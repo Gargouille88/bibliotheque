@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ma Bibliothèque</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f5f2ed; --surface: #fff; --surface2: #f0ede8;
+  --ink: #1c1917; --ink2: #57534e; --ink3: #a8a29e;
+  --gold: #b45309; --gold-light: #fef3c7;
+  --line: rgba(28,25,23,0.1); --line2: rgba(28,25,23,0.06);
+  --read: #15803d; --toread: #1d4ed8; --dnf: #b91c1c; --reading: #b45309;
+  --lent: #6d28d9; --lent-bg: #ede9fe;
+  --radius: 3px;
+  --sh: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
+  --sh-h: 0 4px 8px rgba(0,0,0,0.1), 0 12px 24px rgba(0,0,0,0.07);
+}
+body { background: var(--bg); color: var(--ink); font-family: 'DM Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+/* HEADER */
+header { background: var(--ink); padding: 2.5rem 2rem 2rem; text-align: center; }
+header h1 { font-family: 'EB Garamond', Georgia, serif; font-size: clamp(2rem,5vw,3.5rem); font-weight: 400; color: #fff; letter-spacing: 0.02em; line-height: 1.1; }
+header h1 em { font-style: italic; color: #d6d3d1; }
+.header-sub { font-size: 0.75rem; color: #78716c; letter-spacing: 0.12em; text-transform: uppercase; margin-top: 0.5rem; }
+
+/* NAV TABS */
+.nav-tabs { background: var(--ink); border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: center; gap: 0; }
+.nav-tab { padding: 0.6rem 1.4rem; font-family: 'DM Sans', sans-serif; font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; color: #78716c; border-bottom: 2px solid transparent; transition: all 0.15s; background: none; border-top: none; border-left: none; border-right: none; }
+.nav-tab:hover { color: #d6d3d1; }
+.nav-tab.active { color: #fff; border-bottom-color: #b45309; }
+
+/* STATS */
+.stats-bar { background: var(--surface); border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; justify-content: center; }
+.stat-pill { display: flex; align-items: center; gap: 6px; padding: 0.5rem 1rem; font-size: 0.75rem; color: var(--ink2); border-right: 1px solid var(--line); }
+.stat-pill:last-child { border-right: none; }
+.stat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.stat-pill strong { color: var(--ink); font-weight: 500; }
+
+/* CONTROLS */
+.controls { background: var(--surface); padding: 0.6rem 1.5rem; display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 100; }
+.search-wrap { position: relative; flex: 1; min-width: 150px; max-width: 230px; }
+.search-wrap svg { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--ink3); pointer-events: none; }
+#search { width: 100%; padding: 0.38rem 0.65rem 0.38rem 1.85rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 0.79rem; color: var(--ink); outline: none; transition: border-color 0.15s; }
+#search:focus { border-color: var(--ink3); background: #fff; }
+#search::placeholder { color: var(--ink3); }
+.filter-group { display: flex; flex-wrap: wrap; gap: 0.25rem; align-items: center; }
+.filter-btn { padding: 0.3rem 0.65rem; border: 1px solid var(--line); border-radius: 2px; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 0.72rem; letter-spacing: 0.02em; cursor: pointer; color: var(--ink2); transition: all 0.12s; white-space: nowrap; }
+.filter-btn:hover { border-color: var(--ink3); color: var(--ink); }
+.filter-btn.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+.filter-btn.f-read.active { background: var(--read); border-color: var(--read); }
+.filter-btn.f-toread.active { background: var(--toread); border-color: var(--toread); }
+.filter-btn.f-dnf.active { background: var(--dnf); border-color: var(--dnf); }
+.filter-btn.f-reading.active { background: var(--reading); border-color: var(--reading); }
+.filter-btn.f-coup.active { background: var(--gold); border-color: var(--gold); }
+.ctrl-sep { width: 1px; height: 16px; background: var(--line); flex-shrink: 0; }
+#year-select { padding: 0.3rem 0.55rem; border: 1px solid var(--line); border-radius: 2px; background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 0.72rem; color: var(--ink2); cursor: pointer; outline: none; }
+#year-select:hover { border-color: var(--ink3); }
+.controls-right { margin-left: auto; display: flex; align-items: center; gap: 0.4rem; }
+.count-label { font-size: 0.72rem; color: var(--ink3); letter-spacing: 0.04em; white-space: nowrap; }
+.action-btn { padding: 0.32rem 0.75rem; border: 1px solid var(--line); border-radius: 2px; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 0.72rem; cursor: pointer; color: var(--ink2); transition: all 0.12s; white-space: nowrap; }
+.action-btn:hover { border-color: var(--ink3); color: var(--ink); }
+.action-btn.primary { background: var(--ink); color: #fff; border-color: var(--ink); font-weight: 500; }
+.action-btn.primary:hover { background: #292524; }
+
+/* PAGES */
+.page { display: none; }
+.page.active { display: block; }
+
+/* GRID */
+#grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 1.3rem; padding: 1.8rem 1.5rem; max-width: 1500px; margin: 0 auto; }
+
+/* BOOK CARD */
+.book-card { cursor: pointer; display: flex; flex-direction: column; }
+.cover-wrap { position: relative; aspect-ratio: 2/3; border-radius: var(--radius); overflow: hidden; box-shadow: var(--sh); transition: box-shadow 0.2s, transform 0.2s; background: var(--surface2); }
+.book-card:hover .cover-wrap { box-shadow: var(--sh-h); transform: translateY(-3px); }
+.cover-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cover-placeholder { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.6rem 0.5rem; text-align: center; background: var(--surface2); }
+.pl-icon { width: 20px; height: 20px; margin-bottom: 0.35rem; opacity: 0.18; }
+.pl-title { font-family: 'EB Garamond', serif; font-size: 0.66rem; color: var(--ink); line-height: 1.25; margin-bottom: 0.2rem; word-break: break-word; }
+.pl-author { font-size: 0.57rem; color: var(--ink3); word-break: break-word; line-height: 1.2; }
+.status-dot { position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.9); }
+.coup-badge { position: absolute; top: 5px; left: 5px; background: var(--gold); color: #fff; font-size: 0.55rem; padding: 1px 4px; border-radius: 1px; line-height: 1.4; font-family: 'DM Sans', sans-serif; letter-spacing: 0.03em; }
+.lent-badge { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(109,40,217,0.88); color: #fff; font-size: 0.57rem; text-align: center; padding: 3px 0; letter-spacing: 0.04em; font-family: 'DM Sans', sans-serif; }
+.sd-read { background: var(--read); } .sd-to-read { background: var(--toread); } .sd-did-not-finish { background: var(--dnf); } .sd-currently-reading { background: var(--reading); }
+.card-meta { margin-top: 0.42rem; padding: 0 0.05rem; }
+.card-title { font-family: 'EB Garamond', serif; font-size: 0.77rem; color: var(--ink); line-height: 1.28; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card-rating { display: flex; gap: 1px; margin-top: 0.16rem; }
+.star { font-size: 0.56rem; color: var(--line); }
+.star.on { color: var(--gold); }
+.empty-state { grid-column: 1/-1; text-align: center; padding: 5rem 2rem; color: var(--ink3); font-family: 'EB Garamond', serif; font-size: 1.1rem; font-style: italic; }
+
+/* COUPS DE COEUR PAGE */
+.coup-header { padding: 2rem 1.5rem 0.5rem; max-width: 1500px; margin: 0 auto; }
+.coup-header h2 { font-family: 'EB Garamond', serif; font-size: 1.6rem; font-weight: 400; color: var(--ink); }
+.coup-header p { font-size: 0.82rem; color: var(--ink3); margin-top: 0.2rem; font-style: italic; }
+
+/* STATS PAGE */
+.stats-page { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; display: flex; flex-direction: column; gap: 2rem; }
+.stats-section { }
+.stats-section h2 { font-family: 'EB Garamond', serif; font-size: 1.4rem; font-weight: 400; color: var(--ink); margin-bottom: 1.1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--line); }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.9rem; }
+.kpi-card { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 1rem 1.1rem; }
+.kpi-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink3); margin-bottom: 0.35rem; }
+.kpi-value { font-family: 'EB Garamond', serif; font-size: 2rem; font-weight: 400; color: var(--ink); line-height: 1; }
+.kpi-sub { font-size: 0.72rem; color: var(--ink3); margin-top: 0.2rem; }
+
+/* YEAR CHART */
+.year-chart { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 1.3rem 1.3rem 0.8rem; }
+.chart-bars { display: flex; align-items: flex-end; gap: 0.5rem; height: 140px; margin-bottom: 0.5rem; }
+.chart-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; flex: 1; min-width: 0; }
+.chart-bar { width: 100%; background: var(--ink); border-radius: 2px 2px 0 0; transition: background 0.15s; cursor: default; position: relative; }
+.chart-bar:hover { background: var(--gold); }
+.chart-bar-val { font-size: 0.62rem; color: var(--ink2); font-weight: 500; }
+.chart-bar-lbl { font-size: 0.6rem; color: var(--ink3); white-space: nowrap; transform: rotate(-40deg); transform-origin: top center; margin-top: 4px; }
+
+/* AUTHORS */
+.author-list { display: flex; flex-direction: column; gap: 0.45rem; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 1rem; }
+.author-row { display: flex; align-items: center; gap: 0.7rem; }
+.author-rank { font-size: 0.72rem; color: var(--ink3); width: 18px; text-align: right; flex-shrink: 0; }
+.author-name { font-size: 0.85rem; color: var(--ink); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.author-bar-wrap { width: 180px; flex-shrink: 0; }
+.author-bar { height: 6px; background: var(--ink); border-radius: 1px; }
+.author-count { font-size: 0.72rem; color: var(--ink3); width: 30px; text-align: right; flex-shrink: 0; }
+
+/* FORMATS PIE-LIKE */
+.format-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.7rem; }
+.format-card { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 0.8rem 1rem; text-align: center; }
+.format-pct { font-family: 'EB Garamond', serif; font-size: 1.6rem; color: var(--ink); line-height: 1; }
+.format-lbl { font-size: 0.7rem; color: var(--ink3); margin-top: 0.2rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.format-count { font-size: 0.68rem; color: var(--ink3); margin-top: 0.15rem; }
+
+/* RATINGS DIST */
+.ratings-dist { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.rating-row { display: flex; align-items: center; gap: 0.6rem; }
+.rating-lbl { font-size: 0.75rem; color: var(--ink2); width: 40px; flex-shrink: 0; display: flex; gap: 1px; }
+.rating-bar-bg { flex: 1; height: 8px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+.rating-bar-fill { height: 100%; background: var(--gold); border-radius: 2px; }
+.rating-count { font-size: 0.72rem; color: var(--ink3); width: 28px; text-align: right; flex-shrink: 0; }
+
+/* MODAL */
+#modal-overlay { display: none; position: fixed; inset: 0; background: rgba(28,25,23,0.55); z-index: 1000; backdrop-filter: blur(3px); align-items: center; justify-content: center; padding: 1rem; }
+#modal-overlay.open { display: flex; }
+.modal-box { background: var(--surface); border-radius: 4px; max-width: 520px; width: 100%; max-height: 88vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.22); }
+.modal-close-bar { display: flex; justify-content: flex-end; padding: 0.75rem 1.1rem 0; }
+.modal-close { background: none; border: none; color: var(--ink3); font-size: 1rem; cursor: pointer; padding: 0.2rem 0.4rem; transition: color 0.1s; line-height: 1; }
+.modal-close:hover { color: var(--ink); }
+.modal-body { display: flex; gap: 1.2rem; padding: 0.4rem 1.3rem 1.2rem; }
+.modal-cover-wrap { flex-shrink: 0; width: 90px; }
+.modal-cover-wrap .cover-wrap { width: 90px; aspect-ratio: 2/3; }
+.modal-info { flex: 1; min-width: 0; }
+.modal-title { font-family: 'EB Garamond', serif; font-size: 1.2rem; font-weight: 400; color: var(--ink); line-height: 1.2; margin-bottom: 0.15rem; }
+.modal-author { font-size: 0.78rem; color: var(--ink2); font-style: italic; margin-bottom: 0.8rem; }
+.modal-rating { display: flex; gap: 2px; margin-bottom: 0.7rem; align-items: center; }
+.modal-rating .star { font-size: 0.78rem; }
+.modal-tags { display: flex; flex-wrap: wrap; gap: 0.28rem; margin-bottom: 1rem; }
+.tag { padding: 0.15rem 0.48rem; border-radius: 2px; font-size: 0.67rem; letter-spacing: 0.03em; font-weight: 500; }
+.tag-read { background: #dcfce7; color: #166534; }
+.tag-to-read { background: #dbeafe; color: #1e40af; }
+.tag-did-not-finish { background: #fee2e2; color: #991b1b; }
+.tag-currently-reading { background: #fef3c7; color: #92400e; }
+.tag-format { background: var(--surface2); color: var(--ink2); }
+.tag-genre { background: var(--gold-light); color: #78350f; }
+.tag-year { background: var(--surface2); color: var(--ink2); }
+.tag-lent { background: #ede9fe; color: #5b21b6; }
+.modal-actions { border-top: 1px solid var(--line); padding: 0.8rem 1.3rem; display: flex; gap: 0.45rem; flex-wrap: wrap; }
+.maction-btn { padding: 0.38rem 0.85rem; border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 0.76rem; cursor: pointer; transition: all 0.12s; border: 1px solid; }
+.maction-lent { border-color: var(--lent); color: var(--lent); background: transparent; }
+.maction-lent:hover, .maction-lent.active { background: var(--lent); color: #fff; }
+.maction-delete { border-color: var(--line); color: var(--ink3); background: transparent; margin-left: auto; }
+.maction-delete:hover { border-color: #b91c1c; color: #b91c1c; background: #fee2e2; }
+
+/* FORM */
+#form-overlay { display: none; position: fixed; inset: 0; background: rgba(28,25,23,0.55); z-index: 1100; backdrop-filter: blur(3px); align-items: center; justify-content: center; padding: 1rem; }
+#form-overlay.open { display: flex; }
+.form-box { background: var(--surface); border-radius: 4px; max-width: 530px; width: 100%; max-height: 93vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.22); }
+.form-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.3rem; border-bottom: 1px solid var(--line); }
+.form-header h2 { font-family: 'EB Garamond', serif; font-size: 1.1rem; font-weight: 400; color: var(--ink); }
+.form-header-close { background: none; border: none; color: var(--ink3); font-size: 1rem; cursor: pointer; line-height: 1; padding: 0.2rem 0.4rem; transition: color 0.1s; }
+.form-header-close:hover { color: var(--ink); }
+.form-inner { display: flex; gap: 1.1rem; padding: 1.1rem 1.3rem; }
+.form-preview-col { flex-shrink: 0; width: 82px; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
+.preview-cover { width: 82px; aspect-ratio: 2/3; background: var(--surface2); border-radius: var(--radius); border: 1px solid var(--line); overflow: hidden; display: flex; align-items: center; justify-content: center; color: var(--ink3); font-size: 1.3rem; }
+.preview-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.preview-label { font-size: 0.62rem; color: var(--ink3); text-align: center; line-height: 1.3; }
+.form-fields { flex: 1; display: flex; flex-direction: column; gap: 0.7rem; }
+.field-group { display: flex; flex-direction: column; gap: 0.16rem; }
+.field-group label { font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink3); font-weight: 500; }
+.field-group input, .field-group select { padding: 0.4rem 0.6rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 0.82rem; color: var(--ink); outline: none; transition: border-color 0.15s; width: 100%; }
+.field-group input:focus, .field-group select:focus { border-color: var(--ink3); background: #fff; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.star-input { display: flex; gap: 4px; align-items: center; padding: 0.25rem 0; }
+.star-input .s { font-size: 1.2rem; cursor: pointer; color: var(--line); transition: color 0.1s; line-height: 1; user-select: none; }
+.star-input .s.on { color: var(--gold); }
+.rating-lbl { font-size: 0.72rem; color: var(--ink3); margin-left: 0.25rem; }
+.lookup-wrap { position: relative; }
+.lookup-btn { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: var(--ink); color: #fff; border: none; border-radius: 2px; padding: 0.16rem 0.48rem; font-size: 0.66rem; font-family: 'DM Sans', sans-serif; cursor: pointer; opacity: 0; transition: opacity 0.15s; pointer-events: none; }
+.lookup-wrap.has-val .lookup-btn { opacity: 1; pointer-events: auto; }
+.suggestions-box { margin-top: 0.25rem; }
+.search-suggestions { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
+.suggestion-item { display: flex; align-items: center; gap: 0.65rem; padding: 0.5rem 0.65rem; cursor: pointer; border-bottom: 1px solid var(--line2); transition: background 0.1s; }
+.suggestion-item:last-child { border-bottom: none; }
+.suggestion-item:hover { background: var(--bg); }
+.sug-cover { width: 28px; height: 42px; object-fit: cover; border-radius: 1px; background: var(--surface2); flex-shrink: 0; }
+.sug-info { flex: 1; min-width: 0; }
+.sug-title { font-family: 'EB Garamond', serif; font-size: 0.83rem; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sug-author { font-size: 0.7rem; color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sug-year { font-size: 0.67rem; color: var(--ink3); flex-shrink: 0; }
+.search-loading { padding: 0.65rem; text-align: center; font-size: 0.76rem; color: var(--ink3); font-style: italic; }
+.form-footer { padding: 0.75rem 1.3rem 1rem; display: flex; gap: 0.4rem; justify-content: flex-end; border-top: 1px solid var(--line); }
+.btn-cancel { padding: 0.42rem 0.95rem; border: 1px solid var(--line); border-radius: var(--radius); background: transparent; font-family: 'DM Sans', sans-serif; font-size: 0.78rem; cursor: pointer; color: var(--ink2); transition: all 0.12s; }
+.btn-cancel:hover { border-color: var(--ink3); color: var(--ink); }
+.btn-submit { padding: 0.42rem 1.15rem; border: 1px solid var(--ink); border-radius: var(--radius); background: var(--ink); font-family: 'DM Sans', sans-serif; font-size: 0.78rem; font-weight: 500; cursor: pointer; color: #fff; transition: all 0.12s; }
+.btn-submit:hover { background: #292524; }
+
+.toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--ink); color: #fff; padding: 0.48rem 0.95rem; border-radius: var(--radius); font-size: 0.78rem; font-family: 'DM Sans', sans-serif; z-index: 2000; opacity: 0; transform: translateY(8px); transition: opacity 0.2s, transform 0.2s; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.warn { background: var(--lent); }
+.toast.danger { background: #b91c1c; }
+
+@media (max-width:600px) {
+  #grid { grid-template-columns: repeat(auto-fill,minmax(95px,1fr)); gap:1rem; padding:1.2rem; }
+  .modal-body,.form-inner { flex-direction:column; }
+  .modal-cover-wrap { width:100%; display:flex; justify-content:center; }
+  .modal-cover-wrap .cover-wrap { width:95px; }
+  .form-preview-col { width:100%; flex-direction:row; }
+  .preview-cover { width:58px; }
+  .field-row { grid-template-columns:1fr; }
+  .controls-right { margin-left:0; }
+  .author-bar-wrap { display:none; }
+  .nav-tab { padding: 0.5rem 0.8rem; font-size: 0.7rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Ma <em>Bibliothèque</em></h1>
+  <p class="header-sub" id="header-sub">— —</p>
+</header>
+
+<nav class="nav-tabs">
+  <button class="nav-tab active" data-page="library">Bibliothèque</button>
+  <button class="nav-tab" data-page="favorites">Coups de cœur</button>
+  <button class="nav-tab" data-page="stats">Statistiques</button>
+</nav>
+
+<div class="stats-bar" id="stats-bar"></div>
+
+<!-- PAGE BIBLIOTHÈQUE -->
+<div class="page active" id="page-library">
+  <div class="controls">
+    <div class="search-wrap">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="search" id="search" placeholder="Titre, auteur…">
+    </div>
+    <div class="filter-group" id="filter-btns">
+      <button class="filter-btn active" data-filter="all">Tous</button>
+      <button class="filter-btn f-read" data-filter="read">Lus</button>
+      <button class="filter-btn f-toread" data-filter="to-read">À lire</button>
+      <button class="filter-btn f-reading" data-filter="currently-reading">En cours</button>
+      <button class="filter-btn f-dnf" data-filter="did-not-finish">Abandonnés</button>
+      <div class="ctrl-sep"></div>
+      <select id="year-select">
+        <option value="">Toutes les années</option>
+        <option value="2014">2014</option>
+        <option value="2015">2015</option>
+        <option value="2016">2016</option>
+        <option value="2017">2017</option>
+        <option value="2018">2018</option>
+        <option value="2020">2020</option>
+        <option value="2021">2021</option>
+        <option value="2022">2022</option>
+        <option value="2023">2023</option>
+        <option value="2024">2024</option>
+        <option value="2025">2025</option>
+        <option value="2026">2026</option>
+      </select>
+    </div>
+    <div class="controls-right">
+      <span class="count-label" id="count-label"></span>
+      <button class="action-btn" id="export-btn">↓ Exporter</button>
+      <button class="action-btn primary" id="open-form-btn">+ Ajouter</button>
+    </div>
+  </div>
+  <div id="grid"></div>
+</div>
+
+<!-- PAGE COUPS DE CŒUR -->
+<div class="page" id="page-favorites">
+  <div class="coup-header">
+    <h2>Coups de cœur</h2>
+    <p id="coup-sub">— livres notés 5 étoiles</p>
+  </div>
+  <div id="grid-favorites" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:1.3rem;padding:1.2rem 1.5rem;max-width:1500px;margin:0 auto;"></div>
+</div>
+
+<!-- PAGE STATISTIQUES -->
+<div class="page" id="page-stats">
+  <div class="stats-page">
+
+    <div class="stats-section">
+      <h2>Vue d'ensemble</h2>
+      <div class="kpi-grid" id="kpi-grid"></div>
+    </div>
+
+    <div class="stats-section">
+      <h2>Livres lus par année</h2>
+      <div class="year-chart">
+        <div class="chart-bars" id="chart-bars"></div>
+      </div>
+    </div>
+
+    <div class="stats-section">
+      <h2>Auteurs les plus lus</h2>
+      <div class="author-list" id="author-list"></div>
+    </div>
+
+    <div class="stats-section">
+      <h2>Formats de lecture</h2>
+      <div class="format-grid" id="format-grid"></div>
+    </div>
+
+    <div class="stats-section">
+      <h2>Distribution des notes</h2>
+      <div class="ratings-dist" id="ratings-dist"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <div class="modal-close-bar"><button class="modal-close" id="close-modal">✕</button></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<!-- FORM -->
+<div id="form-overlay" role="dialog" aria-modal="true">
+  <div class="form-box">
+    <div class="form-header">
+      <h2>Ajouter un livre</h2>
+      <button class="form-header-close" id="close-form">✕</button>
+    </div>
+    <div class="form-inner">
+      <div class="form-preview-col">
+        <div class="preview-cover" id="preview-cover">📖</div>
+        <span class="preview-label">Aperçu couverture</span>
+      </div>
+      <div class="form-fields">
+        <div class="field-group">
+          <label>Titre *</label>
+          <div class="lookup-wrap" id="title-wrap">
+            <input type="text" id="f-title" placeholder="Le nom du livre" autocomplete="off">
+            <button class="lookup-btn" id="lookup-btn" type="button">Rechercher</button>
+          </div>
+          <div class="suggestions-box" id="suggestions-box"></div>
+        </div>
+        <div class="field-group">
+          <label>Auteur(s)</label>
+          <input type="text" id="f-author" placeholder="Prénom Nom" autocomplete="off">
+        </div>
+        <div class="field-group">
+          <label>ISBN</label>
+          <input type="text" id="f-isbn" placeholder="Détecté automatiquement" maxlength="17" autocomplete="off">
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <label>Statut *</label>
+            <select id="f-status">
+              <option value="to-read">À lire</option>
+              <option value="read">Lu</option>
+              <option value="currently-reading">En cours</option>
+              <option value="did-not-finish">Abandonné</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>Format</label>
+            <select id="f-format">
+              <option value="">—</option>
+              <option value="paperback">Poche</option>
+              <option value="hardcover">Relié</option>
+              <option value="digital">Numérique</option>
+              <option value="audio">Audio</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-group" id="date-read-group" style="display:none">
+          <label>Date de lecture</label>
+          <input type="date" id="f-date-read" style="color-scheme:light">
+        </div>
+        <div class="field-group">
+          <label>Note</label>
+          <div class="star-input" id="star-input">
+            <span class="s" data-v="1">★</span><span class="s" data-v="2">★</span>
+            <span class="s" data-v="3">★</span><span class="s" data-v="4">★</span>
+            <span class="s" data-v="5">★</span>
+            <span class="rating-lbl" id="rating-val">—</span>
+          </div>
+        </div>
+        <div class="field-group">
+          <label>Tags / Genre</label>
+          <input type="text" id="f-tags" placeholder="roman, histoire, essai…">
+        </div>
+      </div>
+    </div>
+    <div class="form-footer">
+      <button class="btn-cancel" id="cancel-form">Annuler</button>
+      <button class="btn-submit" id="submit-form">Ajouter à la bibliothèque</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const BOOKS = [{"t": "Premier Bilan Après l'Apocalypse", "a": "Frédéric Beigbeder", "c": "https://covers.openlibrary.org/b/isbn/9782253173403-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Histoire de chambres", "a": "Michelle Perrot", "c": "https://covers.openlibrary.org/b/isbn/9782020892797-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2014"}, {"t": "Des erreurs ont été commises", "a": "David Carkeet, Marie Chabin", "c": "", "r": "3.5", "s": "to-read", "g": "", "f": "", "y": "2026"}, {"t": "Jours de gloire et de tristesse: Une histoire extraordinaire de la Révolution par un Parisien ordinaire", "a": "Timothy Tackett", "c": "https://covers.openlibrary.org/b/isbn/2226489851-M.jpg", "r": "", "s": "to-read", "g": "", "f": "", "y": ""}, {"t": "La prochaine fois que tu mordras la poussière", "a": "Panayotis Pascot", "c": "https://covers.openlibrary.org/b/isbn/9782253907824-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2024"}, {"t": "Le Retour de Martin Guerre: Suivi de Martin Guerre", "a": "Jean-Claude Carrière, Daniel Vigne, Natalie Zemon Davis", "c": "https://covers.openlibrary.org/b/isbn/9791021051973-M.jpg", "r": "", "s": "to-read", "g": "", "f": "", "y": ""}, {"t": "Le vent dans les saules", "a": "Kenneth Grahame", "c": "https://covers.openlibrary.org/b/isbn/9782752905444-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Mai 67", "a": "Colombe Schneck", "c": "", "r": "4.0", "s": "read", "g": "", "f": "digital", "y": "2015"}, {"t": "Astérix et le Griffon", "a": "Jean-Yves Ferri", "c": "https://covers.openlibrary.org/b/isbn/9782864973492-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "hardcover", "y": "2022"}, {"t": "Tant que le café est encore chaud", "a": "Toshikazu Kawaguchi", "c": "https://covers.openlibrary.org/b/isbn/9782253940920-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Une bête au paradis", "a": "Cécile Coulon", "c": "https://covers.openlibrary.org/b/isbn/9782253261940-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "One Piece 5: Pour qui sonne le glas", "a": "Eiichiro Oda", "c": "https://covers.openlibrary.org/b/isbn/9782723434829-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2024"}, {"t": "L'École des Femmes / La Critique de l'École des Femmes", "a": "Molière", "c": "https://covers.openlibrary.org/b/isbn/9782081250444-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "J'écris l'Iliade", "a": "Pierre Michon", "c": "https://covers.openlibrary.org/b/isbn/9782070128075-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Naufragés: Histoires vraies", "a": "Daniel Fiévet", "c": "https://covers.openlibrary.org/b/isbn/9782260056621-M.jpg", "r": "", "s": "to-read", "g": "", "f": "", "y": ""}, {"t": "Il y a quelqu'un dans la maison...", "a": "Patricia Darré", "c": "", "r": "2.0", "s": "read", "g": "", "f": "digital", "y": "2020"}, {"t": "Atomic Habits: An Easy & Proven Way to Build Good Habits & Break Bad Ones", "a": "James Clear", "c": "", "r": "5.0", "s": "read", "g": "", "f": "audio", "y": "2023"}, {"t": "Richesse oblige", "a": "Hannelore Cayre", "c": "https://covers.openlibrary.org/b/isbn/9791022610216-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "Contre le développement personnel", "a": "Thierry Jobard", "c": "https://covers.openlibrary.org/b/isbn/9782374252711-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "Selected Writings of Paul Valery", "a": "Paul Valéry", "c": "https://covers.openlibrary.org/b/isbn/9780811202138-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2017"}, {"t": "Le Propre et le sale : L'hygiène du corps depuis le Moyen Age", "a": "Georges Vigarello", "c": "", "r": "5.0", "s": "read", "g": "histoire", "f": "", "y": "2024"}, {"t": "Le Fou et l'Assassin - Intégrale 3", "a": "Robin Hobb", "c": "https://covers.openlibrary.org/b/isbn/9782290359310-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Abel: un western métaphysique", "a": "Alessandro Baricco", "c": "https://covers.openlibrary.org/b/isbn/9782073060686-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Nord Sentinelle: Contes de l'indigène et du voyageur", "a": "Jérôme Ferrari", "c": "https://covers.openlibrary.org/b/isbn/9782330194413-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Soie", "a": "Alessandro Baricco", "c": "https://covers.openlibrary.org/b/isbn/9782070419654-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "Henri IV et la France réconciliée", "a": "Gonzague Saint Bris", "c": "", "r": "3.0", "s": "read", "g": "", "f": "", "y": "2023"}, {"t": "Écritures carnassières", "a": "Ervé", "c": "https://covers.openlibrary.org/b/isbn/9782862314044-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "digital", "y": "2023"}, {"t": "Professeur de désir", "a": "Philip Roth", "c": "https://covers.openlibrary.org/b/isbn/9782070374229-M.jpg", "r": "", "s": "did-not-finish", "g": "", "f": "paperback", "y": "2025"}, {"t": "HBR's 10 Must Reads on Emotional Intelligence", "a": "Harvard Business Review, Daniel Goleman, Richard E. Boyatzis", "c": "https://covers.openlibrary.org/b/isbn/9781633690196-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "Poésies", "a": "François Villon", "c": "https://covers.openlibrary.org/b/isbn/9782070320691-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Nuits", "a": "Pierre Deram", "c": "https://covers.openlibrary.org/b/isbn/9782246838968-M.jpg", "r": "", "s": "to-read", "g": "", "f": "", "y": ""}, {"t": "Brumes et tempêtes", "a": "Robin Hobb", "c": "", "r": "5.0", "s": "read", "g": "", "f": "", "y": ""}, {"t": "One piece, Tome 7:  Vieux machin", "a": "Eiichiro Oda", "c": "https://covers.openlibrary.org/b/isbn/9782723489942-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "La vérité sur la lumière", "a": "Auður Ava Ólafsdóttir", "c": "https://covers.openlibrary.org/b/isbn/9791038700642-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Camille, mon envolée", "a": "Sophie Daull", "c": "", "r": "5.0", "s": "read", "g": "", "f": "", "y": "2015"}, {"t": "Intérieur nuit", "a": "Nicolas Demorand", "c": "https://covers.openlibrary.org/b/isbn/9791037514233-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "La Condition pavillonnaire", "a": "Sophie Divry", "c": "", "r": "5.0", "s": "read", "g": "", "f": "", "y": "2016"}, {"t": "Habiter poétiquement le monde", "a": "Collectif, Frédéric Brun", "c": "https://covers.openlibrary.org/b/isbn/9782955211922-M.jpg", "r": "", "s": "read", "g": "", "f": "hardcover", "y": "2017"}, {"t": "Fragments d'un discours amoureux", "a": "Roland Barthes", "c": "https://covers.openlibrary.org/b/isbn/9782020046053-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "Home", "a": "Toni Morrison", "c": "https://covers.openlibrary.org/b/isbn/9780307594167-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "hardcover", "y": "2021"}, {"t": "Le camp des autres", "a": "Thomas Vinau", "c": "https://covers.openlibrary.org/b/isbn/9782362792175-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "hardcover", "y": "2017"}, {"t": "French Theory: How Foucault, Derrida, Deleuze, & Co. Transformed the Intellectual Life of the United States", "a": "Francois Cusset", "c": "https://covers.openlibrary.org/b/isbn/9780816647330-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2017"}, {"t": "Downstream from Trout Fishing in America: A Memoir of Richard Brautigan", "a": "Keith Abbott", "c": "https://covers.openlibrary.org/b/isbn/9780884962939-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "hardcover", "y": "2021"}, {"t": "Le Coiffeur de Chateaubriand", "a": "Adrien Goetz", "c": "https://covers.openlibrary.org/b/isbn/9782253157588-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2026"}, {"t": "Moby Dick", "a": "Herman Melville", "c": "https://covers.openlibrary.org/b/isbn/9782070400669-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "La Sirène, le marchand et la courtisane", "a": "Imogen Hermes Gowar", "c": "https://covers.openlibrary.org/b/isbn/9782714494191-M.jpg", "r": "5.0", "s": "read", "g": "litt-rature", "f": "", "y": "2024"}, {"t": "The Miracle Morning: The Not-So-Obvious Secret Guaranteed to Transform Your Life: Before 8AM", "a": "Hal Elrod", "c": "https://covers.openlibrary.org/b/isbn/9781637744352-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "digital", "y": "2022"}, {"t": "Moi, Boy", "a": "Roald Dahl", "c": "https://covers.openlibrary.org/b/isbn/9782070515196-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2024"}, {"t": "The Call of Cthulhu and Other Weird Stories", "a": "H.P. Lovecraft", "c": "https://covers.openlibrary.org/b/isbn/9780141182346-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": ""}, {"t": "Tu montreras ma tête au peuple", "a": "François-Henri Désérable", "c": "https://covers.openlibrary.org/b/isbn/9782070139873-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Réparer les vivants", "a": "Maylis de Kerangal", "c": "https://covers.openlibrary.org/b/isbn/9782070144136-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "Revue des Deux Mondes février 2022: L'extrême droite est-elle de retour ?", "a": "Jacques De Saint Victor, Laurent Gayard, Georges Bensoussan, Laurent Ottavi, Grégoire Kauffmann, Jean-Yves Camus, Valérie Toranian, Fatiha Boudjahlat, Abel Quentin, Bertrand Raison, Danièle Sabbah, Éric Roussel, Lucien D'Azay, Sébastien Lapaque, Valérie Igounet, Jérôme Besnard, Raphaël Doan, Patrick Kéchichian, Stéphane Guégan, Pierre-André Taguieff, Brice Couturier, Michel Delon, Olivier Bellamy, Richard Millet, Annick Steta, Franz-Olivier Giesbert, Marin de Viry", "c": "https://covers.openlibrary.org/b/isbn/9782356502704-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "", "y": "2022"}, {"t": "A Brief History of the Western World", "a": "Thomas H. Greer", "c": "https://covers.openlibrary.org/b/isbn/9780155023307-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2014"}, {"t": "L'après littérature", "a": "Alain Finkielkraut", "c": "https://covers.openlibrary.org/b/isbn/9782234087255-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Peau-de-sang", "a": "Audrée Wilhelmy", "c": "https://covers.openlibrary.org/b/isbn/9782370554253-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "digital", "y": "2024"}, {"t": "Le coffre", "a": "Jacky Schwartzmann, Jean-Louis Courriol, Lucian-Dragoș Bogdan", "c": "", "r": "3.0", "s": "read", "g": "", "f": "", "y": "2022"}, {"t": "A Personal Anthology", "a": "Jorge Luis Borges", "c": "https://covers.openlibrary.org/b/isbn/9780802130778-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "Un secret", "a": "Philippe Grimbert", "c": "https://covers.openlibrary.org/b/isbn/9782253117186-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2017"}, {"t": "Ce matin, un lapin...", "a": "Antti Tuomainen, Anne Colin du Terrail", "c": "https://covers.openlibrary.org/b/isbn/9782264081742-M.jpg", "r": "3.75", "s": "read", "g": "", "f": "", "y": "2025"}, {"t": "Le réel et son double", "a": "Clément Rosset", "c": "https://covers.openlibrary.org/b/isbn/9782070702848-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2017"}, {"t": "The Joy of Not Thinking: A Radical Approach to Happiness", "a": "Tim Grimes", "c": "https://covers.openlibrary.org/b/isbn/9781698559506-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Je suis un chat", "a": "Natsume Sōseki", "c": "https://covers.openlibrary.org/b/isbn/2070706346-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Là où s'arrête la nuit", "a": "Robin Fabre", "c": "https://covers.openlibrary.org/b/isbn/9791095668008-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "", "y": "2017"}, {"t": "La part des nuages", "a": "Thomas Vinau", "c": "https://covers.openlibrary.org/b/isbn/9782362791192-M.jpg", "r": "", "s": "read", "g": "", "f": "hardcover", "y": "2015"}, {"t": "Quiet: The Power of Introverts in a World That Can't Stop Talking", "a": "Susan Cain", "c": "https://covers.openlibrary.org/b/isbn/9780307352149-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "hardcover", "y": "2015"}, {"t": "Les Secrets de Castelcerf", "a": "Robin Hobb", "c": "https://covers.openlibrary.org/b/isbn/9782290344385-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "Ces jours qui disparaissent", "a": "Timothé Le Boucher", "c": "https://covers.openlibrary.org/b/isbn/9782344013328-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "hardcover", "y": "2023"}, {"t": "End Times: Elites, Counter-Elites, and the Path of Political Disintegration", "a": "Peter Turchin", "c": "https://covers.openlibrary.org/b/isbn/9780593490501-M.jpg", "r": "", "s": "to-read", "g": "", "f": "hardcover", "y": ""}, {"t": "Le miracle Spinoza", "a": "Frédéric Lenoir", "c": "https://covers.openlibrary.org/b/isbn/9782253091936-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Gray", "a": "Leonie Swann", "c": "https://covers.openlibrary.org/b/isbn/9782264075505-M.jpg", "r": "", "s": "did-not-finish", "g": "abandonné", "f": "paperback", "y": ""}, {"t": "Les Sources", "a": "Marie-Hélène Lafon", "c": "https://covers.openlibrary.org/b/isbn/9782283036600-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "La délicatesse", "a": "David Foenkinos", "c": "https://covers.openlibrary.org/b/isbn/9782070459315-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "La comédie (in)humaine", "a": "Nicolas Bouzou", "c": "https://covers.openlibrary.org/b/isbn/1032903961-M.jpg", "r": "", "s": "to-read", "g": "philosophie", "f": "", "y": ""}, {"t": "Le Moyen Âge en questions", "a": "Sylvain Gouguenheim", "c": "", "r": "3.0", "s": "read", "g": "", "f": "", "y": "2026"}, {"t": "La Guerre", "a": "Michael McDowell", "c": "https://covers.openlibrary.org/b/isbn/9782381960487-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Manières d'être vivant", "a": "Baptiste Morizot, Stéphane Durand, Alain Damasio", "c": "https://covers.openlibrary.org/b/isbn/9782330129736-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "Bleak House", "a": "Charles Dickens", "c": "https://covers.openlibrary.org/b/isbn/9780143037613-M.jpg", "r": "", "s": "did-not-finish", "g": "abandonné", "f": "paperback", "y": ""}, {"t": "Les Transparents", "a": "Ondjaki", "c": "", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "Le Dragon des glaces", "a": "Robin Hobb", "c": "https://covers.openlibrary.org/b/isbn/9782290353066-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "The Adventures of Huckleberry Finn", "a": "Mark Twain", "c": "https://covers.openlibrary.org/b/isbn/9780142437179-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "L'odyssée de Sven", "a": "Nathaniel Ian Miller", "c": "https://covers.openlibrary.org/b/isbn/9782283036037-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "", "y": "2024"}, {"t": "Le silence qui cache la forêt", "a": "Marie Sélène", "c": "https://covers.openlibrary.org/b/isbn/9782956517344-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Les vrais leaders se servent en dernier : Pourquoi certaines équipes se serrent les coudes et d'autres pas", "a": "Simon Sinek, Simon Sinek", "c": "", "r": "2.0", "s": "read", "g": "d-veloppement-personnel", "f": "", "y": "2024"}, {"t": "The Memoirs of Count Witte", "a": "Sergei Iu Witte, Sidney Harcave", "c": "https://covers.openlibrary.org/b/isbn/9780873325714-M.jpg", "r": "", "s": "read", "g": "", "f": "hardcover", "y": "2021"}, {"t": "SPQR: A History of Ancient Rome", "a": "Mary Beard", "c": "https://covers.openlibrary.org/b/isbn/9781631492228-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Une immense sensation de calme", "a": "Laurine Roux", "c": "https://covers.openlibrary.org/b/isbn/9782072858208-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "Le Duc", "a": "Matteo Melchiorre", "c": "https://covers.openlibrary.org/b/isbn/9791022614368-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "La Disparition de Josef Mengele", "a": "Olivier Guez", "c": "https://covers.openlibrary.org/b/isbn/9782246855873-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "La Loi des mâles", "a": "Maurice Druon", "c": "https://covers.openlibrary.org/b/isbn/9782253004059-M.jpg", "r": "5.0", "s": "read", "g": "litt-rature", "f": "paperback", "y": "2024"}, {"t": "Sagan, Paris 1954", "a": "Anne Berest", "c": "https://covers.openlibrary.org/b/isbn/9781908313898-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "Harry Potter and the Cursed Child - Parts One and Two", "a": "J.K. Rowling", "c": "https://covers.openlibrary.org/b/isbn/9781338099133-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "hardcover", "y": "2016"}, {"t": "Conseils d''une amie pour des temps difficiles", "a": "Pema Chödrön, Claude Riso-Lévi", "c": "", "r": "4.0", "s": "read", "g": "", "f": "", "y": "2022"}, {"t": "Le fromage et les vers", "a": "Carlo Ginzburg", "c": "https://covers.openlibrary.org/b/isbn/9782081451780-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "One Piece, Tome 6: La Grande Promesse", "a": "Eiichiro Oda", "c": "https://covers.openlibrary.org/b/isbn/9782723435604-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Un crocodile s'en allait à la guerre", "a": "Antti Tuomainen", "c": "https://covers.openlibrary.org/b/isbn/9782264085030-M.jpg", "r": "", "s": "to-read", "g": "", "f": "", "y": ""}, {"t": "Et recoudre le soleil", "a": "Gaëlle Josse", "c": "https://covers.openlibrary.org/b/isbn/9782882507242-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Guide de survie du jeune papa", "a": "Laurent Moreau", "c": "https://covers.openlibrary.org/b/isbn/9782367043104-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "", "y": "2025"}, {"t": "La confrérie des intranquilles", "a": "Laurent Dandrieu", "c": "https://covers.openlibrary.org/b/isbn/9791097507251-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "", "y": "2023"}, {"t": "Homo Deus: A History of Tomorrow", "a": "Yuval Noah Harari", "c": "", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "The Gods and Goddesses of Greece and Rome", "a": "Philip Matyszak", "c": "https://covers.openlibrary.org/b/isbn/9780500024188-M.jpg", "r": "", "s": "to-read", "g": "essai", "f": "hardcover", "y": ""}, {"t": "Sapiens: A Brief History of Humankind", "a": "Yuval Noah Harari", "c": "https://covers.openlibrary.org/b/isbn/9781494556907-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "audio", "y": "2020"}, {"t": "Protocole gouvernante", "a": "Guillaume Lavenant", "c": "", "r": "3.0", "s": "read", "g": "", "f": "", "y": "2021"}, {"t": "Quatrains et autres poèmes brefs", "a": "Emily Dickinson", "c": "https://covers.openlibrary.org/b/isbn/9782070329427-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "C'est une chose étrange à la fin que le monde", "a": "Jean d'Ormesson", "c": "https://covers.openlibrary.org/b/isbn/9782221117026-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "Savoirs secrets: les techniques perdues des maîtres anciens", "a": "David Hockney", "c": "https://covers.openlibrary.org/b/isbn/9780500296714-M.jpg", "r": "", "s": "currently-reading", "g": "", "f": "paperback", "y": ""}, {"t": "Dans nos pierres et dans nos os", "a": "Nathaniel Ian Miller", "c": "https://covers.openlibrary.org/b/isbn/9782283040881-M.jpg", "r": "", "s": "to-read", "g": "", "f": "", "y": ""}, {"t": "La Huitième Couleur", "a": "Terry Pratchett", "c": "https://covers.openlibrary.org/b/isbn/9782266211819-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Constellation", "a": "Adrien Bosc", "c": "https://covers.openlibrary.org/b/isbn/9782234077317-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "One Piece, Tome 3: Une vérité qui blesse", "a": "Eiichiro Oda", "c": "https://covers.openlibrary.org/b/isbn/9782723489904-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2024"}, {"t": "Mondo reverso Intégrale", "a": "Arnaud Le Gouëfflec", "c": "https://covers.openlibrary.org/b/isbn/9791038203051-M.jpg", "r": "", "s": "to-read", "g": "bd", "f": "", "y": ""}, {"t": "Quelques mois dans ma vie ", "a": "Michel Houellebecq", "c": "https://covers.openlibrary.org/b/isbn/9782080435804-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "Sur l'épaule des géants", "a": "Laurine Roux", "c": "https://covers.openlibrary.org/b/isbn/9782073029683-M.jpg", "r": "2.5", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Freedom", "a": "Jonathan Franzen", "c": "https://covers.openlibrary.org/b/isbn/9782757829950-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "Genius At Play: The Curious Mind of John Horton Conway", "a": "Siobhan Roberts", "c": "", "r": "2.0", "s": "read", "g": "", "f": "", "y": "2021"}, {"t": "Memoire de Mes Putains Tristes", "a": "Gabriel García Márquez", "c": "https://covers.openlibrary.org/b/isbn/9782253116844-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2017"}, {"t": "Duncton Wood", "a": "William Horwood", "c": "https://covers.openlibrary.org/b/isbn/9780099443001-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": ""}, {"t": "Le voyant d'Etampes", "a": "Abel Quentin", "c": "https://covers.openlibrary.org/b/isbn/9782290364086-M.jpg", "r": "4.75", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Trois saisons d'orage", "a": "Cécile Coulon", "c": "https://covers.openlibrary.org/b/isbn/9782878583373-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "", "y": "2023"}, {"t": "Mon vrai nom est Elisabeth", "a": "Adèle Yon", "c": "https://covers.openlibrary.org/b/isbn/9782364689572-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Conversations d'un enfant du siècle", "a": "Frédéric Beigbeder", "c": "", "r": "2.75", "s": "read", "g": "", "f": "", "y": "2025"}, {"t": "Panorama", "a": "Lilia Hassaine", "c": "https://covers.openlibrary.org/b/isbn/9782073035059-M.jpg", "r": "5.0", "s": "read", "g": "litt-rature", "f": "paperback", "y": "2024"}, {"t": "2666", "a": "Roberto Bolaño", "c": "https://covers.openlibrary.org/b/isbn/9782070437139-M.jpg", "r": "", "s": "read", "g": "", "f": "paperback", "y": "2017"}, {"t": "Soumission", "a": "Michel Houellebecq", "c": "https://covers.openlibrary.org/b/isbn/9782081354807-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "The Happy Couple", "a": "Naoise Dolan", "c": "https://covers.openlibrary.org/b/isbn/9782823621433-M.jpg", "r": "", "s": "to-read", "g": "", "f": "", "y": ""}, {"t": "Adieux et retrouvailles", "a": "Robin Hobb", "c": "https://covers.openlibrary.org/b/isbn/9782290002964-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "Watership Down", "a": "Richard Adams", "c": "https://covers.openlibrary.org/b/isbn/9791090724273-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2017"}, {"t": "Zephyr, Alabama", "a": "Robert R. McCammon", "c": "https://covers.openlibrary.org/b/isbn/9782381960418-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "hardcover", "y": "2025"}, {"t": "Sorcière ?", "a": "Venko Andonovski, Венко Андоновски, Maria Béjanovska", "c": "", "r": "3.0", "s": "read", "g": "", "f": "", "y": "2016"}, {"t": "Sept brèves leçons de physique", "a": "Carlo Rovelli", "c": "https://covers.openlibrary.org/b/isbn/9782738133120-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "L'heure du roi", "a": "Elena Balzamo, Борис Хазанов, Boris Khazanov", "c": "https://covers.openlibrary.org/b/isbn/9782878583526-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "", "y": "2015"}, {"t": "The Sun and Her Flowers", "a": "Rupi Kaur", "c": "https://covers.openlibrary.org/b/isbn/9781449486792-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Femmes d'homosexuels célèbres", "a": "LARIVIERE MICHEL", "c": "https://covers.openlibrary.org/b/isbn/9782842717698-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Les Poisons de la Couronne (Les Rois Maudits, Tome 3)", "a": "Maurice Druon", "c": "https://covers.openlibrary.org/b/isbn/9782253004042-M.jpg", "r": "4.0", "s": "read", "g": "litt-rature", "f": "paperback", "y": "2024"}, {"t": "La Chatte sur un toit brûlant", "a": "Tennessee Williams", "c": "https://covers.openlibrary.org/b/isbn/9782264036667-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "Le Loup des steppes", "a": "Hermann Hesse", "c": "https://covers.openlibrary.org/b/isbn/9782253002932-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "L'incroyable histoire du sexe: intégrale", "a": "Philippe Brenot", "c": "https://covers.openlibrary.org/b/isbn/9791037506856-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "Histoire de Byzance", "a": "John Julius Norwich", "c": "https://covers.openlibrary.org/b/isbn/9782262018900-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Pourquoi les femmes ont une meilleure vie sexuelle sous le socialisme", "a": "Kristen R. Ghodsee", "c": "https://covers.openlibrary.org/b/isbn/9782895963448-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "L'intranquille monsieur Pessoa", "a": "Nicolas Barral", "c": "https://covers.openlibrary.org/b/isbn/9782205206142-M.jpg", "r": "", "s": "to-read", "g": "", "f": "", "y": ""}, {"t": "Les Vies vides : Notre besoin de reconnaissance est impossible à rassasier", "a": "Elsa Godart", "c": "", "r": "", "s": "to-read", "g": "philosophie", "f": "digital", "y": ""}, {"t": "Belle du Seigneur", "a": "Albert Cohen", "c": "https://covers.openlibrary.org/b/isbn/9782070404025-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "Le Maître et Marguerite", "a": "Mikhail Bulgakov", "c": "https://covers.openlibrary.org/b/isbn/9782253037293-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "La blancheur qu'on croyait éternelle", "a": "Virginie Carton", "c": "https://covers.openlibrary.org/b/isbn/9782234076204-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "paperback", "y": "2017"}, {"t": "Anglais excentriques", "a": "Thierry Coudert", "c": "https://covers.openlibrary.org/b/isbn/9791021057050-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "", "y": "2024"}, {"t": "Une éducation", "a": "Tara Westover", "c": "https://covers.openlibrary.org/b/isbn/9782253820369-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "The Practice of Not Thinking: A Guide to Mindful Living", "a": "Ryūnosuke Koike", "c": "https://covers.openlibrary.org/b/isbn/9780141994611-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Les trahisons nécessaires: S'autoriser à être soi", "a": "Nicole Prieur", "c": "https://covers.openlibrary.org/b/isbn/9782221254745-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "One Piece, Tome 1: À l'aube d'une grande aventure", "a": "Eiichiro Oda", "c": "https://covers.openlibrary.org/b/isbn/9782723433358-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2024"}, {"t": "Le Chant d'Achille", "a": "Madeline Miller", "c": "https://covers.openlibrary.org/b/isbn/9782266252430-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "One Piece, Tome 2: Luffy versus la bande à Baggy !!", "a": "Eiichiro Oda", "c": "https://covers.openlibrary.org/b/isbn/9782723489898-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2024"}, {"t": "Derniers mètres jusqu'au cimetière ", "a": "Antti Tuomainen", "c": "https://covers.openlibrary.org/b/isbn/9782264076113-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Le Sans Dieu", "a": "Virginie Caillé-Bastide", "c": "https://covers.openlibrary.org/b/isbn/2266283243-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "", "y": ""}, {"t": "Les élucubrations d'un homme soudain frappé par la grâce", "a": "Edouard Baer", "c": "https://covers.openlibrary.org/b/isbn/9782021468052-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "hardcover", "y": "2021"}, {"t": "La Vie immédiate précédé de L'Évidence poétique et suivi de La Rose publique et de Les Yeux fertiles", "a": "Paul Éluard", "c": "", "r": "3.0", "s": "read", "g": "po-sie", "f": "digital", "y": "2024"}, {"t": "Helgoland: Le sens de la mécanique quantique", "a": "Carlo Rovelli", "c": "https://covers.openlibrary.org/b/isbn/9782080429865-M.jpg", "r": "3.75", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Le Livre de M", "a": "Peng Shepherd", "c": "https://covers.openlibrary.org/b/isbn/9782226442932-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Les Oubliés de l'Amas", "a": "Floriane Soulas", "c": "https://covers.openlibrary.org/b/isbn/9782367409221-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Petit éloge de la médiocrité", "a": "Guillaume Meurice", "c": "https://covers.openlibrary.org/b/isbn/9791025205785-M.jpg", "r": "1.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "Capitain Fracasse", "a": "Henri Gautier", "c": "https://covers.openlibrary.org/b/isbn/9782877142182-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "digital", "y": "2023"}, {"t": "Le totalitarisme sans le goulag", "a": "Mathieu Bock-Côté", "c": "https://covers.openlibrary.org/b/isbn/9782258201644-M.jpg", "r": "4.0", "s": "read", "g": "essai", "f": "", "y": "2024"}, {"t": "Tu vas être papa", "a": "Cédric Rostein", "c": "https://covers.openlibrary.org/b/isbn/9782412076811-M.jpg", "r": "1.0", "s": "read", "g": "", "f": "", "y": "2025"}, {"t": "Le Sentiment d'Abandon: Se libérer du passe pour exister par soi-même", "a": "Saverio Tomasella", "c": "https://covers.openlibrary.org/b/isbn/9782212545302-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "12 clochards célestes", "a": "Thomas Vinau", "c": "https://covers.openlibrary.org/b/isbn/B01L7CPAAE-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "digital", "y": "2017"}, {"t": "Juste après la pluie", "a": "Thomas Vinau", "c": "https://covers.openlibrary.org/b/isbn/9782362790980-M.jpg", "r": "", "s": "read", "g": "", "f": "hardcover", "y": "2015"}, {"t": "L'usure d'un monde: Une traversée de l'Iran", "a": "François-Henri Désérable", "c": "https://covers.openlibrary.org/b/isbn/9782073026163-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Votre collection de montres mécaniques: Une sélection de modèles pour homme à combiner selon vos usages", "a": "Nicolas Esposito", "c": "https://covers.openlibrary.org/b/isbn/9782416008818-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "", "y": "2023"}, {"t": "Je ne suis pas mort... je dors!", "a": "Michel Sardou", "c": "https://covers.openlibrary.org/b/isbn/9782374483351-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "", "y": "2022"}, {"t": "La salle de bal", "a": "Anna Hope", "c": "https://covers.openlibrary.org/b/isbn/9782072824470-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "Lanzarote", "a": "Michel Houellebecq", "c": "https://covers.openlibrary.org/b/isbn/9780099448365-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "La Reine solitaire", "a": "Robin Hobb", "c": "https://covers.openlibrary.org/b/isbn/9782290325520-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "Bartleby / Les Îles enchantées / La Campanile", "a": "Herman Melville", "c": "https://covers.openlibrary.org/b/isbn/9782081275294-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "Le Livre de l'intranquillité", "a": "Fernando Pessoa", "c": "https://covers.openlibrary.org/b/isbn/9782267021776-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "hardcover", "y": "2015"}, {"t": "Les stripteaseuses ont toujours besoin de conseils juridiques", "a": "Iain Levison", "c": "https://covers.openlibrary.org/b/isbn/9791034909537-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "My Absolute Darling", "a": "Gabriel Tallent", "c": "https://covers.openlibrary.org/b/isbn/9782351787205-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "Visceres", "a": "Mo Hayder", "c": "https://covers.openlibrary.org/b/isbn/9782258092396-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "Maigret Et Les Braves Gens", "a": "Georges Simenon", "c": "https://covers.openlibrary.org/b/isbn/9782253142492-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Le Grand Meaulnes", "a": "Alain-Fournier", "c": "https://covers.openlibrary.org/b/isbn/9782253005278-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Traite de L Efficacite", "a": "F. Jullien", "c": "https://covers.openlibrary.org/b/isbn/9782253942924-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2017"}, {"t": "Le linguiste était presque parfait", "a": "David Carkeet", "c": "", "r": "4.0", "s": "read", "g": "", "f": "", "y": "2017"}, {"t": "The Adventures of Tom Sawyer", "a": "Mark Twain", "c": "https://covers.openlibrary.org/b/isbn/9780143039563-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "Novecento : pianiste", "a": "Alessandro Baricco", "c": "https://covers.openlibrary.org/b/isbn/9782070419876-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "L'idiot volume 1 (livres I et II)", "a": "Fyodor Dostoevsky", "c": "https://covers.openlibrary.org/b/isbn/9782742736454-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "La promesse de l'aube", "a": "Romain Gary", "c": "https://covers.openlibrary.org/b/isbn/0811210162-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "Wilt 2: Comment se débarrasser d'un crocodile, de terroristes et d'une jeune fille au pair", "a": "Tom Sharpe", "c": "https://covers.openlibrary.org/b/isbn/9782264042446-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "Quand le souffle rejoint le ciel", "a": "Paul Kalanithi", "c": "https://covers.openlibrary.org/b/isbn/9782709658638-M.jpg", "r": "", "s": "to-read", "g": "", "f": "digital", "y": ""}, {"t": "White", "a": "Bret Easton Ellis", "c": "https://covers.openlibrary.org/b/isbn/9780525656302-M.jpg", "r": "", "s": "to-read", "g": "", "f": "hardcover", "y": ""}, {"t": "Journal d'un vampire en pyjama", "a": "Mathias Malzieu", "c": "https://covers.openlibrary.org/b/isbn/9782226321824-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "Requin", "a": "Bertrand Belin", "c": "https://covers.openlibrary.org/b/isbn/9782818035719-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "", "y": "2015"}, {"t": "Le Vertige MeToo", "a": "Caroline Fourest", "c": "", "r": "", "s": "to-read", "g": "", "f": "digital", "y": ""}, {"t": "La Route", "a": "Cormac McCarthy", "c": "https://covers.openlibrary.org/b/isbn/9782757811610-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "La Centaine d'amour", "a": "Pablo Neruda", "c": "https://covers.openlibrary.org/b/isbn/9782070328925-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "Nathalie Sorokine, la passion folle", "a": "Julie Duchatel", "c": "", "r": "", "s": "to-read", "g": "", "f": "digital", "y": ""}, {"t": "On ne badine pas avec l'amour", "a": "Alfred de Musset", "c": "https://covers.openlibrary.org/b/isbn/9788225318003-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "Le Fou et l'Assassin", "a": "Robin Hobb", "c": "https://covers.openlibrary.org/b/isbn/9782756411187-M.jpg", "r": "5.0", "s": "read", "g": "litt-rature", "f": "paperback", "y": "2024"}, {"t": "Un jour ce sera vide", "a": "Hugo Lindenberg", "c": "https://covers.openlibrary.org/b/isbn/9782267032673-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "Le monde est-il mathématique?: les maths au prisme des sciences humaines", "a": "Antoine Houlou-Garcia", "c": "https://covers.openlibrary.org/b/isbn/9782745328182-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "", "y": "2017"}, {"t": "La Promesse", "a": "Jan Guillou", "c": "https://covers.openlibrary.org/b/isbn/9782748905243-M.jpg", "r": "4.0", "s": "read", "g": "litt-rature", "f": "", "y": "2023"}, {"t": "Serge Reggiani: la nostalgie est toujours ce qu'elle était", "a": "Anne-Sophie Mercier, Bertrand Dicale", "c": "https://covers.openlibrary.org/b/isbn/9791032922590-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "", "y": "2023"}, {"t": "Nos amours radicales", "a": "Axelle Jah Njiké, Lou Eve, Emanouela Todorova, Léane Alestra, Anaïs Bourdet, Sabrina Erin Gin, Nanténé Traoré, Sharone Omankoy", "c": "https://covers.openlibrary.org/b/isbn/9782017101307-M.jpg", "r": "1.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Les sept divinités du bonheur", "a": "Keigo Higashino", "c": "https://covers.openlibrary.org/b/isbn/9782330168070-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2024"}, {"t": "Paix", "a": "Richard Bausch", "c": "https://covers.openlibrary.org/b/isbn/9782072579882-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "digital", "y": "2015"}, {"t": "Sept générations d'exécuteurs", "a": "François-Henri Désérable", "c": "https://covers.openlibrary.org/b/isbn/9782262050627-M.jpg", "r": "", "s": "to-read", "g": "", "f": "", "y": ""}, {"t": "La Succession", "a": "Jean-Paul Dubois, Edition de l'Olivier", "c": "", "r": "3.0", "s": "read", "g": "", "f": "", "y": "2020"}, {"t": "Confessions d'un hétérosexuel légèrement dépassé: Roman", "a": "Frédéric Beigbeder", "c": "https://covers.openlibrary.org/b/isbn/9782226478382-M.jpg", "r": "", "s": "to-read", "g": "", "f": "hardcover", "y": ""}, {"t": "Le grand feu", "a": "Léonor de Récondo", "c": "https://covers.openlibrary.org/b/isbn/9782246834809-M.jpg", "r": "5.0", "s": "read", "g": "litt-rature", "f": "digital", "y": "2024"}, {"t": "Magus: The Art of Magic from Faustus to Agrippa", "a": "Anthony Grafton", "c": "https://covers.openlibrary.org/b/isbn/9780674659735-M.jpg", "r": "", "s": "to-read", "g": "essai", "f": "hardcover", "y": ""}, {"t": "Les façons d'être", "a": "François de Cornière", "c": "https://covers.openlibrary.org/b/isbn/9791027803163-M.jpg", "r": "3.0", "s": "read", "g": "po-sie", "f": "paperback", "y": "2024"}, {"t": "La Reine Étranglée (Les Rois Maudits, Tome 2)", "a": "Maurice Druon", "c": "https://covers.openlibrary.org/b/isbn/9782253003069-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "Né d'aucune femme", "a": "Franck Bouysse", "c": "https://covers.openlibrary.org/b/isbn/9782358872713-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "La Louve de France", "a": "Maurice Druon", "c": "https://covers.openlibrary.org/b/isbn/9782253004066-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2024"}, {"t": "L'Education Sentimentale", "a": "Gustave Flaubert", "c": "https://covers.openlibrary.org/b/isbn/9782070308798-M.jpg", "r": "", "s": "did-not-finish", "g": "abandonné", "f": "paperback", "y": ""}, {"t": "Mon Oncle Oswald", "a": "Roald Dahl", "c": "https://covers.openlibrary.org/b/isbn/9782070377459-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2024"}, {"t": "Le plus grand menu du monde : Vies secrètes de nos aliments", "a": "Bill François", "c": "", "r": "4.0", "s": "read", "g": "", "f": "digital", "y": "2025"}, {"t": "Rose Et Autres Po'mes(la)", "a": "William Butler", "c": "https://covers.openlibrary.org/b/isbn/9782757810156-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "Charlotte", "a": "David Foenkinos", "c": "https://covers.openlibrary.org/b/isbn/9783328100225-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "La quête", "a": "Jan Guillou", "c": "https://covers.openlibrary.org/b/isbn/9782748905342-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "", "y": "2024"}, {"t": "Pêcheur de perles", "a": "Alain Finkielkraut", "c": "https://covers.openlibrary.org/b/isbn/9782073048981-M.jpg", "r": "", "s": "to-read", "g": "essai", "f": "hardcover", "y": ""}, {"t": "Expo 58", "a": "Jonathan Coe", "c": "https://covers.openlibrary.org/b/isbn/9782070142798-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2026"}, {"t": "Capitaine Hornblower, tome 1: Aspirant de marine / Lieutenant de marine / Seul maître à bord / Trésor de guerre / Retour à bon port", "a": "C.S. Forester", "c": "https://covers.openlibrary.org/b/isbn/9782258039612-M.jpg", "r": "", "s": "to-read", "g": "", "f": "", "y": ""}, {"t": "Le Feu", "a": "Henri Barbusse", "c": "https://covers.openlibrary.org/b/isbn/9782253047414-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Un privé à Babylone", "a": "Richard Brautigan, Marc Chénetier", "c": "", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "La vertu dangereuse: Les entreprises et le piège de la bien-pensance", "a": "Julia de Funès", "c": "https://covers.openlibrary.org/b/isbn/9791032933787-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "", "y": "2024"}, {"t": "Chère petite", "a": "Romy Hausmann, Stéphanie Lux", "c": "https://covers.openlibrary.org/b/isbn/9782330150105-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "L'ordre du jour: récit", "a": "Éric Vuillard", "c": "https://covers.openlibrary.org/b/isbn/9780320086342-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "", "y": "2023"}, {"t": "Éloge du carburateur", "a": "Matthew B. Crawford", "c": "https://covers.openlibrary.org/b/isbn/9782707192493-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "digital", "y": "2017"}, {"t": "Les faux-monnayeurs", "a": "André Gide", "c": "https://covers.openlibrary.org/b/isbn/9782070368792-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Roman fleuve", "a": "Philibert Humm", "c": "https://covers.openlibrary.org/b/isbn/9782073019448-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2026"}, {"t": "Récit secret", "a": "Pierre Drieu la Rochelle", "c": "", "r": "5.0", "s": "read", "g": "", "f": "", "y": "2021"}, {"t": "Le Grand Livre de la littérature de plage – Une anthologie insolite des écrits balnéaires", "a": "Collectif", "c": "https://covers.openlibrary.org/b/isbn/9782840499855-M.jpg", "r": "", "s": "to-read", "g": "", "f": "", "y": ""}, {"t": "Japon, la face cachée de la perfection", "a": "Karyn Nishimura-Poupée", "c": "https://covers.openlibrary.org/b/isbn/9791021057029-M.jpg", "r": "5.0", "s": "read", "g": "essai", "f": "digital", "y": "2024"}, {"t": "La vraie vie est ailleurs", "a": "Jean Forton", "c": "https://covers.openlibrary.org/b/isbn/9782842637392-M.jpg", "r": "", "s": "to-read", "g": "", "f": "digital", "y": ""}, {"t": "Il est de retour", "a": "Timur Vermes", "c": "https://covers.openlibrary.org/b/isbn/9782714456090-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "Une putain de catastrophe", "a": "David Carkeet, Marie Chabin", "c": "", "r": "3.5", "s": "read", "g": "", "f": "", "y": "2025"}, {"t": "Le Feu follet, suivi d'Adieu à Gonzague", "a": "Pierre Drieu la Rochelle", "c": "https://covers.openlibrary.org/b/isbn/9782070361526-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "Le Bikini de Diamants", "a": "Charles Williams", "c": "https://covers.openlibrary.org/b/isbn/9782351785911-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "Уна & Сэлинджер", "a": "Frédéric Beigbeder, Frédéric Beigbeder", "c": "https://covers.openlibrary.org/b/isbn/9782246777014-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "digital", "y": "2015"}, {"t": "Si par une nuit d'hiver un voyageur: roman", "a": "Italo Calvino", "c": "https://covers.openlibrary.org/b/isbn/9782020251570-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "Le Fou et l'Assassin - Intégrale 2", "a": "Robin Hobb", "c": "https://covers.openlibrary.org/b/isbn/9782290359303-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2024"}, {"t": "Les Juges", "a": "Elie Wiesel, Elie Wiesel", "c": "https://covers.openlibrary.org/b/isbn/9782020361507-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "Feu", "a": "Maria Pourchet", "c": "https://covers.openlibrary.org/b/isbn/9782213720784-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "La Poursuite du bonheur", "a": "Michel Houellebecq", "c": "https://covers.openlibrary.org/b/isbn/9782290334553-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "", "y": "2015"}, {"t": "Les Naufragés du Wager", "a": "David Grann", "c": "https://covers.openlibrary.org/b/isbn/9782364684126-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "digital", "y": "2023"}, {"t": "Le piège du bonheur : arrêtez de vouloir être heureux à tout prix et vivez enfin pleinement", "a": "Russ Harris", "c": "https://covers.openlibrary.org/b/isbn/9782266269230-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Crénom, Baudelaire !", "a": "Jean Teulé", "c": "https://covers.openlibrary.org/b/isbn/9782080208842-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "Ce qui vient après", "a": "Joanne (illustrations) Tomlinson", "c": "https://covers.openlibrary.org/b/isbn/9782351788912-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Zogru, in fr", "a": "Doina Ruști, Doina Ruști", "c": "", "r": "3.0", "s": "read", "g": "", "f": "", "y": "2022"}, {"t": "Rester vivant: et autres textes", "a": "Michel Houellebecq", "c": "", "r": "5.0", "s": "read", "g": "", "f": "", "y": "2015"}, {"t": "Wilt 3", "a": "Tom Sharpe, Tom Sharpe", "c": "", "r": "3.0", "s": "read", "g": "", "f": "", "y": ""}, {"t": "À Knokke-le-Zoute !", "a": "Nadine Monfils", "c": "https://covers.openlibrary.org/b/isbn/9782221250211-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Le Sans Maître: roman", "a": "Virginie Caillé-Bastide", "c": "https://covers.openlibrary.org/b/isbn/9782350877259-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "", "y": "2020"}, {"t": "One Piece, Tome 4: Attaque au clair de lune", "a": "Eiichiro Oda", "c": "https://covers.openlibrary.org/b/isbn/9782723489911-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2024"}, {"t": "L'Incroyable histoire de la littérature française", "a": "Catherine Mory, Isabelle Lebeau, Christian Lerolle", "c": "https://covers.openlibrary.org/b/isbn/9791037500052-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "La Révolution racialiste, et autres virus idéologiques", "a": "Mathieu Bock-Côté", "c": "https://covers.openlibrary.org/b/isbn/B08YPB76MS-M.jpg", "r": "", "s": "to-read", "g": "essai", "f": "digital", "y": ""}, {"t": "Solenoide", "a": "Mircea Cărtărescu", "c": "https://covers.openlibrary.org/b/isbn/9788416542994-M.jpg", "r": "", "s": "did-not-finish", "g": "abandonné", "f": "hardcover", "y": ""}, {"t": "Histoire de la Rome antique : Les armes et les mots", "a": "Lucien Jerphagnon", "c": "https://covers.openlibrary.org/b/isbn/9782012791770-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "", "y": "2022"}, {"t": "Armures", "a": "Stéphanie Hochet", "c": "https://covers.openlibrary.org/b/isbn/9782743666682-M.jpg", "r": "", "s": "to-read", "g": "", "f": "digital", "y": ""}, {"t": "La vie très privée de Mr Sim", "a": "Jonathan Coe", "c": "https://covers.openlibrary.org/b/isbn/9782070129744-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Nos cheveux blanchiront avec nos yeux", "a": "Thomas Vinau", "c": "https://covers.openlibrary.org/b/isbn/9782362790003-M.jpg", "r": "", "s": "read", "g": "", "f": "hardcover", "y": "2015"}, {"t": "Le Vide qui est en nous", "a": "Hélène L'Heuillet", "c": "https://covers.openlibrary.org/b/isbn/9782226498304-M.jpg", "r": "", "s": "to-read", "g": "", "f": "digital", "y": ""}, {"t": "Romancero gitano", "a": "Federico García Lorca", "c": "https://covers.openlibrary.org/b/isbn/9789871165292-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2017"}, {"t": "Le Temps des magiciens : 1919-1929 l'invention de la pensée moderne", "a": "Wolfram Eilenberger", "c": "", "r": "4.0", "s": "read", "g": "", "f": "digital", "y": "2024"}, {"t": "Pike", "a": "Benjamin Whitmer", "c": "", "r": "4.0", "s": "read", "g": "", "f": "", "y": "2021"}, {"t": "Le fils de l'Homme-dé", "a": "Luke Rhinehart", "c": "https://covers.openlibrary.org/b/isbn/9782373057966-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Entre fauves", "a": "Colin Niel", "c": "https://covers.openlibrary.org/b/isbn/9782812620683-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "Un tout petit monde", "a": "Maurice Couturier, David Lodge, Yvonne Couturier", "c": "https://covers.openlibrary.org/b/isbn/2869305583-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "DRH : mission ou démission - 3 pistes d'action à l'heure du choix", "a": "Thomas Chardin", "c": "https://covers.openlibrary.org/b/isbn/9782354563592-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "", "y": "2022"}, {"t": "La Maison", "a": "Michael McDowell", "c": "https://covers.openlibrary.org/b/isbn/9782381960470-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Serments et Deuils", "a": "Robin Hobb", "c": "https://covers.openlibrary.org/b/isbn/9782290344392-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Cleopatra and Frankenstein", "a": "Coco Mellors", "c": "https://covers.openlibrary.org/b/isbn/9781635576818-M.jpg", "r": "", "s": "to-read", "g": "", "f": "hardcover", "y": ""}, {"t": "L'ami Fritz", "a": "Erckmann-Chatrian", "c": "https://covers.openlibrary.org/b/isbn/9781482088304-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2017"}, {"t": "Le gros poète", "a": "Matthias Zschokke", "c": "https://covers.openlibrary.org/b/isbn/9782889279449-M.jpg", "r": "", "s": "did-not-finish", "g": "abandonné", "f": "", "y": ""}, {"t": "Apocalypse cognitive", "a": "Gérald Bronner", "c": "https://covers.openlibrary.org/b/isbn/9782130733041-M.jpg", "r": "5.0", "s": "read", "g": "essai", "f": "paperback", "y": "2023"}, {"t": "Sangsues - Tome 1", "a": "Daisuke Imai", "c": "https://covers.openlibrary.org/b/isbn/9782203095366-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "Vies minuscules", "a": "Pierre Michon", "c": "https://covers.openlibrary.org/b/isbn/9782070401185-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Hazel", "a": "Sarah Koskievic, Sarah Koskievic", "c": "https://covers.openlibrary.org/b/isbn/9791040116417-M.jpg", "r": "3.5", "s": "read", "g": "", "f": "paperback", "y": "2026"}, {"t": "La vie ordinaire", "a": "Adèle van Reeth", "c": "https://covers.openlibrary.org/b/isbn/9782072962974-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "", "y": "2025"}, {"t": "Les Mémoires d'un chat", "a": "Hiro Arikawa", "c": "https://covers.openlibrary.org/b/isbn/9782330078232-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "Fantaisies guérillères", "a": "Guillaume Lebrun", "c": "https://covers.openlibrary.org/b/isbn/9782267046649-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "Your Town", "a": "Shuky", "c": "https://covers.openlibrary.org/b/isbn/9780999769836-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "hardcover", "y": "2023"}, {"t": "La Voie magique", "a": "Robin Hobb", "c": "https://covers.openlibrary.org/b/isbn/9782290320211-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "The Birds", "a": "Tarjei Vesaas", "c": "https://covers.openlibrary.org/b/isbn/9780720611434-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "Une nuit au cap de la Chèvre", "a": "François Cheng", "c": "https://covers.openlibrary.org/b/isbn/9782226500281-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Le parfum du bonheur est plus fort sous la pluie", "a": "Virginie Grimaldi", "c": "https://covers.openlibrary.org/b/isbn/9782213706573-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "digital", "y": "2023"}, {"t": "Home Body", "a": "Rupi Kaur", "c": "https://covers.openlibrary.org/b/isbn/9781982172459-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Anéantir", "a": "Michel Houellebecq", "c": "https://covers.openlibrary.org/b/isbn/9782080271532-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Pyongyang 1071", "a": "Jacky Schwartzmann", "c": "https://covers.openlibrary.org/b/isbn/9782375020807-M.jpg", "r": "", "s": "to-read", "g": "", "f": "hardcover", "y": ""}, {"t": "Wisdom of Psychopaths", "a": "Kevin Dutton", "c": "https://covers.openlibrary.org/b/isbn/9780374533984-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Le Chagrin", "a": "Lionel Duroy", "c": "", "r": "", "s": "to-read", "g": "", "f": "", "y": ""}, {"t": "La Douleur porte un costume de plumes", "a": "Max Porter", "c": "https://covers.openlibrary.org/b/isbn/9782021243567-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "Très chers amis", "a": "Gary Shteyngart", "c": "https://covers.openlibrary.org/b/isbn/9782823619751-M.jpg", "r": "", "s": "to-read", "g": "essai", "f": "", "y": ""}, {"t": "Le roi n'avait pas ri", "a": "Guillaume Meurice", "c": "https://covers.openlibrary.org/b/isbn/9782709667869-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "L'Homme noir", "a": "Robin Hobb", "c": "https://covers.openlibrary.org/b/isbn/9782290353073-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "Comment gouverner un peuple-roi ?: Traité nouveau d'art politique", "a": "Pierre-Henri Tavoillot", "c": "", "r": "5.0", "s": "read", "g": "", "f": "digital", "y": "2020"}, {"t": "David Foster Wallace", "a": "Max, D. T.", "c": "https://covers.openlibrary.org/b/isbn/9782823601725-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Au lit au Moyen Âge: Comment et avec qui", "a": "Lucien d’Azay, Chiara Frugoni", "c": "", "r": "", "s": "to-read", "g": "histoire", "f": "", "y": ""}, {"t": "Mieux vaut mourir debout que vivre à genoux", "a": "Patrick Pelloux", "c": "https://covers.openlibrary.org/b/isbn/9782221141274-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Mater Dolorosa", "a": "Jurica Pavičić", "c": "https://covers.openlibrary.org/b/isbn/9782382461235-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Solomon Gursky Was Here", "a": "Mordecai Richler", "c": "https://covers.openlibrary.org/b/isbn/9780670825264-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "hardcover", "y": "2016"}, {"t": "Bleu de travail", "a": "Thomas Vinau", "c": "", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "Quand les politiques nous faisaient rire", "a": "Jean-Louis Debré", "c": "https://covers.openlibrary.org/b/isbn/9782382921067-M.jpg", "r": "3.5", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Un jour je m'en irai sans en avoir tout dit", "a": "Jean d'Ormesson", "c": "https://covers.openlibrary.org/b/isbn/9782221138335-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "Le Vaisseau magique", "a": "Robin Hobb", "c": "https://covers.openlibrary.org/b/isbn/9782290325711-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2024"}, {"t": "Latitude zéro : 40000 km pour partir à la rencontre du monde", "a": "Mike Horn", "c": "https://covers.openlibrary.org/b/isbn/9782266130288-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "L'Oeil du Monde : première partie", "a": "Robert Jordan", "c": "https://covers.openlibrary.org/b/isbn/9791028102586-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Pression fatale", "a": "Nicole Patilloux, Rita Falk", "c": "", "r": "4.0", "s": "read", "g": "", "f": "", "y": "2020"}, {"t": "Lolita", "a": "Vladimir Nabokov", "c": "https://covers.openlibrary.org/b/isbn/9782070412082-M.jpg", "r": "4.5", "s": "read", "g": "", "f": "paperback", "y": "2026"}, {"t": "Le Bruit des autres", "a": "Jean Esch, Amy Grace Loyd", "c": "https://covers.openlibrary.org/b/isbn/9782234075566-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "Le noeud gordien", "a": "Georges Pompidou", "c": "https://covers.openlibrary.org/b/isbn/9782262080266-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "", "y": "2022"}, {"t": "L'Homme de miel", "a": "Olivier Martinelli", "c": "", "r": "5.0", "s": "read", "g": "", "f": "digital", "y": "2020"}, {"t": "L'Enfer commence avec elle", "a": "John O'Hara, John O'Hara", "c": "", "r": "", "s": "to-read", "g": "", "f": "", "y": ""}, {"t": "Crossroads", "a": "Jonathan Franzen", "c": "https://covers.openlibrary.org/b/isbn/9780385693752-M.jpg", "r": "", "s": "to-read", "g": "litt-rature", "f": "digital", "y": ""}, {"t": "Hildegarde", "a": "Léo Henry", "c": "https://covers.openlibrary.org/b/isbn/9782370490612-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "Purity", "a": "Jonathan Franzen", "c": "https://covers.openlibrary.org/b/isbn/9782764624371-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Super Triste Histoire D'Amour", "a": "Gary Shteyngart", "c": "https://covers.openlibrary.org/b/isbn/9782757832202-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "La poésie est invincible", "a": "Abdellatif Laâbi", "c": "https://covers.openlibrary.org/b/isbn/9791027803125-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Les gens heureux lisent et boivent du café", "a": "Agnès Martin-Lugand", "c": "", "r": "2.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "Molière", "a": "Boris Donné", "c": "https://covers.openlibrary.org/b/isbn/9782204148962-M.jpg", "r": "3.0", "s": "read", "g": "histoire", "f": "", "y": "2023"}, {"t": "L'apparence du vivant ", "a": "Charlotte Bourlard", "c": "https://covers.openlibrary.org/b/isbn/9782360841431-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Revue XXI #58", "a": "Various", "c": "https://covers.openlibrary.org/b/isbn/9782356381699-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "hardcover", "y": "2022"}, {"t": "Mine de rien", "a": "Rim Battal, Arthur H", "c": "https://covers.openlibrary.org/b/isbn/9791027803118-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "L'homme sans qualités, tome 1", "a": "Robert Musil, Philippe Jaccottet", "c": "https://covers.openlibrary.org/b/isbn/9782020238151-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Chronique d'une mort annoncée", "a": "Gabriel García Márquez", "c": "https://covers.openlibrary.org/b/isbn/9782253043973-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2017"}, {"t": "Les passants de Lisbonne", "a": "Philippe Besson", "c": "https://covers.openlibrary.org/b/isbn/9782260029205-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "paperback", "y": "2017"}, {"t": "Pour que tu ne te perdes pas dans le quartier", "a": "Patrick Modiano", "c": "https://covers.openlibrary.org/b/isbn/9782070146932-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "Brefs Entretiens avec des hommes hideux", "a": "David Foster Wallace", "c": "https://covers.openlibrary.org/b/isbn/9782846260886-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "Under the Volcano", "a": "Malcolm Lowry", "c": "https://covers.openlibrary.org/b/isbn/9780061120152-M.jpg", "r": "", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "One Piece, Tome 9: Larmes", "a": "Eiichiro Oda", "c": "https://covers.openlibrary.org/b/isbn/9782723492539-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Tous les hommes n'habitent pas le monde de la même façon", "a": "Jean-Paul Dubois", "c": "https://covers.openlibrary.org/b/isbn/9782823615166-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "L'inconnu de la Forêt", "a": "Harlan Coben", "c": "https://covers.openlibrary.org/b/isbn/9782298159394-M.jpg", "r": "", "s": "did-not-finish", "g": "abandonné", "f": "paperback", "y": ""}, {"t": "Yama Loka terminus: Dernières nouvelles de Yirminadingrad", "a": "Léo Henry, Jacques Mucchielli", "c": "https://covers.openlibrary.org/b/isbn/9782353460212-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "Blizzard", "a": "Marie Vingtras", "c": "https://covers.openlibrary.org/b/isbn/9782823617054-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "L'œuvre de Dieu, la part du Diable", "a": "John Irving", "c": "https://covers.openlibrary.org/b/isbn/9782020257800-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Mon maître et mon vainqueur", "a": "François-Henri Désérable", "c": "https://covers.openlibrary.org/b/isbn/9782072900945-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "Les marins ne savent pas nager", "a": "Dominique Scali", "c": "https://covers.openlibrary.org/b/isbn/9782925141198-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "Circe", "a": "Madeline Miller", "c": "https://covers.openlibrary.org/b/isbn/9780316556347-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "hardcover", "y": "2021"}, {"t": "La Montagne magique", "a": "Thomas Mann", "c": "https://covers.openlibrary.org/b/isbn/9782253057529-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Cabane - Prix des Libraires de Nancy Le Point 2024", "a": "Abel Quentin", "c": "https://covers.openlibrary.org/b/isbn/9791032925454-M.jpg", "r": "", "s": "to-read", "g": "", "f": "", "y": ""}, {"t": "Le Livre de Ma Mere", "a": "Albert Cohen", "c": "https://covers.openlibrary.org/b/isbn/9782070365616-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "888-1180. Féodalités", "a": "Florian Mazel", "c": "https://covers.openlibrary.org/b/isbn/9782072798962-M.jpg", "r": "", "s": "to-read", "g": "", "f": "digital", "y": ""}, {"t": "La Secte maudite", "a": "Robin Hobb", "c": "https://covers.openlibrary.org/b/isbn/9782290337714-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "La crue", "a": "Michael McDowell", "c": "https://covers.openlibrary.org/b/isbn/9782381960456-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "La Vitesse Foudroyante Du Passé", "a": "Raymond Carver, Raymond Carver", "c": "", "r": "2.0", "s": "read", "g": "", "f": "", "y": "2016"}, {"t": "Le Bureau des affaires occultes", "a": "Eric Fouassier", "c": "https://covers.openlibrary.org/b/isbn/9782253107729-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Tristesse de la terre : Une histoire de Buffalo Bill Cody", "a": "Nicola Denis, Éric Vuillard", "c": "https://covers.openlibrary.org/b/isbn/9782330035990-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Le Roi de fer", "a": "Maurice Druon", "c": "https://covers.openlibrary.org/b/isbn/9782253011019-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "Le vrai rôle du papa", "a": "Eric Tognoni", "c": "https://covers.openlibrary.org/b/isbn/9782889052233-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "", "y": "2024"}, {"t": "UN ETRANGER NOMME PICASSO", "a": "Annie Cohen-Solal", "c": "https://covers.openlibrary.org/b/isbn/9782213711447-M.jpg", "r": "", "s": "did-not-finish", "g": "", "f": "", "y": ""}, {"t": "Une fatalité de bonheur", "a": "Philippe Forest", "c": "https://covers.openlibrary.org/b/isbn/9782246812081-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "digital", "y": "2016"}, {"t": "North Woods", "a": "Daniel Mason", "c": "https://covers.openlibrary.org/b/isbn/9780593597033-M.jpg", "r": "", "s": "to-read", "g": "", "f": "hardcover", "y": ""}, {"t": "Rupture(s)", "a": "Claire Marin", "c": "https://covers.openlibrary.org/b/isbn/9791032903384-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "L'Énéide", "a": "Virgil", "c": "https://covers.openlibrary.org/b/isbn/9781508435631-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2024"}, {"t": "De moi, pauvre, je veux parler: vie et mort de François Villon", "a": "Sophie Cassagnes-Brouquet", "c": "https://covers.openlibrary.org/b/isbn/9782226325921-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "", "y": "2023"}, {"t": "Le Sacre", "a": "Jan Guillou, Jan Guillou", "c": "", "r": "3.0", "s": "read", "g": "", "f": "", "y": "2025"}, {"t": "Je pense donc je jouis: Philosophie du cul", "a": "Sylvain Bosselet", "c": "https://covers.openlibrary.org/b/isbn/9782315004980-M.jpg", "r": "", "s": "did-not-finish", "g": "abandonné, essai", "f": "", "y": ""}, {"t": "Un coeur sous une soutane, Volume 2", "a": "Jacky Schwartzmann, Sylvain Vallée", "c": "https://covers.openlibrary.org/b/isbn/9782205211306-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "hardcover", "y": "2025"}, {"t": "The Craftsman", "a": "Richard Sennett", "c": "https://covers.openlibrary.org/b/isbn/9780300119091-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "hardcover", "y": "2017"}, {"t": "Contes glacés", "a": "Jacques Sternberg", "c": "https://covers.openlibrary.org/b/isbn/9782874230240-M.jpg", "r": "1.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "Le joueur", "a": "Fyodor Dostoevsky", "c": "https://covers.openlibrary.org/b/isbn/9782070368938-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "Milk and Honey", "a": "Rupi Kaur", "c": "https://covers.openlibrary.org/b/isbn/9781502784278-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Les Oreilles de Buster", "a": "Maria Ernestam", "c": "https://covers.openlibrary.org/b/isbn/9782330014452-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "Matière première", "a": "Raphaël Enthoven", "c": "https://covers.openlibrary.org/b/isbn/9782070139583-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "", "y": "2018"}, {"t": "Changer l'eau des fleurs", "a": "Valérie Perrin", "c": "https://covers.openlibrary.org/b/isbn/9782226403049-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Une simple lettre d'amour", "a": "Yann Moix", "c": "", "r": "5.0", "s": "read", "g": "", "f": "", "y": "2015"}, {"t": "Un Bonheur Parfait", "a": "James Salter", "c": "https://covers.openlibrary.org/b/isbn/9782757811009-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "La Consolation de la philosophie", "a": "Boèce", "c": "", "r": "3.0", "s": "read", "g": "", "f": "digital", "y": "2021"}, {"t": "Évasion", "a": "Benjamin Whitmer", "c": "https://covers.openlibrary.org/b/isbn/9782351781876-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "Les Reliques d'Anekai: Le Coffre de l'Usurpateur", "a": "Guillaume Bersier", "c": "https://covers.openlibrary.org/b/isbn/9782322427765-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "digital", "y": "2024"}, {"t": "La Digue", "a": "Michael McDowell", "c": "https://covers.openlibrary.org/b/isbn/9782381960463-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "L'oeil de Cuivre", "a": "Constantin Kaïtéris, Panagiotis A. Agapitos", "c": "", "r": "", "s": "did-not-finish", "g": "abandonné", "f": "", "y": ""}, {"t": "Son fils", "a": "Justine Lévy", "c": "https://covers.openlibrary.org/b/isbn/9782234083233-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Plateforme", "a": "Michel Houellebecq", "c": "https://covers.openlibrary.org/b/isbn/9782290321232-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Nom d'une pipe !", "a": "Nadine Monfils", "c": "https://covers.openlibrary.org/b/isbn/9782221250204-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Bella Figura", "a": "Yasmina Reza", "c": "", "r": "4.0", "s": "read", "g": "", "f": "", "y": "2016"}, {"t": "Nouvelle Histoire du Moyen Age", "a": "Florian Mazel", "c": "https://covers.openlibrary.org/b/isbn/9782021460353-M.jpg", "r": "", "s": "to-read", "g": "", "f": "hardcover", "y": ""}, {"t": "Les Choses que nous avons vues", "a": "Hanna Bervoets", "c": "https://covers.openlibrary.org/b/isbn/9782493206039-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "L'Homme-dé", "a": "Luke Rhinehart", "c": "https://covers.openlibrary.org/b/isbn/9782879291673-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "", "y": "2016"}, {"t": "Thecel", "a": "Léo Henry", "c": "https://covers.openlibrary.org/b/isbn/9782072849633-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "Marked for Life", "a": "Emelie Schepp", "c": "https://covers.openlibrary.org/b/isbn/9780778319566-M.jpg", "r": "3.0", "s": "read", "g": "litt-rature", "f": "hardcover", "y": "2023"}, {"t": "Enfants au Moyen Age: (XIIe-XVe siècle)", "a": "Didier Lett, Danièle Alexandre-Bidon", "c": "https://covers.openlibrary.org/b/isbn/9791021057852-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "", "y": "2025"}, {"t": "Le Livre des Baltimore", "a": "Joël Dicker", "c": "https://covers.openlibrary.org/b/isbn/9782877069472-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "Le temps des prédateurs: la Chine, les États-Unis, la Russie et nous", "a": "François Heisbourg", "c": "https://covers.openlibrary.org/b/isbn/9782738152015-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "", "y": "2022"}, {"t": "Lunar Park", "a": "Bret Easton Ellis", "c": "https://covers.openlibrary.org/b/isbn/9780375727276-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Le Second Sommeil", "a": "Natalie Zimmermann, Robert Harris", "c": "", "r": "4.5", "s": "read", "g": "", "f": "", "y": "2025"}, {"t": "L'Arbre de Colère", "a": "Guillaume Aubin", "c": "https://covers.openlibrary.org/b/isbn/9782376650331-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "digital", "y": "2022"}, {"t": "Histoire de la fatigue", "a": "Georges Vigarello", "c": "https://covers.openlibrary.org/b/isbn/9782021291919-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "Comment écrire sa thèse", "a": "Umberto Eco, Laurent Cantagrel", "c": "", "r": "3.0", "s": "read", "g": "", "f": "", "y": "2017"}, {"t": "L'invention de Tristan", "a": "Adrien Bosc", "c": "https://covers.openlibrary.org/b/isbn/9782234099395-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "L'énigme de l'anguille et autres bizarreries animales", "a": "Lucy Cooke", "c": "", "r": "5.0", "s": "read", "g": "", "f": "", "y": "2021"}, {"t": "Les archives des sentiments", "a": "Peter Stamm", "c": "https://covers.openlibrary.org/b/isbn/9782267051094-M.jpg", "r": "4.5", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Foucault en Californie. Un récit inédit.", "a": "Simeon Wade", "c": "https://covers.openlibrary.org/b/isbn/9782355221583-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "Explosive modernité: Malaise dans la vie intérieure", "a": "Eva Illouz", "c": "https://covers.openlibrary.org/b/isbn/9782073026484-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Conquistadors", "a": "Éric Vuillard", "c": "https://covers.openlibrary.org/b/isbn/9782330053222-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "L'Art de la méditation", "a": "Matthieu Ricard", "c": "https://covers.openlibrary.org/b/isbn/9782266194242-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "Penser ce qui nous arrive avec Hannah Arendt", "a": "Bérénice Levet", "c": "https://covers.openlibrary.org/b/isbn/9791032915110-M.jpg", "r": "", "s": "to-read", "g": "", "f": "", "y": ""}, {"t": "James", "a": "Percival Everett", "c": "https://covers.openlibrary.org/b/isbn/9782823622188-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Cry Father", "a": "Benjamin Whitmer", "c": "https://covers.openlibrary.org/b/isbn/9782351786437-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "", "y": "2020"}, {"t": "Ici ça va", "a": "Thomas Vinau", "c": "https://covers.openlibrary.org/b/isbn/9782264061683-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "Canada", "a": "Richard Ford", "c": "https://covers.openlibrary.org/b/isbn/9780061692048-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "hardcover", "y": "2016"}, {"t": "L'Homme qui penche", "a": "Thierry Metz", "c": "https://covers.openlibrary.org/b/isbn/9782877041799-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2017"}, {"t": "Trois hommes dans un bateau", "a": "Jerome K. Jerome", "c": "https://covers.openlibrary.org/b/isbn/9798652705480-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "Utérotopie", "a": "Espedite", "c": "https://covers.openlibrary.org/b/isbn/9782330173869-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "Le Panoptique", "a": "Jeremy Bentham, Michelle Perrot", "c": "https://covers.openlibrary.org/b/isbn/9782841007745-M.jpg", "r": "", "s": "to-read", "g": "", "f": "", "y": ""}, {"t": "Le Lièvre de Vatanen", "a": "Arto Paasilinna", "c": "https://covers.openlibrary.org/b/isbn/9782070386024-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Lake Success", "a": "Gary Shteyngart", "c": "https://covers.openlibrary.org/b/isbn/9780812997415-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "hardcover", "y": "2021"}, {"t": "Gros-Câlin", "a": "Émile Ajar, Romain Gary", "c": "https://covers.openlibrary.org/b/isbn/9782070445622-M.jpg", "r": "4.5", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Le banquier anarchiste", "a": "Fernando Pessoa", "c": "https://covers.openlibrary.org/b/isbn/9782267015379-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "paperback", "y": "2017"}, {"t": "Le Juge Et Son Bourreau", "a": "Friedrich Dürrenmatt", "c": "https://covers.openlibrary.org/b/isbn/9782253932642-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "One Piece, Tome 8: Je ne vais pas mourir", "a": "Eiichiro Oda", "c": "https://covers.openlibrary.org/b/isbn/9782723436236-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Crédit illimité", "a": "Nicolas Rey", "c": "https://covers.openlibrary.org/b/isbn/9782290387580-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "digital", "y": "2023"}, {"t": "LE LIEVRE DE VATANEN", "a": "Arto Paasilinna", "c": "https://covers.openlibrary.org/b/isbn/9782207250273-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Bien-être", "a": "Nathan Hill", "c": "https://covers.openlibrary.org/b/isbn/9782072999901-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Pluie", "a": "Michael McDowell", "c": "https://covers.openlibrary.org/b/isbn/9782381960500-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Les Corrections", "a": "Rémy Lambrechts, Jonathan Franzen", "c": "", "r": "5.0", "s": "read", "g": "", "f": "", "y": "2025"}, {"t": "Paul Celan: les jours et les nuits", "a": "Werner Hamacher, Jean Daive", "c": "https://covers.openlibrary.org/b/isbn/9782370840264-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "", "y": "2017"}, {"t": "Le Prieuré de l'Oranger - Partie I", "a": "Samantha Shannon", "c": "https://covers.openlibrary.org/b/isbn/9782290253175-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2024"}, {"t": "Le syndrome de l'Orangerie", "a": "Grégoire Bouillier", "c": "https://covers.openlibrary.org/b/isbn/9782080445742-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Miss Islande", "a": "Auður Ava Ólafsdóttir", "c": "https://covers.openlibrary.org/b/isbn/9782843048692-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": ""}, {"t": "Mémoires de Dirk Raspe", "a": "Pierre Drieu la Rochelle, Pierre Andreu", "c": "https://covers.openlibrary.org/b/isbn/9782070220120-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "", "y": "2021"}, {"t": "L'impossible retour", "a": "Amélie Nothomb", "c": "https://covers.openlibrary.org/b/isbn/9782226495945-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Miniaturiste", "a": "Jessie Burton", "c": "https://covers.openlibrary.org/b/isbn/9782070144228-M.jpg", "r": "", "s": "to-read", "g": "litt-rature", "f": "paperback", "y": ""}, {"t": "La Fortune", "a": "Michael McDowell", "c": "https://covers.openlibrary.org/b/isbn/9782381960494-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Le travail est la solution ", "a": "Franck Morel", "c": "https://covers.openlibrary.org/b/isbn/9791037041814-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "", "y": "2026"}, {"t": "Aurélien", "a": "Louis Aragon", "c": "https://covers.openlibrary.org/b/isbn/9782070393688-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "« Arrête avec tes mensonges »", "a": "Philippe Besson", "c": "https://covers.openlibrary.org/b/isbn/9782260029939-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "digital", "y": "2017"}, {"t": "La Reine morte", "a": "Henry de Montherlant", "c": "https://covers.openlibrary.org/b/isbn/9782070360123-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2017"}, {"t": "Le Dépeupleur", "a": "Samuel Beckett", "c": "https://covers.openlibrary.org/b/isbn/9782707302885-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Ci-gît l’amer. Guérir du ressentiment", "a": "Cynthia Fleury", "c": "https://covers.openlibrary.org/b/isbn/9782072858581-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "digital", "y": "2021"}, {"t": "Tout cela n'a rien à voir avec moi", "a": "Monica Sabolo", "c": "", "r": "2.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "Vårt behov av tröst", "a": "Olof Lagercrantz, Stig Dagerman", "c": "", "r": "4.0", "s": "read", "g": "", "f": "hardcover", "y": "2021"}, {"t": "Neveu de Wittgenstein", "a": "Thomas Bernhard", "c": "https://covers.openlibrary.org/b/isbn/9782070384471-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "La conquête de la liberté", "a": "Robin Hobb", "c": "", "r": "5.0", "s": "read", "g": "", "f": "", "y": "2025"}, {"t": "En l'absence du capitaine", "a": "Cécile Coulon", "c": "https://covers.openlibrary.org/b/isbn/9791027803149-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Le passé à venir: Repenser l'idée de génération", "a": "Tim Ingold", "c": "https://covers.openlibrary.org/b/isbn/9782021576955-M.jpg", "r": "", "s": "to-read", "g": "", "f": "digital", "y": ""}, {"t": "Shit !", "a": "Jacky Schwartzmann", "c": "https://covers.openlibrary.org/b/isbn/9782021526721-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "hardcover", "y": "2024"}, {"t": "Les croisades - Histoire, idées reçues et méconnues", "a": "Sylvain Gouguenheim, Martin Aurell", "c": "https://covers.openlibrary.org/b/isbn/9782262105266-M.jpg", "r": "", "s": "to-read", "g": "", "f": "", "y": ""}, {"t": "Habemus Bastard, 1/2 L'être nécessaire", "a": "Jacky Schwartzmann, Sylvain Vallée, Sylvain Vallée, Elvire de Cock", "c": "", "r": "4.0", "s": "read", "g": "", "f": "", "y": "2025"}, {"t": "Par les routes", "a": "Sylvain Prudhomme", "c": "https://covers.openlibrary.org/b/isbn/9782072740381-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "Respirer à fond", "a": "Rita Halász", "c": "https://covers.openlibrary.org/b/isbn/9782267054095-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Quand viendra l'aube", "a": "Dominique Fortier", "c": "https://covers.openlibrary.org/b/isbn/9782896946037-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Le Liseur du 6h27", "a": "Jean-Paul Didierlaurent", "c": "https://covers.openlibrary.org/b/isbn/9782070461448-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Anagrammes pour lire dans les pensées", "a": "Jacques Perry-Salkow, Raphaël Enthoven", "c": "", "r": "5.0", "s": "read", "g": "", "f": "digital", "y": "2017"}, {"t": "The Bunker Diary", "a": "Kevin Brooks", "c": "https://covers.openlibrary.org/b/isbn/9780141326122-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "Un autre m'attend ailleurs", "a": "Christophe Bigot", "c": "https://covers.openlibrary.org/b/isbn/9791040118435-M.jpg", "r": "", "s": "to-read", "g": "", "f": "", "y": ""}, {"t": "Les dynamiteurs", "a": "Benjamin Whitmer", "c": "https://covers.openlibrary.org/b/isbn/9782351782293-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "Je suis un chat", "a": "Tirol Cobato", "c": "https://covers.openlibrary.org/b/isbn/9782809711905-M.jpg", "r": "", "s": "read", "g": "", "f": "paperback", "y": "2017"}, {"t": "En attendant Bojangles", "a": "Olivier Bourdeaut", "c": "https://covers.openlibrary.org/b/isbn/9782363390639-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2017"}, {"t": "L'Homme incendié: Le roman de Giordano Bruno", "a": "Serge Filippini", "c": "https://covers.openlibrary.org/b/isbn/9782752909220-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "digital", "y": "2024"}, {"t": "Les Jeunes Mariés", "a": "Nell Freudenberger, Sabine Porte", "c": "https://covers.openlibrary.org/b/isbn/9782710370260-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "Chronique fidèle des événements survenus au siècle dernier dans la Principauté de Wasquelham comprenant des révélations sur l'étrange pouvoir d'une certaine Rosa qui faisait à son insu le bonheur des plus malheureux des hommes", "a": "Maurice Pons", "c": "https://covers.openlibrary.org/b/isbn/9782207204825-M.jpg", "r": "", "s": "to-read", "g": "", "f": "", "y": ""}, {"t": "L'accompagnatrice", "a": "Nina Berberova", "c": "https://covers.openlibrary.org/b/isbn/9788807811180-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "Forgotten Peoples of the Ancient World", "a": "Philip Matyszak", "c": "https://covers.openlibrary.org/b/isbn/9780500052150-M.jpg", "r": "", "s": "to-read", "g": "essai", "f": "hardcover", "y": ""}, {"t": "Le siècle des égarés", "a": "Julia de Funès, Julia de Funès", "c": "", "r": "", "s": "to-read", "g": "philosophie", "f": "", "y": ""}, {"t": "Les Ronces (Poésie)", "a": "Cécile Coulon", "c": "https://covers.openlibrary.org/b/isbn/9791027802784-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Oublier Palerme", "a": "Roux Charles", "c": "https://covers.openlibrary.org/b/isbn/9782253009245-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "Dark Matter", "a": "Blake Crouch", "c": "https://covers.openlibrary.org/b/isbn/9781101904220-M.jpg", "r": "", "s": "to-read", "g": "", "f": "hardcover", "y": ""}, {"t": "Nageur de rivière", "a": "Jim Harrison", "c": "https://covers.openlibrary.org/b/isbn/9782081262096-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "Eva", "a": "Simon Liberati", "c": "https://covers.openlibrary.org/b/isbn/9782234077294-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "HBR's 10 Must Reads 2015", "a": "Harvard Business Review, Daniel Goleman, W. Chan Kim", "c": "https://covers.openlibrary.org/b/isbn/9781633690219-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "Vivre la misère au Moyen Âge", "a": "Jean-Louis Roch", "c": "https://covers.openlibrary.org/b/isbn/9782251918785-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "digital", "y": "2023"}, {"t": "Le Prophète blanc", "a": "Robin Hobb", "c": "https://covers.openlibrary.org/b/isbn/9782290337707-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "L'étourdissement", "a": "Joël Egloff", "c": "https://covers.openlibrary.org/b/isbn/9782070311576-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2014"}, {"t": "Lettres à un jeune poète", "a": "Rainer Maria Rilke", "c": "https://covers.openlibrary.org/b/isbn/9782290376850-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "L'heure des prédateurs", "a": "Giuliano da Empoli", "c": "https://covers.openlibrary.org/b/isbn/9782073113207-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Le serpent de l'Essex", "a": "Sarah Perry", "c": "https://covers.openlibrary.org/b/isbn/9782267030549-M.jpg", "r": "", "s": "to-read", "g": "litt-rature", "f": "paperback", "y": ""}, {"t": "Salammbô", "a": "A.J. Krailsheimer, Gustave Flaubert", "c": "https://covers.openlibrary.org/b/isbn/9782080205292-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "", "y": "2022"}, {"t": "Rapatriement", "a": "Eve Guerra, Eve Guerra", "c": "", "r": "", "s": "to-read", "g": "", "f": "", "y": ""}, {"t": "La Consolation de Philosophie", "a": "Boece", "c": "https://covers.openlibrary.org/b/isbn/9782253082477-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "Retour à la case départ", "a": "Stephen McCauley", "c": "https://covers.openlibrary.org/b/isbn/9782264075390-M.jpg", "r": "4.5", "s": "read", "g": "", "f": "", "y": "2025"}, {"t": "Rêveuse bourgeoisie", "a": "Pierre Drieu La Rochelle", "c": "https://covers.openlibrary.org/b/isbn/9782070740871-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Les Folles enquêtes de Magritte et Georgette - Liège en eaux troubles", "a": "Nadine Monfils", "c": "https://covers.openlibrary.org/b/isbn/9782221260913-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "digital", "y": "2023"}, {"t": "Noir volcan", "a": "Cécile Coulon", "c": "https://covers.openlibrary.org/b/isbn/9791027802449-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Eurotrash", "a": "Christian Kracht", "c": "https://covers.openlibrary.org/b/isbn/9781805223047-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Les aventuriers de la mémoire perdue: Léonard, Érasme, Michelet et les autres", "a": "Jean-Christophe Saladin", "c": "https://covers.openlibrary.org/b/isbn/9782251451442-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "", "y": "2021"}, {"t": "La Zone d'inconfort: Une Histoire Personnelle", "a": "Jonathan Franzen", "c": "https://covers.openlibrary.org/b/isbn/9782757810118-M.jpg", "r": "3.5", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "Le peigne de Cléopâtre", "a": "Maria Ernestam", "c": "https://covers.openlibrary.org/b/isbn/9782330056353-M.jpg", "r": "", "s": "did-not-finish", "g": "abandonné, litt-rature", "f": "paperback", "y": ""}, {"t": "Le Chardonneret", "a": "Donna Tartt", "c": "https://covers.openlibrary.org/b/isbn/9782259221863-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "paperback", "y": "2015"}, {"t": "Et Dormir Dans l'Oubli comme le Requin Dans l'Onde", "a": "Pierre Guglielmina, Steven Hall", "c": "https://covers.openlibrary.org/b/isbn/9782221256237-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "L'atelier de la nature: 1860-1910 : invitation à la collection Terra", "a": "Katherine M. Bourguignon", "c": "https://covers.openlibrary.org/b/isbn/9782711875351-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "", "y": "2022"}, {"t": "Les empêchés", "a": "Stéphanie Vasseur", "c": "https://covers.openlibrary.org/b/isbn/9791095668053-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "", "y": "2017"}, {"t": "Au bord des fleuves qui vont", "a": "António Lobo Antunes, Dominique Nédellec", "c": "https://covers.openlibrary.org/b/isbn/9782267027242-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "digital", "y": "2016"}, {"t": "« Art »", "a": "Yasmina Reza", "c": "https://covers.openlibrary.org/b/isbn/9782210754478-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "Ethan Frome", "a": "Edith Wharton", "c": "https://covers.openlibrary.org/b/isbn/9781566196741-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "hardcover", "y": "2015"}, {"t": "Comment Se Sortir D'une Poupée Gonflable Et De Beaucoup D'autres Ennuis Encore", "a": "Tom Sharpe, Tom Sharpe", "c": "", "r": "4.0", "s": "read", "g": "", "f": "", "y": "2020"}, {"t": "Fort Alamo", "a": "Fabrice Caro", "c": "https://covers.openlibrary.org/b/isbn/9782073085153-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Être un chêne. Sous l'écorce de Quercus", "a": "Laurent Tillon", "c": "https://covers.openlibrary.org/b/isbn/9782330144968-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "digital", "y": "2021"}, {"t": "Vivre vite", "a": "Brigitte Giraud", "c": "https://covers.openlibrary.org/b/isbn/9782080207340-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2022"}, {"t": "Un certain M. Piekielny", "a": "François-Henri Désérable", "c": "https://covers.openlibrary.org/b/isbn/9782072824272-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Pour En Finir Avec Le Moyen GE", "a": "Régine Pernoud", "c": "https://covers.openlibrary.org/b/isbn/9782757841075-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "La Clarté Notre-Dame", "a": "Philippe Jaccottet", "c": "https://covers.openlibrary.org/b/isbn/9782072939570-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Aan zee", "a": "Dörte Hansen", "c": "", "r": "", "s": "to-read", "g": "", "f": "hardcover", "y": ""}, {"t": "Il nous fallait des mythes: la Révolution et ses imaginaires de 1789 à nos jours", "a": "Emmanuel de Waresquiel", "c": "https://covers.openlibrary.org/b/isbn/9791021062399-M.jpg", "r": "", "s": "to-read", "g": "", "f": "", "y": ""}, {"t": "Humus", "a": "Gaspard Kœnig", "c": "https://covers.openlibrary.org/b/isbn/9791032927823-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2026"}, {"t": "Le tiers temps: roman", "a": "Maylis Besserie", "c": "https://covers.openlibrary.org/b/isbn/9782072878398-M.jpg", "r": "", "s": "did-not-finish", "g": "abandonné", "f": "paperback", "y": ""}, {"t": "Peste & Choléra", "a": "Patrick Deville", "c": "https://covers.openlibrary.org/b/isbn/9782021077209-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "Le Navire aux esclaves", "a": "Robin Hobb", "c": "https://covers.openlibrary.org/b/isbn/9782290337059-M.jpg", "r": "4.5", "s": "read", "g": "", "f": "paperback", "y": "2025"}, {"t": "La délicatesse", "a": "David Foenkinos", "c": "https://covers.openlibrary.org/b/isbn/9782070126415-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": ""}, {"t": "La Fête du siècle", "a": "Niccolò Ammaniti, Myriem Bouzaher", "c": "", "r": "3.0", "s": "read", "g": "", "f": "", "y": "2015"}, {"t": "Juste la fin du monde", "a": "Jean-Luc Lagarce", "c": "https://covers.openlibrary.org/b/isbn/9782912464880-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2016"}, {"t": "La Cité des nuages et des oiseaux", "a": "Anthony Doerr", "c": "https://covers.openlibrary.org/b/isbn/9782226461537-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2024"}, {"t": "Marthe Richard ou les beaux mensonges", "a": "Nicolas d'Estienne d'Orves", "c": "https://covers.openlibrary.org/b/isbn/9782757883440-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "", "y": "2024"}, {"t": "Les Dépossédés", "a": "Christophe Guilluy", "c": "", "r": "4.0", "s": "read", "g": "", "f": "hardcover", "y": "2023"}, {"t": "Pourquoi les poètes inconnus restent inconnus", "a": "Richard Brautigan, Romain Rabier, Thierry Beauchamp", "c": "https://covers.openlibrary.org/b/isbn/9782859205218-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "", "y": "2020"}, {"t": "Justin Coudures", "a": "Adrien Girault", "c": "", "r": "3.0", "s": "read", "g": "litt-rature", "f": "paperback", "y": "2024"}, {"t": "Bien sûr que les poissons ont froid", "a": "Fanny Ruwet", "c": "https://covers.openlibrary.org/b/isbn/9782378803490-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "Les spectres de la terre brisée", "a": "S. Craig Zahler", "c": "https://covers.openlibrary.org/b/isbn/9782351787168-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2023"}, {"t": "Garden of love", "a": "Marcus Malte", "c": "https://covers.openlibrary.org/b/isbn/9791038701045-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Confiteor", "a": "Jaume Cabré", "c": "https://covers.openlibrary.org/b/isbn/9789604355075-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "paperback", "y": "2020"}, {"t": "Les vivants", "a": "Ambre Chalumeau", "c": "https://covers.openlibrary.org/b/isbn/9782234097650-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": ""}, {"t": "La fille de l'assassin", "a": "Robin Hobb", "c": "https://covers.openlibrary.org/b/isbn/9782756415079-M.jpg", "r": "5.0", "s": "read", "g": "litt-rature", "f": "digital", "y": "2024"}, {"t": "Lettre à mon juge", "a": "Georges Simenon", "c": "https://covers.openlibrary.org/b/isbn/9782253142768-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Nat Tate: An American Artist: 1928-1960", "a": "William Boyd", "c": "", "r": "", "s": "to-read", "g": "", "f": "digital", "y": ""}, {"t": "La guerre par d'autres moyens", "a": "Karine Tuil", "c": "https://covers.openlibrary.org/b/isbn/9782073072764-M.jpg", "r": "", "s": "to-read", "g": "", "f": "paperback", "y": ""}, {"t": "Talleyrand, le prince immobile", "a": "Charles Emmanuel De Warnery", "c": "https://covers.openlibrary.org/b/isbn/9791021008779-M.jpg", "r": "", "s": "currently-reading", "g": "", "f": "paperback", "y": ""}, {"t": "L'Idiot (Vol. 2) Livres 3 & 4", "a": "Fyodor Dostoevsky", "c": "https://covers.openlibrary.org/b/isbn/9782742736461-M.jpg", "r": "3.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}, {"t": "L'Amour aux temps du choléra", "a": "Gabriel García Márquez", "c": "https://covers.openlibrary.org/b/isbn/9782246376316-M.jpg", "r": "5.0", "s": "read", "g": "", "f": "paperback", "y": "2017"}, {"t": "Le Prieuré de l'Oranger - Partie II", "a": "Samantha Shannon", "c": "https://covers.openlibrary.org/b/isbn/9782290255858-M.jpg", "r": "2.0", "s": "read", "g": "", "f": "paperback", "y": "2024"}, {"t": "La géante et le naufrageur", "a": "Léo Henry", "c": "https://covers.openlibrary.org/b/isbn/9782381630908-M.jpg", "r": "", "s": "did-not-finish", "g": "abandonné", "f": "paperback", "y": ""}, {"t": "Les fleurs se racontent", "a": "Sylvie Lagorce", "c": "https://covers.openlibrary.org/b/isbn/9782816020229-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "hardcover", "y": "2024"}, {"t": "Plop", "a": "Rafael Pinedo", "c": "https://covers.openlibrary.org/b/isbn/9789871180059-M.jpg", "r": "4.0", "s": "read", "g": "", "f": "paperback", "y": "2021"}];
+const BY_YEAR_DATA = [["2014", 3], ["2015", 42], ["2016", 32], ["2017", 32], ["2018", 1], ["2020", 33], ["2021", 46], ["2022", 58], ["2023", 45], ["2024", 42], ["2025", 51], ["2026", 8]];
+const TOP_AUTHORS_DATA = [["Robin Hobb", 17], ["Eiichiro Oda", 9], ["Thomas Vinau", 7], ["Michael McDowell", 6], ["Michel Houellebecq", 6], ["Cécile Coulon", 5], ["Maurice Druon", 5], ["Tom Sharpe", 5], ["Frédéric Beigbeder", 4], ["Jacky Schwartzmann", 4], ["Jan Guillou", 4], ["Benjamin Whitmer", 4]];
+const STATUS_LABELS = {'read':'Lu','to-read':'À lire','did-not-finish':'Abandonné','currently-reading':'En cours'};
+const LS_KEY='biblio_custom';
+const LS_LENT='biblio_lent';
+let currentFilter='all', currentSearch='', currentYear='';
+let currentModalBook=null;
+
+function loadCustom(){try{return JSON.parse(localStorage.getItem(LS_KEY))||[];}catch{return[];}}
+function saveCustom(a){localStorage.setItem(LS_KEY,JSON.stringify(a));}
+function loadLent(){try{return JSON.parse(localStorage.getItem(LS_LENT))||[];}catch{return[];}}
+function saveLent(a){localStorage.setItem(LS_LENT,JSON.stringify(a));}
+
+(function(){loadCustom().forEach(b=>BOOKS.unshift(b));})();
+
+// ── NAV ──
+document.querySelectorAll('.nav-tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('page-'+tab.dataset.page).classList.add('active');
+    if(tab.dataset.page==='stats') buildStatsPage();
+    if(tab.dataset.page==='favorites') buildFavorites();
+  });
+});
+
+// ── STATS BAR ──
+function buildStats(){
+  const counts={'read':0,'to-read':0,'did-not-finish':0,'currently-reading':0};
+  BOOKS.forEach(b=>{if(counts[b.s]!==undefined)counts[b.s]++;});
+  const colors={'read':'#15803d','to-read':'#1d4ed8','did-not-finish':'#b91c1c','currently-reading':'#b45309'};
+  const labels={'read':'Lus','to-read':'À lire','did-not-finish':'Abandonnés','currently-reading':'En cours'};
+  document.getElementById('header-sub').textContent=`${BOOKS.length} livres`;
+  document.getElementById('stats-bar').innerHTML=Object.entries(counts).map(([s,n])=>
+    `<div class="stat-pill"><div class="stat-dot" style="background:${colors[s]}"></div><strong>${n}</strong>&nbsp;${labels[s]}</div>`
+  ).join('');
+}
+
+function stars(r){
+  if(!r) return '';
+  const v=parseFloat(r),full=Math.floor(v),half=v%1>=0.5?1:0,empty=5-full-half;
+  return Array(full).fill('<span class="star on">★</span>').join('')
+    +Array(half).fill('<span class="star on" style="opacity:.5">★</span>').join('')
+    +Array(empty).fill('<span class="star">★</span>').join('');
+}
+
+const BSVG=`<svg class="pl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`;
+
+function makePh(book){
+  const d=document.createElement('div');d.className='cover-placeholder';
+  const s=t=>t.length>40?t.slice(0,40)+'…':t;
+  d.innerHTML=BSVG+`<div class="pl-title">${s(book.t)}</div><div class="pl-author">${s(book.a)}</div>`;
+  return d;
+}
+function makeCover(book){
+  if(book.c){
+    const img=document.createElement('img');img.className='cover-img';img.loading='lazy';img.alt=book.t;img.src=book.c;
+    img.onerror=function(){
+      // Fallback Google Books
+      const q=encodeURIComponent(book.t+' '+book.a);
+      fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1&fields=items/volumeInfo/imageLinks`)
+        .then(r=>r.json()).then(d=>{
+          const url=d.items&&d.items[0]&&d.items[0].volumeInfo&&d.items[0].volumeInfo.imageLinks&&d.items[0].volumeInfo.imageLinks.thumbnail;
+          if(url){const ni=document.createElement('img');ni.className='cover-img';ni.src=url.replace('http:','https:');ni.alt=book.t;ni.onerror=()=>this.parentNode&&this.parentNode.replaceChild(makePh(book),ni);if(this.parentNode)this.parentNode.replaceChild(ni,this);}
+          else if(this.parentNode) this.parentNode.replaceChild(makePh(book),this);
+        }).catch(()=>{ if(this.parentNode) this.parentNode.replaceChild(makePh(book),this); });
+    };
+    return img;
+  }
+  return makePh(book);
+}
+
+function makeCard(book, showCoup){
+  const lent=loadLent();
+  const isLent=lent.includes(book.t+book.a);
+  const isCoup=parseFloat(book.r)===5;
+  const card=document.createElement('div');card.className='book-card';card.tabIndex=0;
+  const wrap=document.createElement('div');wrap.className='cover-wrap';wrap.appendChild(makeCover(book));
+  const dot=document.createElement('div');dot.className=`status-dot sd-${book.s}`;wrap.appendChild(dot);
+  if(showCoup&&isCoup){const cb=document.createElement('div');cb.className='coup-badge';cb.textContent='★ 5';wrap.appendChild(cb);}
+  if(isLent){const lb=document.createElement('div');lb.className='lent-badge';lb.textContent='prêté';wrap.appendChild(lb);}
+  card.appendChild(wrap);
+  const meta=document.createElement('div');meta.className='card-meta';
+  meta.innerHTML=`<div class="card-title">${book.t}</div>${book.r?`<div class="card-rating">${stars(book.r)}</div>`:''}`;
+  card.appendChild(meta);
+  card.addEventListener('click',()=>openModal(book));
+  card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')openModal(book);});
+  return card;
+}
+
+// ── RENDER LIBRARY ──
+function render(){
+  const q=currentSearch.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const visible=BOOKS.filter(b=>{
+    const mF=currentFilter==='all'||b.s===currentFilter;
+    const mY=!currentYear||b.y===currentYear;
+    if(!q) return mF&&mY;
+    const tt=b.t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    const aa=b.a.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    return mF&&mY&&(tt.includes(q)||aa.includes(q));
+  });
+  const grid=document.getElementById('grid');grid.innerHTML='';
+  document.getElementById('count-label').textContent=`${visible.length} livre${visible.length>1?'s':''}`;
+  if(!visible.length){grid.innerHTML='<p class="empty-state">Aucun livre trouvé.</p>';return;}
+  visible.forEach(b=>grid.appendChild(makeCard(b,true)));
+}
+
+// ── FAVORITES ──
+function buildFavorites(){
+  const favs=BOOKS.filter(b=>parseFloat(b.r)===5);
+  document.getElementById('coup-sub').textContent=`${favs.length} livre${favs.length>1?'s':''} notés 5 étoiles`;
+  const grid=document.getElementById('grid-favorites');grid.innerHTML='';
+  favs.forEach(b=>grid.appendChild(makeCard(b,false)));
+}
+
+// ── STATS PAGE ──
+function buildStatsPage(){
+  const allRead=BOOKS.filter(b=>b.s==='read');
+  const withRating=BOOKS.filter(b=>b.r&&parseFloat(b.r)>0);
+  const avgRating=withRating.length?(withRating.reduce((s,b)=>s+parseFloat(b.r),0)/withRating.length).toFixed(2):0;
+  const coup=BOOKS.filter(b=>parseFloat(b.r)===5).length;
+  const lent=loadLent().length;
+
+  // KPIs
+  document.getElementById('kpi-grid').innerHTML=[
+    {l:'Livres lus',v:allRead.length,s:'sur '+BOOKS.length+' total'},
+    {l:'Note moyenne',v:avgRating+'★',s:withRating.length+' livres notés'},
+    {l:'Coups de cœur',v:coup,s:'notés 5 étoiles'},
+    {l:'En cours de prêt',v:lent,s:'livres prêtés'},
+    {l:'À lire',v:BOOKS.filter(b=>b.s==='to-read').length,s:'dans la liste'},
+    {l:'Abandonnés',v:BOOKS.filter(b=>b.s==='did-not-finish').length,s:'livres'},
+  ].map(k=>`<div class="kpi-card"><div class="kpi-label">${k.l}</div><div class="kpi-value">${k.v}</div><div class="kpi-sub">${k.s}</div></div>`).join('');
+
+  // Year chart — merge static + custom
+  const customRead=loadCustom().filter(b=>b.s==='read'&&b.y);
+  const byYear={...Object.fromEntries(BY_YEAR_DATA)};
+  customRead.forEach(b=>{byYear[b.y]=(byYear[b.y]||0)+1;});
+  const yearEntries=Object.entries(byYear).sort((a,b)=>a[0].localeCompare(b[0]));
+  const maxY=Math.max(...yearEntries.map(([,n])=>n),1);
+  const chartH=140;
+  document.getElementById('chart-bars').innerHTML=yearEntries.map(([y,n])=>{
+    const h=Math.round((n/maxY)*(chartH-24));
+    return `<div class="chart-bar-wrap">
+      <span class="chart-bar-val">${n}</span>
+      <div class="chart-bar" style="height:${h}px" title="${y}: ${n} livres"></div>
+      <span class="chart-bar-lbl">${y}</span>
+    </div>`;
+  }).join('');
+
+  // Authors — merge
+  const authCounts={...Object.fromEntries(TOP_AUTHORS_DATA)};
+  loadCustom().filter(b=>b.s==='read'&&b.a).forEach(b=>{
+    b.a.split(',').forEach(a=>{a=a.trim();if(a&&a.length>2)authCounts[a]=(authCounts[a]||0)+1;});
+  });
+  const topA=Object.entries(authCounts).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const maxA=topA[0]?topA[0][1]:1;
+  document.getElementById('author-list').innerHTML=topA.map(([a,n],i)=>`
+    <div class="author-row">
+      <span class="author-rank">${i+1}</span>
+      <span class="author-name">${a}</span>
+      <div class="author-bar-wrap"><div class="author-bar" style="width:${Math.round((n/maxA)*100)}%"></div></div>
+      <span class="author-count">${n}</span>
+    </div>`).join('');
+
+  // Formats
+  const formats={'paperback':'Poche','hardcover':'Relié','digital':'Numérique','audio':'Audio','':"Non renseigné"};
+  const fmtCounts={};
+  BOOKS.forEach(b=>{const k=b.f||'';fmtCounts[k]=(fmtCounts[k]||0)+1;});
+  const total=BOOKS.length;
+  document.getElementById('format-grid').innerHTML=Object.entries(formats).map(([k,l])=>{
+    const n=fmtCounts[k]||0;
+    return `<div class="format-card"><div class="format-pct">${Math.round(n/total*100)}%</div><div class="format-lbl">${l}</div><div class="format-count">${n} livres</div></div>`;
+  }).join('');
+
+  // Ratings distribution
+  const ratingBuckets={'5':0,'4':0,'3':0,'2':0,'1':0};
+  BOOKS.forEach(b=>{if(b.r){const r=Math.round(parseFloat(b.r));if(r>=1&&r<=5)ratingBuckets[r]++;}});
+  const maxR=Math.max(...Object.values(ratingBuckets),1);
+  document.getElementById('ratings-dist').innerHTML=['5','4','3','2','1'].map(r=>`
+    <div class="rating-row">
+      <div class="rating-lbl">${Array(parseInt(r)).fill('<span class="star on" style="font-size:.6rem">★</span>').join('')}</div>
+      <div class="rating-bar-bg"><div class="rating-bar-fill" style="width:${Math.round(ratingBuckets[r]/maxR*100)}%"></div></div>
+      <span class="rating-count">${ratingBuckets[r]}</span>
+    </div>`).join('');
+}
+
+// ── MODAL ──
+function openModal(book){
+  currentModalBook=book;
+  const lent=loadLent();
+  const isLent=lent.includes(book.t+book.a);
+  const isCustom=!!book._custom;
+  const body=document.getElementById('modal-body');
+  const actions=document.getElementById('modal-actions');
+  const wrap=document.createElement('div');wrap.className='modal-cover-wrap';
+  const cw=document.createElement('div');cw.className='cover-wrap';cw.appendChild(makeCover(book));wrap.appendChild(cw);
+  const info=document.createElement('div');info.className='modal-info';
+  const genres=book.g?book.g.split(',').map(g=>g.trim()).filter(Boolean):[];
+  info.innerHTML=`<div class="modal-title">${book.t}</div>
+    <div class="modal-author">${book.a||'Auteur inconnu'}</div>
+    ${book.r?`<div class="modal-rating">${stars(book.r)}<span style="margin-left:4px;font-size:.76rem;color:var(--ink3)">${parseFloat(book.r).toFixed(1)}/5</span></div>`:''}
+    <div class="modal-tags">
+      <span class="tag tag-${book.s}">${STATUS_LABELS[book.s]||book.s}</span>
+      ${book.f?`<span class="tag tag-format">${book.f}</span>`:''}
+      ${book.y?`<span class="tag tag-year">📅 ${book.y}</span>`:''}
+      ${isLent?`<span class="tag tag-lent">prêté</span>`:''}
+      ${genres.map(g=>`<span class="tag tag-genre">${g}</span>`).join('')}
+    </div>`;
+  body.innerHTML='';body.appendChild(wrap);body.appendChild(info);
+  actions.innerHTML='';
+  const lb=document.createElement('button');
+  lb.className=`maction-btn maction-lent${isLent?' active':''}`;
+  lb.textContent=isLent?'✓ Prêté — marquer rendu':'Marquer comme prêté';
+  lb.addEventListener('click',()=>toggleLent(book));
+  actions.appendChild(lb);
+  if(isCustom){
+    const db=document.createElement('button');db.className='maction-btn maction-delete';db.textContent='Supprimer';
+    db.addEventListener('click',()=>deleteBook(book));
+    actions.appendChild(db);
+  }
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');document.body.style.overflow='';currentModalBook=null;}
+function toggleLent(book){
+  const key=book.t+book.a;let lent=loadLent();const was=lent.includes(key);
+  if(was)lent=lent.filter(k=>k!==key);else lent.push(key);
+  saveLent(lent);showToast(was?'Marqué comme rendu':'Marqué comme prêté','warn');closeModal();render();
+}
+function deleteBook(book){
+  const idx=BOOKS.findIndex(b=>b===book);if(idx>-1)BOOKS.splice(idx,1);
+  saveCustom(loadCustom().filter(b=>!(b.t===book.t&&b.a===book.a)));
+  buildStats();render();closeModal();showToast('Livre supprimé','danger');
+}
+document.getElementById('close-modal').addEventListener('click',closeModal);
+document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+
+// ── FILTERS ──
+document.getElementById('search').addEventListener('input',e=>{currentSearch=e.target.value;render();});
+document.getElementById('filter-btns').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-filter]');if(!btn)return;
+  currentFilter=btn.dataset.filter;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');render();
+});
+document.getElementById('year-select').addEventListener('change',e=>{currentYear=e.target.value;render();});
+
+// ── FORM ──
+let currentRating=0;
+const starSpans=document.querySelectorAll('#star-input .s');
+function setStars(v){currentRating=v;starSpans.forEach(s=>s.classList.toggle('on',parseInt(s.dataset.v)<=v));document.getElementById('rating-val').textContent=v>0?`${v}/5`:'—';}
+starSpans.forEach(s=>{
+  s.addEventListener('click',()=>setStars(parseInt(s.dataset.v)));
+  s.addEventListener('mouseenter',()=>starSpans.forEach(ss=>ss.classList.toggle('on',parseInt(ss.dataset.v)<=parseInt(s.dataset.v))));
+  s.addEventListener('mouseleave',()=>setStars(currentRating));
+});
+document.getElementById('f-status').addEventListener('change',function(){
+  const dg=document.getElementById('date-read-group');dg.style.display=this.value==='read'?'flex':'none';
+  if(this.value==='read'&&!document.getElementById('f-date-read').value)document.getElementById('f-date-read').value=new Date().toISOString().slice(0,10);
+});
+function openForm(){document.getElementById('form-overlay').classList.add('open');document.body.style.overflow='hidden';document.getElementById('f-title').focus();const s=document.getElementById('f-status').value;document.getElementById('date-read-group').style.display=s==='read'?'flex':'none';}
+function closeForm(){document.getElementById('form-overlay').classList.remove('open');document.body.style.overflow='';resetForm();}
+function resetForm(){
+  ['f-title','f-author','f-isbn','f-tags','f-date-read'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-status').value='to-read';document.getElementById('f-format').value='';
+  document.getElementById('date-read-group').style.display='none';
+  document.getElementById('preview-cover').innerHTML='📖';
+  document.getElementById('suggestions-box').innerHTML='';
+  document.getElementById('title-wrap').classList.remove('has-val');
+  setStars(0);
+}
+document.getElementById('open-form-btn').addEventListener('click',openForm);
+document.getElementById('close-form').addEventListener('click',closeForm);
+document.getElementById('cancel-form').addEventListener('click',closeForm);
+document.getElementById('form-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeForm();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeForm();}});
+
+// ── OPEN LIBRARY SEARCH ──
+let searchTimer=null;
+const titleInput=document.getElementById('f-title');
+const sugBox=document.getElementById('suggestions-box');
+const titleWrap=document.getElementById('title-wrap');
+titleInput.addEventListener('input',function(){
+  clearTimeout(searchTimer);const v=this.value.trim();
+  titleWrap.classList.toggle('has-val',v.length>0);
+  if(v.length<3){sugBox.innerHTML='';return;}
+  sugBox.innerHTML='<div class="search-suggestions"><div class="search-loading">Recherche…</div></div>';
+  searchTimer=setTimeout(()=>searchOL(v),650);
+});
+document.getElementById('lookup-btn').addEventListener('click',()=>{const v=titleInput.value.trim();if(v.length>=2)searchOL(v);});
+async function searchOL(q){
+  const a=document.getElementById('f-author').value.trim();
+  try{
+    const res=await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q+(a?' '+a:''))}&limit=6&fields=title,author_name,isbn,first_publish_year,cover_i`);
+    const data=await res.json();renderSug(data.docs||[]);
+  }catch{sugBox.innerHTML='';}
+}
+function renderSug(docs){
+  if(!docs.length){sugBox.innerHTML='';return;}
+  const box=document.createElement('div');box.className='search-suggestions';
+  docs.slice(0,5).forEach(doc=>{
+    const cUrl=doc.cover_i?`https://covers.openlibrary.org/b/id/${doc.cover_i}-S.jpg`:'';
+    const isbn=(doc.isbn&&doc.isbn[0])||'';
+    const author=(doc.author_name&&doc.author_name.slice(0,2).join(', '))||'';
+    const item=document.createElement('div');item.className='suggestion-item';
+    item.innerHTML=`${cUrl?`<img class="sug-cover" src="${cUrl}" alt="" loading="lazy">`:`<div class="sug-cover" style="display:flex;align-items:center;justify-content:center;color:var(--ink3);font-size:9px">—</div>`}
+      <div class="sug-info"><div class="sug-title">${doc.title||''}</div><div class="sug-author">${author}</div></div>
+      ${doc.first_publish_year?`<span class="sug-year">${doc.first_publish_year}</span>`:''}`;
+    item.addEventListener('click',()=>applySug(doc,isbn));
+    box.appendChild(item);
+  });
+  sugBox.innerHTML='';sugBox.appendChild(box);
+}
+function applySug(doc,isbn){
+  document.getElementById('f-title').value=doc.title||'';
+  document.getElementById('f-author').value=(doc.author_name&&doc.author_name.slice(0,2).join(', '))||'';
+  if(isbn)document.getElementById('f-isbn').value=isbn;
+  const cFull=doc.cover_i?`https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`:(isbn?`https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`:'');
+  if(cFull){const p=document.getElementById('preview-cover');p.innerHTML=`<img src="${cFull}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">`;}
+  titleWrap.classList.add('has-val');sugBox.innerHTML='';
+}
+document.getElementById('f-isbn').addEventListener('input',function(){
+  const isbn=this.value.replace(/[\s-]/g,'');
+  if(isbn.length>=10){const url=`https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`;const img=new Image();img.onload=()=>{if(img.naturalWidth>1){const p=document.getElementById('preview-cover');p.innerHTML=`<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">`;}};img.src=url;}
+});
+
+// ── SUBMIT ──
+document.getElementById('submit-form').addEventListener('click',()=>{
+  const title=document.getElementById('f-title').value.trim();if(!title){document.getElementById('f-title').focus();return;}
+  const author=document.getElementById('f-author').value.trim();
+  const isbn=document.getElementById('f-isbn').value.replace(/[\s-]/g,'');
+  const prevImg=document.getElementById('preview-cover').querySelector('img');
+  const cover=prevImg?prevImg.src:(isbn.length>=10?`https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`:'');
+  const status=document.getElementById('f-status').value;
+  const dateRead=document.getElementById('f-date-read').value;
+  const year=dateRead?dateRead.slice(0,4):'';
+  const nb={t:title,a:author||'Auteur inconnu',c:cover,r:currentRating>0?currentRating.toFixed(1):'',s:status,g:document.getElementById('f-tags').value.trim(),f:document.getElementById('f-format').value,y:year,_custom:true};
+  const custom=loadCustom();custom.unshift(nb);saveCustom(custom);BOOKS.unshift(nb);
+  if(year){const sel=document.getElementById('year-select');if(![...sel.options].some(o=>o.value===year)){const opt=document.createElement('option');opt.value=year;opt.textContent=year;let ins=false;for(let i=1;i<sel.options.length;i++){if(parseInt(sel.options[i].value)>parseInt(year)){sel.insertBefore(opt,sel.options[i]);ins=true;break;}}if(!ins)sel.appendChild(opt);}}
+  buildStats();render();closeForm();showToast(`« ${title} » ajouté !`);
+});
+
+// ── EXPORT ──
+document.getElementById('export-btn').addEventListener('click',()=>{
+  const c=loadCustom();if(!c.length){showToast('Aucun livre ajouté manuellement.');return;}
+  const blob=new Blob([JSON.stringify(c,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='mes_livres_ajoutes.json';a.click();URL.revokeObjectURL(url);
+});
+
+// ── TOAST ──
+function showToast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='toast'+(type?' '+type:'');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
+
+buildStats();render();
+</script>
+</body>
+</html>
