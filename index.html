@@ -231,6 +231,28 @@ header h1 em { font-style: italic; color: #d6d3d1; }
 .btn-submit { padding: 0.42rem 1.15rem; border: 1px solid var(--ink); border-radius: var(--radius); background: var(--ink); font-family: 'DM Sans', sans-serif; font-size: 0.78rem; font-weight: 500; cursor: pointer; color: #fff; transition: all 0.12s; }
 .btn-submit:hover { background: #292524; }
 
+/* GITHUB SYNC */
+.sync-bar { background: var(--ink); color: #d6d3d1; font-family: 'DM Sans', sans-serif; font-size: 0.75rem; text-align: center; padding: 0.45rem 1rem; display: none; align-items: center; justify-content: center; gap: 0.5rem; }
+.sync-bar.show { display: flex; }
+.sync-spinner { width: 12px; height: 12px; border: 1.5px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.sync-bar.success { background: #15803d; }
+.sync-bar.error { background: #b91c1c; }
+
+/* SETUP MODAL */
+#setup-overlay { display: none; position: fixed; inset: 0; background: rgba(28,25,23,0.7); z-index: 1300; backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 1rem; }
+#setup-overlay.open { display: flex; }
+.setup-box { background: var(--surface); border-radius: 4px; max-width: 440px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); padding: 1.8rem; }
+.setup-box h2 { font-family: 'EB Garamond', serif; font-size: 1.3rem; font-weight: 400; color: var(--ink); margin-bottom: 0.3rem; }
+.setup-box p { font-size: 0.8rem; color: var(--ink2); line-height: 1.5; margin-bottom: 1.2rem; }
+.setup-box label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink3); font-weight: 500; display: block; margin-bottom: 0.2rem; }
+.setup-box input { width: 100%; padding: 0.5rem 0.65rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); font-family: 'DM Sans', monospace; font-size: 0.82rem; color: var(--ink); outline: none; margin-bottom: 1rem; }
+.setup-box input:focus { border-color: var(--ink3); background: #fff; }
+.setup-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+.setup-hint { font-size: 0.7rem; color: var(--ink3); line-height: 1.4; margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid var(--line); }
+.setup-hint a { color: var(--toread); text-decoration: none; }
+.setup-hint a:hover { text-decoration: underline; }
+
 .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--ink); color: #fff; padding: 0.48rem 0.95rem; border-radius: var(--radius); font-size: 0.78rem; font-family: 'DM Sans', sans-serif; z-index: 2000; opacity: 0; transform: translateY(8px); transition: opacity 0.2s, transform 0.2s; pointer-events: none; }
 .toast.show { opacity: 1; transform: translateY(0); }
 .toast.warn { background: var(--lent); }
@@ -252,10 +274,33 @@ header h1 em { font-style: italic; color: #d6d3d1; }
 </head>
 <body>
 
+<div class="sync-bar" id="sync-bar">
+  <div class="sync-spinner" id="sync-spinner"></div>
+  <span id="sync-msg">Synchronisation…</span>
+</div>
+
 <header>
   <h1>Ma <em>Bibliothèque</em></h1>
   <p class="header-sub" id="header-sub">— —</p>
 </header>
+
+<!-- SETUP GITHUB -->
+<div id="setup-overlay">
+  <div class="setup-box">
+    <h2>Synchronisation GitHub</h2>
+    <p>Pour sauvegarder tes modifications sur GitHub et les retrouver partout, entre ton token d'accès personnel.</p>
+    <label>Token GitHub (Personal Access Token)</label>
+    <input type="password" id="setup-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+    <div class="setup-actions">
+      <button class="btn-cancel" id="setup-cancel">Plus tard</button>
+      <button class="btn-submit" id="setup-confirm">Enregistrer</button>
+    </div>
+    <div class="setup-hint">
+      Ton token est stocké uniquement dans ce navigateur, jamais envoyé ailleurs que GitHub.<br>
+      <a href="https://github.com/settings/tokens" target="_blank">Créer un token →</a> (cocher <code>repo</code>)
+    </div>
+  </div>
+</div>
 
 <nav class="nav-tabs">
   <button class="nav-tab active" data-page="library">Bibliothèque</button>
@@ -306,6 +351,7 @@ header h1 em { font-style: italic; color: #d6d3d1; }
     <div class="controls-right">
       <span class="count-label" id="count-label"></span>
       <button class="action-btn" id="export-btn">↓ Exporter</button>
+      <button class="action-btn" id="sync-btn" title="Configurer la synchro GitHub" style="opacity:0.6">⟳ GitHub</button>
       <button class="action-btn primary" id="open-form-btn">+ Ajouter</button>
     </div>
   </div>
