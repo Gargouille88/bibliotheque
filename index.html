@@ -793,7 +793,31 @@ function openModal(book){
   const body=document.getElementById('modal-body'),actions=document.getElementById('modal-actions');
   const wrap=document.createElement('div');wrap.className='modal-cover-wrap';
   const cw=document.createElement('div');cw.className='cover-wrap';cw.appendChild(makeCover(book));wrap.appendChild(cw);
-  const info=document.createElement('div');info.className='modal-info';
+  // Progress data (must be before info.innerHTML)
+  const mp=book.s==='currently-reading'?getProgress(book):null;
+  const mpPct=mp?(mp.pct!=null?mp.pct:(mp.pages_read&&mp.total_pages?Math.round(mp.pages_read/mp.total_pages*100):null)):null;
+  const progressSection=book.s==='currently-reading'?
+    '<div class="progress-wrap" id="modal-progress-wrap">'
+    +'<div class="progress-lbl"><span style="font-size:0.67rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink3);font-weight:500">Progression</span>'
+    +(mpPct!=null?'<strong>'+mpPct+'%</strong>':'<span style="color:var(--ink3);font-size:0.72rem">non renseignée</span>')+'</div>'
+    +(mpPct!=null?'<div class="progress-bar-bg"><div class="progress-bar-fill" style="width:'+mpPct+'%"></div></div>':'')
+    +(mp&&mp.pages_read&&mp.total_pages?'<div style="font-size:0.68rem;color:var(--ink3);margin-top:0.25rem;margin-bottom:0.4rem">'+mp.pages_read+' / '+mp.total_pages+' pages</div>':'')
+    +'<div class="progress-edit" id="progress-edit-zone">'
+    +'<button class="progress-mode-btn active" id="pm-pages">Pages</button>'
+    +'<button class="progress-mode-btn" id="pm-pct">%</button>'
+    +'<div class="progress-input-group" id="pg-pages-group">'
+    +'<input type="number" id="pg-pages-read" min="0" placeholder="'+(mp&&mp.pages_read?mp.pages_read:'0')+'" value="'+(mp&&mp.pages_read?mp.pages_read:'')+'" />'
+    +'<span>/ <input type="number" id="pg-total-pages" min="1" placeholder="total" value="'+(mp&&mp.total_pages?mp.total_pages:'')+'" style="width:60px;padding:0.28rem 0.3rem;border:1px solid var(--line);border-radius:2px;background:var(--bg);font-family:DM Sans,sans-serif;font-size:0.8rem;color:var(--ink);outline:none;text-align:center" /></span>'
+    +'</div>'
+    +'<div class="progress-input-group" id="pg-pct-group" style="display:none">'
+    +'<input type="number" id="pg-pct-val" min="0" max="100" placeholder="0" value="'+(mp&&mp.pct!=null?mp.pct:'')+'" />'
+    +'<span>%</span>'
+    +'</div>'
+    +'<button class="progress-save-btn" id="pg-save-btn">Enregistrer</button>'
+    +'</div>'
+    +'</div>'
+    : '';
+    const info=document.createElement('div');info.className='modal-info';
   const genres=book.g?book.g.split(',').map(g=>g.trim()).filter(Boolean):[];
   info.innerHTML='<div class="modal-title">'+book.t+'</div>'
     +'<div class="modal-author">'+(book.a||'Auteur inconnu')+'</div>'
@@ -812,29 +836,6 @@ function openModal(book){
     +'<div class="modal-comment-wrap"><div class="modal-comment-lbl">Mon avis</div>'
     +'<textarea class="modal-comment-input" id="modal-comment" placeholder="Tes impressions…">'+bookComment+'</textarea>'
     +'<button class="modal-comment-save" id="modal-comment-save">Sauvegarder l\'avis</button></div>'
-    // Progress section (only for currently-reading)
-    const mp=book.s==='currently-reading'?getProgress(book):null;
-    const mpPct=mp?(mp.pct!=null?mp.pct:(mp.pages_read&&mp.total_pages?Math.round(mp.pages_read/mp.total_pages*100):null)):null;
-    const progressSection=book.s==='currently-reading'?
-      '<div class="progress-wrap" id="modal-progress-wrap">'
-      +'<div class="progress-lbl"><span style="font-size:0.67rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink3);font-weight:500">Progression</span>'
-      +(mpPct!=null?'<strong>'+mpPct+'%</strong>':'<span style="color:var(--ink3);font-size:0.72rem">non renseignée</span>')+'</div>'
-      +(mpPct!=null?'<div class="progress-bar-bg"><div class="progress-bar-fill" style="width:'+mpPct+'%"></div></div>':'')
-      +(mp&&mp.pages_read&&mp.total_pages?'<div style="font-size:0.68rem;color:var(--ink3);margin-top:0.25rem;margin-bottom:0.4rem">'+mp.pages_read+' / '+mp.total_pages+' pages</div>':'')
-      +'<div class="progress-edit" id="progress-edit-zone">'
-      +'<button class="progress-mode-btn active" id="pm-pages" title="Entrer le nombre de pages">Pages</button>'
-      +'<button class="progress-mode-btn" id="pm-pct" title="Entrer un pourcentage">%</button>'
-      +'<div class="progress-input-group" id="pg-pages-group">'
-      +'<input type="number" id="pg-pages-read" min="0" placeholder="'+(mp&&mp.pages_read?mp.pages_read:'0')+'" value="'+(mp&&mp.pages_read?mp.pages_read:'')+'" />'
-      +'<span>/ <input type="number" id="pg-total-pages" min="1" placeholder="total" value="'+(mp&&mp.total_pages?mp.total_pages:'')+'" style="width:65px" /></span>'
-      +'</div>'
-      +'<div class="progress-input-group" id="pg-pct-group" style="display:none">'
-      +'<input type="number" id="pg-pct-val" min="0" max="100" placeholder="0" value="'+(mp&&mp.pct!=null?mp.pct:'')+'" />'
-      +'<span>%</span>'
-      +'</div>'
-      +'<button class="progress-save-btn" id="pg-save-btn">Sauvegarder</button>'
-      +'</div>'
-      +'</div>' : '';
     // Tags
     +progressSection
     +'<div class="modal-tags">'
