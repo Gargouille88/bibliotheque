@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'books.csv'
+      - 'index.html'
 
 permissions:
   contents: write
