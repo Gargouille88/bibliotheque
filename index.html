@@ -677,7 +677,11 @@ header h1 em{font-style:italic;color:#c8b99a}
     <p>Entre ton token d'accès GitHub pour sauvegarder tes modifications et les retrouver partout.</p>
     <label>Token GitHub (Personal Access Token)</label>
     <input type="password" id="setup-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
-    <div class="setup-actions"><button class="btn-cancel" id="setup-cancel">Plus tard</button><button class="btn-submit" id="setup-confirm">Enregistrer</button></div>
+    <div class="setup-actions">
+      <button class="btn-cancel" id="setup-cancel">Plus tard</button>
+      <button class="action-btn" id="setup-force-sync" style="border-color:var(--reading);color:var(--reading)" title="Pousser les livres de CE navigateur vers GitHub">⬆ Forcer la synchro</button>
+      <button class="btn-submit" id="setup-confirm">Enregistrer</button>
+    </div>
     <div class="setup-hint">Stocké uniquement dans ce navigateur. <a href="https://github.com/settings/tokens" target="_blank">Créer un token →</a> (cocher <code>repo</code>)</div>
   </div>
 </div>
@@ -2014,6 +2018,9 @@ async function pushToGitHub(allBooks,message){
     localStorage.setItem(LS_LASTUPDATE,now);
     updateLastUpdateDisplay();
     addLog('sync-ok','✓ Synchro GitHub réussie',message||'mise à jour');
+    // Mémoriser le nouveau SHA pour éviter un faux bandeau "mise à jour"
+    const newCommit=await(await fetch('https://api.github.com/repos/'+GH_REPO+'/commits/main',{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'},cache:'no-store'})).json();
+    if(newCommit.sha) sessionStorage.setItem('biblio_known_sha',newCommit.sha);
     showSyncBar('✓ Sauvegardé sur GitHub — visible partout dans ~30s','success');
     return true;
   }catch(e){
@@ -2038,6 +2045,14 @@ function closeSetup(){document.getElementById('setup-overlay').classList.remove(
 document.getElementById('sync-btn').addEventListener('click',openSetup);
 document.getElementById('setup-cancel').addEventListener('click',()=>{localStorage.setItem('setup_dismissed','1');closeSetup();});
 document.getElementById('setup-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeSetup();});
+document.getElementById('setup-force-sync').addEventListener('click',async()=>{
+  const t=getToken();
+  if(!t){showToast('Configure le token GitHub d\'abord','warn');return;}
+  closeSetup();
+  showToast('Synchro forcée : '+BOOKS.length+' livres en cours…','warn');
+  await pushToGitHub(getAllBooksForSync(),'🔄 Synchro forcée: '+BOOKS.length+' livres');
+});
+
 document.getElementById('setup-confirm').addEventListener('click',async()=>{
   const t=document.getElementById('setup-token').value.trim();
   if(!t){showToast('Token vide','danger');return;}
@@ -2118,25 +2133,34 @@ buildStats();render();updateSyncBtn();
 if(!getToken()&&!localStorage.getItem('setup_dismissed')){setTimeout(()=>openSetup(),1200);}
 
 // ── VERSION CHECK — détecte quand une autre appareil a mis à jour ──
-document.getElementById('update-reload-btn').addEventListener('click',()=>location.reload(true));
+document.getElementById('update-reload-btn').addEventListener('click',()=>{
+  sessionStorage.removeItem('biblio_known_sha'); // force re-mémorisation après reload
+  location.reload(true);
+});
 document.getElementById('update-dismiss-btn').addEventListener('click',()=>{
   document.getElementById('update-banner').classList.remove('show');
 });
 async function checkForUpdates(){
   if(!getToken()) return;
   try{
-    await new Promise(r=>setTimeout(r,3000)); // attendre 3s après le chargement
+    await new Promise(r=>setTimeout(r,4000));
     const res=await fetch('https://api.github.com/repos/'+GH_REPO+'/commits/main',{
       headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'},
       cache:'no-store'
     });
     if(!res.ok) return;
     const data=await res.json();
-    const lastCommitDate=data.commit?.committer?.date||data.commit?.author?.date;
-    if(!lastCommitDate) return;
-    const remoteTs=new Date(lastCommitDate).getTime();
-    const localTs=new Date(PAGE_VERSION).getTime();
-    if(remoteTs>localTs+5000){ // 5s de marge
+    const remoteSha=data.sha;
+    if(!remoteSha) return;
+    // Comparer avec le SHA connu au chargement (stocké en sessionStorage)
+    const knownSha=sessionStorage.getItem('biblio_known_sha');
+    if(!knownSha){
+      // Premier chargement : mémoriser ce SHA comme "version actuelle"
+      sessionStorage.setItem('biblio_known_sha',remoteSha);
+      return;
+    }
+    if(remoteSha!==knownSha){
+      // Un autre appareil a poussé une nouvelle version
       document.getElementById('update-banner').classList.add('show');
     }
   }catch(e){}
