@@ -2279,7 +2279,11 @@ async function pushToGitHub(allBooks,message){
     if(!fileRes.ok) throw new Error('Impossible de lire index.html ('+fileRes.status+')');
     const fileData=await fileRes.json();
     const sha=fileData.sha;
-    const currentHTML=decodeURIComponent(escape(atob(fileData.content.replace(/\n/g,''))));
+    // TextDecoder properly handles all UTF-8 including chars > U+00FF
+    const raw=atob(fileData.content.replace(/\n/g,''));
+    const bytes=new Uint8Array(raw.length);
+    for(let i=0;i<raw.length;i++) bytes[i]=raw.charCodeAt(i);
+    const currentHTML=new TextDecoder('utf-8').decode(bytes);
     const booksJSON=JSON.stringify(allBooks);
     const syncJSON=JSON.stringify({
       progress:loadProgress(),
@@ -2295,7 +2299,11 @@ async function pushToGitHub(allBooks,message){
       .replace(/const BOOKS=\[[\s\S]*?\];/,'const BOOKS='+booksJSON+';')
       .replace(/const SYNC_DATA=\{[\s\S]*?\};/,'const SYNC_DATA='+syncJSON+';')
       .replace(/const PAGE_VERSION='[^']*';/,"const PAGE_VERSION='"+now+"';");
-    const encoded=btoa(unescape(encodeURIComponent(updatedHTML)));
+    // TextEncoder properly handles all UTF-8 including chars > U+00FF
+    const encBytes=new TextEncoder().encode(updatedHTML);
+    let encBin='';
+    for(let i=0;i<encBytes.length;i++) encBin+=String.fromCharCode(encBytes[i]);
+    const encoded=btoa(encBin);
     const res=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_FILE,{
       method:'PUT',
       headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
