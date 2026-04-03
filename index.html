@@ -107,6 +107,27 @@ header h1 em{font-style:italic;color:#d6d3d1}
 .cur-title{font-family:'EB Garamond',serif;font-size:0.9rem;color:var(--ink);line-height:1.25;margin-bottom:0.2rem}
 .cur-author{font-size:0.72rem;color:var(--ink2);font-style:italic;margin-bottom:0.6rem}
 .cur-tag{font-size:0.65rem;padding:0.12rem 0.4rem;background:var(--gold-light);color:#78350f;border-radius:2px;display:inline-block;margin-bottom:0.5rem}
+.progress-wrap{margin-top:0.6rem}
+.progress-lbl{font-size:0.68rem;color:var(--ink3);margin-bottom:0.25rem;display:flex;justify-content:space-between;align-items:center}
+.progress-lbl strong{color:var(--reading);font-weight:600}
+.progress-bar-bg{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.progress-bar-fill{height:100%;background:var(--reading);border-radius:3px;transition:width 0.4s ease}
+.progress-edit{margin-top:0.55rem;display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap}
+.progress-mode-btn{padding:0.2rem 0.55rem;border:1px solid var(--line);border-radius:2px;background:transparent;font-family:'DM Sans',sans-serif;font-size:0.68rem;cursor:pointer;color:var(--ink3);transition:all 0.12s}
+.progress-mode-btn.active{background:var(--reading);color:#fff;border-color:var(--reading)}
+.progress-input-group{display:flex;align-items:center;gap:0.3rem;flex:1}
+.progress-input-group input{width:70px;padding:0.28rem 0.45rem;border:1px solid var(--line);border-radius:2px;background:var(--bg);font-family:'DM Sans',sans-serif;font-size:0.8rem;color:var(--ink);outline:none;text-align:center}
+.progress-input-group input:focus{border-color:var(--reading)}
+.progress-input-group span{font-size:0.72rem;color:var(--ink3);white-space:nowrap}
+.progress-save-btn{padding:0.28rem 0.7rem;border:1px solid var(--reading);border-radius:2px;background:var(--reading);font-family:'DM Sans',sans-serif;font-size:0.72rem;cursor:pointer;color:#fff;transition:all 0.12s;white-space:nowrap}
+.progress-save-btn:hover{opacity:0.85}
+.card-progress{margin-top:0.35rem;padding:0 0.05rem}
+.card-progress-bar-bg{height:3px;background:var(--line2);border-radius:2px;overflow:hidden}
+.card-progress-bar-fill{height:100%;background:var(--reading);border-radius:2px}
+.card-progress-lbl{font-size:0.55rem;color:var(--reading);margin-top:0.15rem;font-weight:500}
+.card-pages{font-size:0.58rem;color:var(--ink3);margin-top:0.12rem;letter-spacing:0.02em}
+.modal-pages-tag{display:inline-flex;align-items:center;gap:3px;padding:0.15rem 0.48rem;border-radius:2px;background:var(--surface2);color:var(--ink2);font-size:0.67rem;font-weight:500;cursor:pointer;transition:background 0.12s}
+.modal-pages-tag:hover{background:var(--line)}
 .stats-page{max-width:960px;margin:0 auto;padding:2rem 1.5rem;display:flex;flex-direction:column;gap:2rem}
 .stats-section h2{font-family:'EB Garamond',serif;font-size:1.35rem;font-weight:400;color:var(--ink);margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--line)}
 .stats-filter-bar{display:flex;align-items:center;gap:0.6rem;margin-bottom:1.5rem;padding:0.65rem 1rem;background:var(--surface);border:1px solid var(--line);border-radius:4px}
@@ -402,6 +423,10 @@ header h1 em{font-style:italic;color:#d6d3d1}
           <div class="field-group"><label>Format</label><select id="f-format"><option value="">—</option><option value="paperback">Poche</option><option value="hardcover">Relié</option><option value="digital">Numérique</option><option value="audio">Audio</option></select></div>
         </div>
         <div class="field-group" id="date-read-group" style="display:none"><label>Date de lecture</label><input type="date" id="f-date-read" style="color-scheme:light"></div>
+        <div class="field-group" id="pages-group" style="display:none">
+          <label>Nombre de pages (optionnel)</label>
+          <input type="number" id="f-total-pages" min="1" placeholder="ex : 320" autocomplete="off">
+        </div>
         <div class="field-group"><label>Note</label>
           <div class="star-input" id="star-input"><span class="s" data-v="1">★</span><span class="s" data-v="2">★</span><span class="s" data-v="3">★</span><span class="s" data-v="4">★</span><span class="s" data-v="5">★</span><span class="rating-lbl" id="rating-val">—</span></div>
         </div>
@@ -431,7 +456,7 @@ const AVG_RATINGS_DATA=[["2014", 5.0], ["2015", 3.92], ["2016", 3.78], ["2017", 
 const GENRE_COUNTS_DATA=[["litt-rature", 14], ["essai", 10], ["histoire", 3], ["philosophie", 3], ["po-sie", 2], ["d-veloppement-personnel", 1], ["bd", 1]];
 const STATUS_LABELS={'read':'Lu','to-read':'À lire','did-not-finish':'Abandonné','currently-reading':'En cours'};
 const GH_REPO='gargouille88/bibliotheque',GH_FILE='index.html',TOKEN_KEY='gh_token';
-const LS_CUSTOM='biblio_custom',LS_LENT='biblio_lent',LS_COMMENTS='biblio_comments',LS_LASTUPDATE='biblio_lastupdate';
+const LS_CUSTOM='biblio_custom',LS_LENT='biblio_lent',LS_COMMENTS='biblio_comments',LS_LASTUPDATE='biblio_lastupdate',LS_PROGRESS='biblio_progress',LS_PAGES='biblio_pages';
 let currentFilter='all',currentSearch='',currentYear='',currentSort='default',currentTag='',currentView='grid';
 let currentModalBook=null;
 
@@ -441,6 +466,28 @@ function loadLent(){try{return JSON.parse(localStorage.getItem(LS_LENT))||{};}ca
 function saveLent(a){localStorage.setItem(LS_LENT,JSON.stringify(a));}
 function loadComments(){try{return JSON.parse(localStorage.getItem(LS_COMMENTS))||{};}catch{return{};}};
 function saveComments(a){localStorage.setItem(LS_COMMENTS,JSON.stringify(a));}
+function loadProgress(){try{return JSON.parse(localStorage.getItem(LS_PROGRESS))||{};}catch{return{};}}
+function saveProgress(a){localStorage.setItem(LS_PROGRESS,JSON.stringify(a));}
+function loadPages(){try{return JSON.parse(localStorage.getItem(LS_PAGES))||{};}catch{return{};}}
+function savePages(a){localStorage.setItem(LS_PAGES,JSON.stringify(a));}
+function getBookPages(book){const p=loadPages();return p[bk(book)]||book.pages||null;}
+async function fetchPagesFromOL(book){
+  const key=bk(book);const pages=loadPages();
+  if(pages[key]) return pages[key];
+  try{
+    const isbn=book.c?book.c.match(/isbn\/([^-]+)-/)?.[1]:'';
+    let url='';
+    if(isbn) url='https://openlibrary.org/api/books?bibkeys=ISBN:'+isbn+'&jscmd=data&format=json';
+    else url='https://openlibrary.org/search.json?q='+encodeURIComponent(book.t+' '+book.a)+'&limit=1&fields=number_of_pages_median';
+    const res=await fetch(url);const data=await res.json();
+    let n=null;
+    if(isbn){const k='ISBN:'+isbn;if(data[k]&&data[k].number_of_pages)n=data[k].number_of_pages;}
+    else if(data.docs&&data.docs[0]&&data.docs[0].number_of_pages_median)n=data.docs[0].number_of_pages_median;
+    if(n){pages[key]=n;savePages(pages);}
+    return n;
+  }catch{return null;}
+}
+function getProgress(book){const p=loadProgress();return p[bk(book)]||null;}
 function getToken(){return localStorage.getItem(TOKEN_KEY)||'';}
 function saveToken(t){localStorage.setItem(TOKEN_KEY,t);}
 function bk(b){return b.t+'||'+b.a;}
@@ -451,7 +498,7 @@ function bk(b){return b.t+'||'+b.a;}
 function updateLastUpdateDisplay(){
   const d=localStorage.getItem(LS_LASTUPDATE);
   const el=document.getElementById('last-update-date');
-  if(d){const dt=new Date(d);el.textContent=dt.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})+' à '+dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});}
+  if(d){const dt=new Date(d);el.textContent=dt.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})+' à '+dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
   else el.textContent='—';
 }
 updateLastUpdateDisplay();
@@ -549,13 +596,27 @@ function makeCard(book,showCoup){
   if(showCoup&&isCoup){const cb=document.createElement('div');cb.className='coup-badge';cb.textContent='★ 5';wrap.appendChild(cb);}
   if(isLent){const lb=document.createElement('div');lb.className='lent-badge';const n=lent[bk(book)];lb.textContent=n?'prêté à '+n:'prêté';wrap.appendChild(lb);}
   card.appendChild(wrap);
+  const prog=book.s==='currently-reading'?getProgress(book):null;
+  const progPct=prog?(prog.pct!=null?prog.pct:(prog.pages_read&&prog.total_pages?Math.round(prog.pages_read/prog.total_pages*100):null)):null;
   if(currentView==='list'){
     const meta=document.createElement('div');meta.className='card-meta';
-    meta.innerHTML='<div class="card-title">'+book.t+'</div><div class="card-author">'+book.a+'</div>'+(book.r?'<div class="card-rating">'+stars(book.r)+'</div>':'')+'<div class="list-year">'+(book.y||'')+'</div>';
+    const cachedPgL=getBookPages(book);
+    meta.innerHTML='<div class="card-title">'+book.t+'</div><div class="card-author">'+book.a+'</div>'+(book.r?'<div class="card-rating">'+stars(book.r)+'</div>':'')
+      +(progPct!=null?'<div style="font-size:0.68rem;color:var(--reading);font-weight:500;white-space:nowrap">'+progPct+'%</div>':'')
+      +(cachedPgL?'<div style="font-size:0.7rem;color:var(--ink3);white-space:nowrap">'+cachedPgL+' p.</div>':'')
+      +'<div class="list-year">'+(book.y||'')+'</div>';
     card.appendChild(meta);
   }else{
     const meta=document.createElement('div');meta.className='card-meta';
-    meta.innerHTML='<div class="card-title">'+book.t+'</div>'+(book.r?'<div class="card-rating">'+stars(book.r)+'</div>':'');
+    const cachedPg=getBookPages(book);
+    meta.innerHTML='<div class="card-title">'+book.t+'</div>'+(book.r?'<div class="card-rating">'+stars(book.r)+'</div>':'')+(cachedPg?'<div class="card-pages">'+cachedPg+' p.</div>':'');
+    if(!cachedPg&&book.s!=='to-read'){fetchPagesFromOL(book).then(n=>{if(n){const el=meta.querySelector('.card-pages');if(!el){const d=document.createElement('div');d.className='card-pages';d.textContent=n+' p.';meta.appendChild(d);}}});}
+    if(progPct!=null){
+      const pDiv=document.createElement('div');pDiv.className='card-progress';
+      pDiv.innerHTML='<div class="card-progress-bar-bg"><div class="card-progress-bar-fill" style="width:'+progPct+'%"></div></div>'
+        +'<div class="card-progress-lbl">'+progPct+'%</div>';
+      meta.appendChild(pDiv);
+    }
     card.appendChild(meta);
   }
   card.addEventListener('click',()=>openModal(book));
@@ -604,9 +665,14 @@ function buildCurrent(){
     const covDiv=document.createElement('div');covDiv.className='cur-cover cover-wrap';covDiv.appendChild(makeCover(b));
     const info=document.createElement('div');info.className='cur-info';
     const genres=b.g?b.g.split(',').map(g=>g.trim()).filter(Boolean):[];
+    const cp=getProgress(b);
+    const cpPct=cp?(cp.pct!=null?cp.pct:(cp.pages_read&&cp.total_pages?Math.round(cp.pages_read/cp.total_pages*100):null)):null;
     info.innerHTML='<div class="cur-title">'+b.t+'</div><div class="cur-author">'+(b.a||'')+'</div>'
       +genres.map(g=>'<span class="cur-tag">'+g+'</span>').join(' ')
-      +(b.r?'<div class="card-rating" style="margin-top:0.4rem">'+stars(b.r)+'</div>':'');
+      +(b.r?'<div class="card-rating" style="margin-top:0.4rem">'+stars(b.r)+'</div>':'')
+      const cpPages=getBookPages(b);
+    +(cpPages?'<div style="font-size:0.7rem;color:var(--ink3);margin-top:0.3rem">'+cpPages+' pages'+(cp&&cp.pages_read?' — '+cp.pages_read+' lues':'')+' </div>':'')
+    +(cpPct!=null?'<div class="progress-wrap" style="margin-top:0.5rem"><div class="progress-lbl"><span>Progression</span><strong>'+cpPct+'%</strong></div><div class="progress-bar-bg"><div class="progress-bar-fill" style="width:'+cpPct+'%"></div></div>'+(cp.pages_read&&cp.total_pages?'<div style="font-size:0.65rem;color:var(--ink3);margin-top:0.2rem">'+cp.pages_read+' / '+cp.total_pages+' pages</div>':'')+'</div>':'');
     card.appendChild(covDiv);card.appendChild(info);
     card.addEventListener('click',()=>openModal(b));
     cards.appendChild(card);
@@ -685,6 +751,30 @@ function buildStatsPage(statsYear){
     return '<div class="format-card"><div class="format-pct">'+Math.round(n/total*100)+'%</div><div class="format-lbl">'+l+'</div><div class="format-count">'+n+' livres</div></div>';
   }).join('');
 
+  // Pages stats
+  const pagesData=loadPages();
+  const booksWithPages=filterRead.filter(b=>getBookPages(b));
+  if(booksWithPages.length>0){
+    const totalPages=booksWithPages.reduce((s,b)=>s+(getBookPages(b)||0),0);
+    const avgPages=Math.round(totalPages/booksWithPages.length);
+    const maxPagesBook=booksWithPages.reduce((a,b)=>(getBookPages(b)||0)>(getBookPages(a)||0)?b:a,booksWithPages[0]);
+    const existingSection=document.getElementById('stats-pages-section');
+    if(!existingSection){
+      const sec=document.createElement('div');sec.className='stats-section';sec.id='stats-pages-section';
+      sec.innerHTML='<h2>Pages lues</h2><div class="kpi-grid">'
+        +'<div class="kpi-card"><div class="kpi-label">Total pages lues</div><div class="kpi-value">'+totalPages.toLocaleString('fr-FR')+'</div><div class="kpi-sub">'+booksWithPages.length+' livres avec données</div></div>'
+        +'<div class="kpi-card"><div class="kpi-label">Moyenne par livre</div><div class="kpi-value">'+avgPages+'</div><div class="kpi-sub">pages par livre</div></div>'
+        +'<div class="kpi-card"><div class="kpi-label">Plus long lu</div><div class="kpi-value" style="font-size:1rem;line-height:1.2">'+maxPagesBook.t.slice(0,25)+(maxPagesBook.t.length>25?'…':'')+'</div><div class="kpi-sub">'+getBookPages(maxPagesBook)+' pages</div></div>'
+        +'</div>';
+      document.querySelector('.stats-page').appendChild(sec);
+    } else {
+      existingSection.querySelector('.kpi-grid').innerHTML=
+        '<div class="kpi-card"><div class="kpi-label">Total pages lues</div><div class="kpi-value">'+totalPages.toLocaleString('fr-FR')+'</div><div class="kpi-sub">'+booksWithPages.length+' livres avec données</div></div>'
+        +'<div class="kpi-card"><div class="kpi-label">Moyenne par livre</div><div class="kpi-value">'+avgPages+'</div><div class="kpi-sub">pages par livre</div></div>'
+        +'<div class="kpi-card"><div class="kpi-label">Plus long lu</div><div class="kpi-value" style="font-size:1rem;line-height:1.2">'+maxPagesBook.t.slice(0,25)+(maxPagesBook.t.length>25?'…':'')+'</div><div class="kpi-sub">'+getBookPages(maxPagesBook)+' pages</div></div>';
+    }
+  }
+
   // Ratings
   const rb={'5':0,'4':0,'3':0,'2':0,'1':0};
   filterBooks.forEach(b=>{if(b.r){const r=Math.round(parseFloat(b.r));if(r>=1&&r<=5)rb[r]++;}});
@@ -722,14 +812,38 @@ function openModal(book){
     +'<div class="modal-comment-wrap"><div class="modal-comment-lbl">Mon avis</div>'
     +'<textarea class="modal-comment-input" id="modal-comment" placeholder="Tes impressions…">'+bookComment+'</textarea>'
     +'<button class="modal-comment-save" id="modal-comment-save">Sauvegarder l\'avis</button></div>'
+    // Progress section (only for currently-reading)
+    const mp=book.s==='currently-reading'?getProgress(book):null;
+    const mpPct=mp?(mp.pct!=null?mp.pct:(mp.pages_read&&mp.total_pages?Math.round(mp.pages_read/mp.total_pages*100):null)):null;
+    const progressSection=book.s==='currently-reading'?
+      '<div class="progress-wrap" id="modal-progress-wrap">'
+      +'<div class="progress-lbl"><span style="font-size:0.67rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink3);font-weight:500">Progression</span>'
+      +(mpPct!=null?'<strong>'+mpPct+'%</strong>':'<span style="color:var(--ink3);font-size:0.72rem">non renseignée</span>')+'</div>'
+      +(mpPct!=null?'<div class="progress-bar-bg"><div class="progress-bar-fill" style="width:'+mpPct+'%"></div></div>':'')
+      +(mp&&mp.pages_read&&mp.total_pages?'<div style="font-size:0.68rem;color:var(--ink3);margin-top:0.25rem;margin-bottom:0.4rem">'+mp.pages_read+' / '+mp.total_pages+' pages</div>':'')
+      +'<div class="progress-edit" id="progress-edit-zone">'
+      +'<button class="progress-mode-btn active" id="pm-pages" title="Entrer le nombre de pages">Pages</button>'
+      +'<button class="progress-mode-btn" id="pm-pct" title="Entrer un pourcentage">%</button>'
+      +'<div class="progress-input-group" id="pg-pages-group">'
+      +'<input type="number" id="pg-pages-read" min="0" placeholder="'+(mp&&mp.pages_read?mp.pages_read:'0')+'" value="'+(mp&&mp.pages_read?mp.pages_read:'')+'" />'
+      +'<span>/ <input type="number" id="pg-total-pages" min="1" placeholder="total" value="'+(mp&&mp.total_pages?mp.total_pages:'')+'" style="width:65px" /></span>'
+      +'</div>'
+      +'<div class="progress-input-group" id="pg-pct-group" style="display:none">'
+      +'<input type="number" id="pg-pct-val" min="0" max="100" placeholder="0" value="'+(mp&&mp.pct!=null?mp.pct:'')+'" />'
+      +'<span>%</span>'
+      +'</div>'
+      +'<button class="progress-save-btn" id="pg-save-btn">Sauvegarder</button>'
+      +'</div>'
+      +'</div>' : '';
     // Tags
+    +progressSection
     +'<div class="modal-tags">'
     +'<span class="tag tag-'+book.s+'">'+STATUS_LABELS[book.s]+'</span>'
     +(book.f?'<span class="tag tag-format">'+book.f+'</span>':'')
     +(book.y?'<span class="tag tag-year">📅 '+book.y+'</span>':'')
     +(isLent?'<span class="tag tag-lent">prêté'+(lentTo?' à '+lentTo:'')+'</span>':'')
     +genres.map(g=>'<span class="tag tag-genre">'+g+'</span>').join('')
-    +'<span class="tag tag-source" id="modal-source-tag"><span class="tag-source-dot" style="background:var(--ink3)"></span>couverture…</span>'
+    +'<span class="tag tag-source" id="modal-source-tag"><span class="tag-source-dot" style="background:var(--ink3)"></span>couverture…</span>'+'<span class="modal-pages-tag" id="modal-pages-tag" title="Cliquer pour récupérer le nombre de pages">📄 …</span>'
     +'</div>';
   body.innerHTML='';body.appendChild(wrap);body.appendChild(info);
   actions.innerHTML='';
@@ -742,6 +856,57 @@ function openModal(book){
   }
   document.getElementById('modal-overlay').classList.add('open');
   document.body.style.overflow='hidden';
+
+  // Progress interactivity (only for currently-reading)
+  if(book.s==='currently-reading'){
+    const pagesBtn=document.getElementById('pm-pages');
+    const pctBtn=document.getElementById('pm-pct');
+    const pagesGroup=document.getElementById('pg-pages-group');
+    const pctGroup=document.getElementById('pg-pct-group');
+    const saveBtn=document.getElementById('pg-save-btn');
+    if(pagesBtn){
+      pagesBtn.addEventListener('click',()=>{
+        pagesBtn.classList.add('active');pctBtn.classList.remove('active');
+        pagesGroup.style.display='flex';pctGroup.style.display='none';
+      });
+      pctBtn.addEventListener('click',()=>{
+        pctBtn.classList.add('active');pagesBtn.classList.remove('active');
+        pctGroup.style.display='flex';pagesGroup.style.display='none';
+      });
+      saveBtn.addEventListener('click',()=>{
+        const progress=loadProgress();
+        const isPct=pctBtn.classList.contains('active');
+        if(isPct){
+          const pct=parseInt(document.getElementById('pg-pct-val').value);
+          if(isNaN(pct)||pct<0||pct>100){showToast('Pourcentage invalide (0-100)','danger');return;}
+          progress[bk(book)]={pct:pct};
+        } else {
+          const pagesRead=parseInt(document.getElementById('pg-pages-read').value);
+          const totalPages=parseInt(document.getElementById('pg-total-pages').value);
+          if(isNaN(pagesRead)||pagesRead<0){showToast('Nombre de pages invalide','danger');return;}
+          progress[bk(book)]={pages_read:pagesRead,total_pages:totalPages||null,pct:null};
+        }
+        saveProgress(progress);
+        showToast('Progression sauvegardée');
+        buildCurrent();render();
+        closeModal();
+        if(getToken()) setTimeout(()=>pushToGitHub(getAllBooksForSync(),'📖 Progression: '+book.t),300);
+      });
+    }
+  }
+
+  // Pages count
+  (function(){
+    const ptag=document.getElementById('modal-pages-tag');
+    const cached=getBookPages(book);
+    if(cached){ptag.textContent='📄 '+cached+' pages';}
+    else{ptag.textContent='📄 pages…';fetchPagesFromOL(book).then(n=>{ptag.textContent=n?'📄 '+n+' pages':'📄 inconnues';});}
+    ptag.addEventListener('click',()=>{
+      ptag.textContent='📄 recherche…';
+      const pages=loadPages();delete pages[bk(book)];savePages(pages);
+      fetchPagesFromOL(book).then(n=>{ptag.textContent=n?'📄 '+n+' pages':'📄 inconnues';render();});
+    });
+  })();
 
   // Cover source
   (function(){
@@ -873,11 +1038,13 @@ starSpans.forEach(s=>{
 document.getElementById('f-status').addEventListener('change',function(){
   const dg=document.getElementById('date-read-group');dg.style.display=this.value==='read'?'flex':'none';
   if(this.value==='read'&&!document.getElementById('f-date-read').value)document.getElementById('f-date-read').value=new Date().toISOString().slice(0,10);
+  const pg=document.getElementById('pages-group');pg.style.display=this.value==='currently-reading'?'flex':'none';
 });
 function openForm(){document.getElementById('form-overlay').classList.add('open');document.body.style.overflow='hidden';document.getElementById('f-title').focus();const s=document.getElementById('f-status').value;document.getElementById('date-read-group').style.display=s==='read'?'flex':'none';}
 function closeForm(){document.getElementById('form-overlay').classList.remove('open');document.body.style.overflow='';resetForm();}
 function resetForm(){
-  ['f-title','f-author','f-isbn','f-tags','f-date-read','f-comment'].forEach(id=>document.getElementById(id).value='');
+  ['f-title','f-author','f-isbn','f-tags','f-date-read','f-comment','f-total-pages'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pages-group').style.display='none';
   document.getElementById('f-status').value='to-read';document.getElementById('f-format').value='';
   document.getElementById('date-read-group').style.display='none';
   document.getElementById('preview-cover').innerHTML='📖';
@@ -907,7 +1074,7 @@ document.getElementById('lookup-btn').addEventListener('click',()=>{const v=titl
 async function searchOL(q){
   const a=document.getElementById('f-author').value.trim();
   try{
-    const res=await fetch('https://openlibrary.org/search.json?q='+encodeURIComponent(q+(a?' '+a:''))+'&limit=6&fields=title,author_name,isbn,first_publish_year,cover_i');
+    const res=await fetch('https://openlibrary.org/search.json?q='+encodeURIComponent(q+(a?' '+a:''))+'&limit=6&fields=title,author_name,isbn,first_publish_year,cover_i,number_of_pages_median');
     const data=await res.json();renderSug(data.docs||[]);
   }catch{sugBox.innerHTML='';}
 }
@@ -931,6 +1098,8 @@ function applySug(doc,isbn){
   document.getElementById('f-title').value=doc.title||'';
   document.getElementById('f-author').value=(doc.author_name&&doc.author_name.slice(0,2).join(', '))||'';
   if(isbn)document.getElementById('f-isbn').value=isbn;
+  if(doc.number_of_pages_median&&!document.getElementById('f-total-pages').value)
+    document.getElementById('f-total-pages').value=doc.number_of_pages_median;
   const cFull=doc.cover_i?'https://covers.openlibrary.org/b/id/'+doc.cover_i+'-M.jpg':(isbn?'https://covers.openlibrary.org/b/isbn/'+isbn+'-M.jpg':'');
   if(cFull){const p=document.getElementById('preview-cover');p.innerHTML='<img src="'+cFull+'" alt="" style="width:100%;height:100%;object-fit:cover;display:block">';}
   titleWrap.classList.add('has-val');sugBox.innerHTML='';
@@ -951,10 +1120,16 @@ document.getElementById('submit-form').addEventListener('click',()=>{
   const dateRead=document.getElementById('f-date-read').value;
   const year=dateRead?dateRead.slice(0,4):'';
   const comment=document.getElementById('f-comment').value.trim();
-  const nb={t:title,a:author||'Auteur inconnu',c:cover,r:currentRating>0?currentRating.toFixed(1):'',s:status,g:document.getElementById('f-tags').value.trim(),f:document.getElementById('f-format').value,y:year,comment:comment,_custom:true};
+  const formTotalPages=parseInt(document.getElementById('f-total-pages').value)||null;
+  const nb={t:title,a:author||'Auteur inconnu',c:cover,r:currentRating>0?currentRating.toFixed(1):'',s:status,g:document.getElementById('f-tags').value.trim(),f:document.getElementById('f-format').value,y:year,comment:comment,pages:formTotalPages,_custom:true};
+  if(formTotalPages){const pg=loadPages();pg[bk(nb)]=formTotalPages;savePages(pg);}
   const custom=loadCustom();custom.unshift(nb);saveCustom(custom);BOOKS.unshift(nb);
   if(comment){const comms=loadComments();comms[bk(nb)]=comment;saveComments(comms);}
   if(year){const sel=document.getElementById('year-select');if(![...sel.options].some(o=>o.value===year)){const opt=document.createElement('option');opt.value=year;opt.textContent=year;let ins=false;for(let i=1;i<sel.options.length;i++){if(parseInt(sel.options[i].value)>parseInt(year)){sel.insertBefore(opt,sel.options[i]);ins=true;break;}}if(!ins)sel.appendChild(opt);}}
+  const totalPagesVal=document.getElementById('f-total-pages').value.trim();
+  if(status==='currently-reading'&&totalPagesVal){
+    const pr=loadProgress();pr[bk(nb)]={pages_read:0,total_pages:parseInt(totalPagesVal),pct:null};saveProgress(pr);
+  }
   buildStats();render();closeForm();showToast('« '+title+' » ajouté !');
   // Sync GitHub — titre capturé ici, avant que closeForm() vide le formulaire
   if(getToken()){setTimeout(()=>pushToGitHub(getAllBooksForSync(),'📚 Ajout: '+title),300);}
