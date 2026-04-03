@@ -1072,7 +1072,7 @@ function buildTimeline(){
       monthBooks.forEach(b=>{
         const bDiv=document.createElement('div');bDiv.className='timeline-book';
         const covUrl=getCachedCover(b)||b.c||'';
-        bDiv.innerHTML='<img class="timeline-book-cover" src="'+covUrl+'" alt="" onerror="this.style.display='none'">'
+        bDiv.innerHTML='<img class="timeline-book-cover" src="'+covUrl+'" alt="" onerror="this.style.opacity=0.2">'
           +'<div class="timeline-book-info"><div class="timeline-book-title">'+b.t+'</div></div>'
           +(b.r?'<span class="timeline-book-rating">'+('★').repeat(Math.round(parseFloat(b.r)))+'</span>':'');
         bDiv.addEventListener('click',()=>openModal(b));
