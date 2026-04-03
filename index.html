@@ -126,6 +126,37 @@ header h1 em{font-style:italic;color:#d6d3d1}
 .card-progress-bar-fill{height:100%;background:var(--reading);border-radius:2px}
 .card-progress-lbl{font-size:0.55rem;color:var(--reading);margin-top:0.15rem;font-weight:500}
 .card-pages{font-size:0.58rem;color:var(--ink3);margin-top:0.12rem;letter-spacing:0.02em}
+.cover-picker-overlay{position:fixed;inset:0;background:rgba(28,25,23,0.7);z-index:1400;display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px)}
+.cover-picker-box{background:var(--surface);border-radius:4px;max-width:600px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.cover-picker-header{display:flex;align-items:center;justify-content:space-between;padding:0.9rem 1.2rem;border-bottom:1px solid var(--line)}
+.cover-picker-header h3{font-family:'EB Garamond',serif;font-size:1.05rem;font-weight:400;color:var(--ink)}
+.cover-picker-close{background:none;border:none;font-size:1rem;color:var(--ink3);cursor:pointer;padding:0.2rem 0.4rem}
+.cover-picker-close:hover{color:var(--ink)}
+.cover-picker-search{padding:0.7rem 1.2rem;border-bottom:1px solid var(--line2)}
+.cover-picker-search input{width:100%;padding:0.38rem 0.6rem;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg);font-family:'DM Sans',sans-serif;font-size:0.82rem;color:var(--ink);outline:none}
+.cover-picker-search input:focus{border-color:var(--ink3)}
+.cover-picker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:0.8rem;padding:1rem 1.2rem}
+.cover-option{cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0.3rem;padding:0.4rem;border-radius:3px;border:2px solid transparent;transition:border-color 0.15s,background 0.15s}
+.cover-option:hover{background:var(--bg)}
+.cover-option.selected{border-color:var(--gold)}
+.cover-option img{width:80px;aspect-ratio:2/3;object-fit:cover;border-radius:2px;box-shadow:var(--sh);background:var(--surface2)}
+.cover-option-src{font-size:0.58rem;color:var(--ink3);text-align:center;letter-spacing:0.04em;text-transform:uppercase}
+.cover-option-title{font-size:0.62rem;color:var(--ink2);text-align:center;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:90px}
+.cover-picker-loading{padding:2rem;text-align:center;color:var(--ink3);font-style:italic;font-size:0.82rem}
+.cover-picker-footer{padding:0.7rem 1.2rem;border-top:1px solid var(--line);display:flex;gap:0.5rem;justify-content:flex-end}
+.cover-picker-custom{padding:0.7rem 1.2rem;border-bottom:1px solid var(--line2);display:flex;gap:0.5rem;align-items:center}
+.cover-picker-custom input{flex:1;padding:0.35rem 0.6rem;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg);font-family:'DM Sans',sans-serif;font-size:0.78rem;color:var(--ink);outline:none}
+.cover-picker-custom input:focus{border-color:var(--ink3);background:#fff}
+.cover-picker-custom input::placeholder{color:var(--ink3)}
+.cover-picker-custom-preview{width:40px;height:60px;object-fit:cover;border-radius:2px;border:1px solid var(--line);background:var(--surface2);flex-shrink:0}
+.cp-gimg-btn{padding:0.3rem 0.65rem;border:1px solid var(--line);border-radius:2px;background:transparent;font-family:'DM Sans',sans-serif;font-size:0.72rem;cursor:pointer;color:var(--ink2);white-space:nowrap;transition:all 0.12s;text-decoration:none;display:inline-flex;align-items:center;gap:0.3rem}
+.cp-gimg-btn:hover{border-color:var(--ink3);color:var(--ink)}
+.cp-use-url-btn{padding:0.3rem 0.65rem;border:1px solid var(--gold);border-radius:2px;background:transparent;font-family:'DM Sans',sans-serif;font-size:0.72rem;cursor:pointer;color:var(--gold);white-space:nowrap;display:none}
+.cp-use-url-btn.show{display:inline-block}
+.cp-use-url-btn:hover{background:var(--gold);color:#fff}
+.cover-edit-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(28,25,23,0.45);opacity:0;transition:opacity 0.2s;border-radius:var(--radius);cursor:pointer}
+.cover-edit-hint span{background:rgba(0,0,0,0.6);color:#fff;font-size:0.65rem;padding:0.2rem 0.5rem;border-radius:2px;font-family:'DM Sans',sans-serif;letter-spacing:0.04em}
+.modal-cover-wrap .cover-wrap:hover .cover-edit-hint{opacity:1}
 .modal-pages-tag{display:inline-flex;align-items:center;gap:3px;padding:0.15rem 0.48rem;border-radius:2px;background:var(--surface2);color:var(--ink2);font-size:0.67rem;font-weight:500;cursor:pointer;transition:background 0.12s}
 .modal-pages-tag:hover{background:var(--line)}
 .stats-page{max-width:960px;margin:0 auto;padding:2rem 1.5rem;display:flex;flex-direction:column;gap:2rem}
@@ -856,7 +887,11 @@ function openModal(book){
   const comments=loadComments();const bookComment=comments[bk(book)]||book.comment||'';
   const body=document.getElementById('modal-body'),actions=document.getElementById('modal-actions');
   const wrap=document.createElement('div');wrap.className='modal-cover-wrap';
-  const cw=document.createElement('div');cw.className='cover-wrap';cw.appendChild(makeCover(book));wrap.appendChild(cw);
+  const cw=document.createElement('div');cw.className='cover-wrap';cw.style.position='relative';cw.appendChild(makeCover(book));
+  const hint=document.createElement('div');hint.className='cover-edit-hint';hint.innerHTML='<span>✎ Changer</span>';
+  hint.addEventListener('click',()=>openCoverPicker(book,cw));
+  cw.appendChild(hint);
+  wrap.appendChild(cw);
   // Progress data (must be before info.innerHTML)
   const mp=book.s==='currently-reading'?getProgress(book):null;
   const mpPct=mp?(mp.pct!=null?mp.pct:(mp.pages_read&&mp.total_pages?Math.round(mp.pages_read/mp.total_pages*100):null)):null;
@@ -1035,7 +1070,130 @@ function openModal(book){
   });
 }
 
-function closeModal(){document.getElementById('modal-overlay').classList.remove('open');document.body.style.overflow='';currentModalBook=null;}
+async function openCoverPicker(book,coverWrapEl){
+  // Remove existing picker if any
+  document.getElementById('cover-picker-overlay')?.remove();
+  const overlay=document.createElement('div');overlay.id='cover-picker-overlay';overlay.className='cover-picker-overlay';
+  const gImgUrl='https://www.google.com/search?tbm=isch&q='+encodeURIComponent(book.t+' '+book.a+' couverture livre');
+  overlay.innerHTML=`<div class="cover-picker-box">
+    <div class="cover-picker-header">
+      <h3>Choisir une couverture</h3>
+      <button class="cover-picker-close" id="cp-close">✕</button>
+    </div>
+    <div class="cover-picker-search">
+      <input type="text" id="cp-search" placeholder="Rechercher une autre édition…" value="${book.t}">
+    </div>
+    <div id="cp-grid" class="cover-picker-grid"><div class="cover-picker-loading">Recherche en cours…</div></div>
+    <div class="cover-picker-custom">
+      <img class="cover-picker-custom-preview" id="cp-preview" src="" alt="" style="display:none">
+      <input type="text" id="cp-url-input" placeholder="…ou coller une URL d'image ici (ex: depuis Google Images)">
+      <button class="cp-use-url-btn" id="cp-use-url">✓ Utiliser</button>
+      <a class="cp-gimg-btn" href="${gImgUrl}" target="_blank" rel="noopener" title="Ouvrir Google Images pour trouver une couverture, puis faire clic droit → Copier l'adresse de l'image">
+        🔍 Google Images ↗
+      </a>
+    </div>
+    <div class="cover-picker-footer">
+      <button class="btn-cancel" id="cp-cancel">Annuler</button>
+      <button class="btn-submit" id="cp-confirm" disabled>Utiliser cette couverture</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  let selectedUrl=null;
+  const close=()=>overlay.remove();
+  overlay.querySelector('#cp-close').addEventListener('click',close);
+  overlay.querySelector('#cp-cancel').addEventListener('click',close);
+  overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
+  const confirmBtn=overlay.querySelector('#cp-confirm');
+  confirmBtn.addEventListener('click',()=>{
+    if(!selectedUrl) return;
+    setCachedCover(book,selectedUrl);
+    // Update the cover in the open modal
+    const img=document.createElement('img');img.className='cover-img';img.src=selectedUrl;img.alt=book.t;
+    const existingCover=coverWrapEl.querySelector('.cover-img,.cover-placeholder,div[style]');
+    if(existingCover) coverWrapEl.replaceChild(img,existingCover);
+    else coverWrapEl.prepend(img);
+    // Also update book.c so subsequent loads use it
+    book.c=selectedUrl;
+    if(book._custom){saveCustom(loadCustom().map(b=>(b.t===book.t&&b.a===book.a)?{...b,c:selectedUrl}:b));}
+    render();close();showToast('Couverture mise à jour');
+    if(getToken()) setTimeout(()=>pushToGitHub(getAllBooksForSync(),'🖼️ Couverture: '+book.t),300);
+  });
+  const searchInput=overlay.querySelector('#cp-search');
+  searchInput.addEventListener('keydown',e=>{if(e.key==='Enter')doSearch(searchInput.value.trim());});
+
+  // Custom URL input
+  const urlInput=overlay.querySelector('#cp-url-input');
+  const urlPreview=overlay.querySelector('#cp-preview');
+  const useUrlBtn=overlay.querySelector('#cp-use-url');
+  let urlDebounce=null;
+  urlInput.addEventListener('input',()=>{
+    clearTimeout(urlDebounce);
+    const url=urlInput.value.trim();
+    if(!url){urlPreview.style.display='none';useUrlBtn.classList.remove('show');return;}
+    urlDebounce=setTimeout(()=>{
+      urlPreview.src=url;urlPreview.style.display='block';
+      urlPreview.onload=()=>{if(urlPreview.naturalWidth>1)useUrlBtn.classList.add('show');else useUrlBtn.classList.remove('show');};
+      urlPreview.onerror=()=>{useUrlBtn.classList.remove('show');};
+    },400);
+  });
+  useUrlBtn.addEventListener('click',()=>{
+    const url=urlInput.value.trim();
+    if(!url) return;
+    // Select this URL as chosen — deselect grid items
+    document.querySelectorAll('.cover-option').forEach(o=>o.classList.remove('selected'));
+    selectedUrl=url;confirmBtn.disabled=false;
+    useUrlBtn.textContent='✓ Sélectionnée';useUrlBtn.style.background='var(--gold)';useUrlBtn.style.color='#fff';
+  });
+  function renderGrid(candidates){
+    const grid=overlay.querySelector('#cp-grid');
+    if(!candidates.length){grid.innerHTML='<div class="cover-picker-loading">Aucun résultat trouvé.</div>';return;}
+    grid.innerHTML='';
+    candidates.forEach(({url,source,title})=>{
+      const opt=document.createElement('div');opt.className='cover-option';
+      opt.innerHTML=`<img src="${url}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'">
+        <span class="cover-option-src">${source}</span>
+        <span class="cover-option-title">${title||''}</span>`;
+      opt.addEventListener('click',()=>{
+        document.querySelectorAll('.cover-option').forEach(o=>o.classList.remove('selected'));
+        opt.classList.add('selected');selectedUrl=url;confirmBtn.disabled=false;
+      });
+      grid.appendChild(opt);
+    });
+  }
+  async function doSearch(q){
+    const grid=overlay.querySelector('#cp-grid');
+    grid.innerHTML='<div class="cover-picker-loading">Recherche en cours…</div>';
+    selectedUrl=null;confirmBtn.disabled=true;
+    const candidates=[];
+    // Open Library search (multiple results)
+    try{
+      const r=await fetch('https://openlibrary.org/search.json?q='+encodeURIComponent(q)+'&limit=10&fields=title,author_name,isbn,cover_i,edition_key');
+      const d=await r.json();
+      (d.docs||[]).forEach(doc=>{
+        if(doc.cover_i){candidates.push({url:'https://covers.openlibrary.org/b/id/'+doc.cover_i+'-M.jpg',source:'Open Library',title:doc.title});}
+        (doc.isbn||[]).slice(0,2).forEach(isbn=>{candidates.push({url:'https://covers.openlibrary.org/b/isbn/'+isbn+'-M.jpg',source:'OL ISBN',title:doc.title});});
+      });
+    }catch{}
+    // Google Books search
+    try{
+      const r=await fetch('https://www.googleapis.com/books/v1/volumes?q='+encodeURIComponent(q)+'&maxResults=8&fields=items(volumeInfo(title,imageLinks))');
+      const d=await r.json();
+      (d.items||[]).forEach(item=>{
+        const links=item.volumeInfo?.imageLinks;
+        if(links?.thumbnail){
+          const url=(links.large||links.medium||links.thumbnail).replace('http:','https:').replace('zoom=1','zoom=2');
+          candidates.push({url,source:'Google Books',title:item.volumeInfo.title});
+        }
+      });
+    }catch{}
+    // Deduplicate by URL
+    const seen=new Set();const unique=candidates.filter(c=>{if(seen.has(c.url))return false;seen.add(c.url);return true;});
+    renderGrid(unique);
+  }
+  doSearch(book.t+' '+book.a);
+}
+
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');document.body.style.overflow='';currentModalBook=null;document.getElementById('cover-picker-overlay')?.remove();}
 document.getElementById('close-modal').addEventListener('click',closeModal);
 document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
 
