@@ -369,6 +369,35 @@ header h1 em{font-style:italic;color:#d6d3d1}
 .timeline-year-select{padding:0.28rem 0.5rem;border:1px solid var(--line);border-radius:2px;background:var(--bg);font-family:'DM Sans',sans-serif;font-size:0.78rem;color:var(--ink2);cursor:pointer;outline:none;margin-left:auto}
 .log-empty{text-align:center;padding:3rem;color:var(--ink3);font-style:italic;font-size:0.88rem}
 .log-group-label{font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);padding:0.8rem 0.8rem 0.3rem;font-weight:500}
+.import-overlay{position:fixed;inset:0;background:rgba(28,25,23,0.65);z-index:1400;display:none;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px)}
+.import-overlay.open{display:flex}
+.import-box{background:var(--surface);border-radius:4px;max-width:500px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3);overflow:hidden}
+.import-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.3rem;border-bottom:1px solid var(--line)}
+.import-header h2{font-family:'EB Garamond',serif;font-size:1.1rem;font-weight:400;color:var(--ink)}
+.import-body{padding:1.1rem 1.3rem;display:flex;flex-direction:column;gap:0.9rem}
+.import-source-tabs{display:flex;gap:0.3rem;background:var(--surface2);border-radius:3px;padding:0.2rem}
+.import-source-tab{flex:1;padding:0.35rem 0.5rem;border:none;border-radius:2px;background:transparent;font-family:'DM Sans',sans-serif;font-size:0.75rem;cursor:pointer;color:var(--ink3);transition:all 0.12s;text-align:center}
+.import-source-tab.active{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+.import-drop-zone{border:2px dashed var(--line);border-radius:4px;padding:2rem;text-align:center;cursor:pointer;transition:all 0.15s;background:var(--bg)}
+.import-drop-zone:hover,.import-drop-zone.drag-over{border-color:var(--gold);background:var(--gold-light)}
+.import-drop-zone p{font-size:0.82rem;color:var(--ink2);line-height:1.5}
+.import-drop-zone small{font-size:0.7rem;color:var(--ink3)}
+.import-file-input{display:none}
+.import-preview{background:var(--surface2);border-radius:3px;padding:0.7rem 0.9rem;font-size:0.8rem;color:var(--ink2);line-height:1.5;display:none}
+.import-preview.show{display:block}
+.import-preview strong{color:var(--ink);font-weight:500}
+.import-options{display:flex;flex-direction:column;gap:0.4rem}
+.import-option{display:flex;align-items:center;gap:0.5rem;font-size:0.8rem;color:var(--ink2);cursor:pointer}
+.import-option input{cursor:pointer;accent-color:var(--gold)}
+.import-footer{padding:0.75rem 1.3rem;border-top:1px solid var(--line);display:flex;gap:0.4rem;justify-content:flex-end}
+.import-progress{height:4px;background:var(--surface2);border-radius:2px;overflow:hidden;display:none}
+.import-progress.show{display:block}
+.import-progress-fill{height:100%;background:var(--gold);border-radius:2px;transition:width 0.3s}
+.more-menu-wrap{position:relative}
+.more-menu{position:absolute;right:0;top:calc(100% + 4px);background:var(--surface);border:1px solid var(--line);border-radius:4px;box-shadow:var(--sh-h);z-index:200;min-width:200px;overflow:hidden}
+.more-menu-item{display:flex;align-items:center;gap:0.5rem;width:100%;padding:0.6rem 1rem;background:none;border:none;font-family:'DM Sans',sans-serif;font-size:0.8rem;color:var(--ink2);cursor:pointer;text-align:left;transition:background 0.1s;white-space:nowrap}
+.more-menu-item:hover{background:var(--bg);color:var(--ink)}
+.more-menu-item+.more-menu-item{border-top:1px solid var(--line2)}
 .goal-section{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:1rem 1.2rem;display:flex;flex-direction:column;gap:0.6rem}
 .goal-row{display:flex;align-items:center;gap:0.7rem;flex-wrap:wrap}
 .goal-label{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink3);font-weight:500;white-space:nowrap}
@@ -474,8 +503,14 @@ header h1 em{font-style:italic;color:#d6d3d1}
       <span class="count-label" id="count-label"></span>
       <div class="view-toggle"><button class="view-btn active" id="btn-grid" title="Vue grille">▦</button><button class="view-btn" id="btn-list" title="Vue liste">☰</button></div>
       <div style="flex:1"></div>
-      <button class="action-btn" id="batch-covers-btn" title="Récupérer les couvertures manquantes">🖼 Couvertures</button>
-      <button class="action-btn" id="export-btn">↓ Exporter</button>
+      <div class="more-menu-wrap" id="more-menu-wrap">
+        <button class="action-btn" id="more-menu-btn" title="Plus d'actions">··· Plus</button>
+        <div class="more-menu" id="more-menu" style="display:none">
+          <button class="more-menu-item" id="import-btn">⬆ Importer</button>
+          <button class="more-menu-item" id="batch-covers-btn">🖼 Couvertures manquantes</button>
+          <button class="more-menu-item" id="export-btn">↓ Exporter CSV</button>
+        </div>
+      </div>
       <button class="action-btn" id="sync-btn">⟳ GitHub</button>
       <button class="action-btn" id="next-read-btn" title="Que lire ensuite ?">🎲 Que lire ?</button>
       <button class="action-btn primary" id="open-form-btn">+ Ajouter</button>
@@ -535,6 +570,42 @@ header h1 em{font-style:italic;color:#d6d3d1}
     <button class="action-btn" id="log-clear-btn">🗑 Effacer</button>
   </div>
   <div id="log-list" style="max-width:860px;margin:0 auto;padding:0.5rem 1.5rem 3rem"></div>
+</div>
+
+<div class="import-overlay" id="import-overlay">
+  <div class="import-box">
+    <div class="import-header">
+      <h2>Importer une bibliothèque</h2>
+      <button class="form-header-close" id="import-close">✕</button>
+    </div>
+    <div class="import-body">
+      <div class="import-source-tabs">
+        <button class="import-source-tab active" data-source="babelio">📚 Babelio</button>
+        <button class="import-source-tab" data-source="goodreads">📖 Goodreads</button>
+        <button class="import-source-tab" data-source="storygraph">🌿 StoryGraph</button>
+      </div>
+      <div id="import-instructions" style="font-size:0.78rem;color:var(--ink2);line-height:1.55;padding:0.5rem 0.7rem;background:var(--surface2);border-radius:3px">
+        <strong>Export depuis Babelio :</strong><br>
+        Profil → Paramétrer le compte → Paramètres → <em>"Exporter ma bibliothèque"</em>
+      </div>
+      <label class="import-drop-zone" id="import-drop-zone" for="import-file-input">
+        <div style="font-size:2rem;margin-bottom:0.5rem">📂</div>
+        <p>Glisse ton fichier CSV ici<br>ou <strong>clique pour parcourir</strong></p>
+        <small>Format : CSV (séparateur ; ou ,)</small>
+      </label>
+      <input type="file" class="import-file-input" id="import-file-input" accept=".csv,.txt">
+      <div class="import-progress" id="import-progress"><div class="import-progress-fill" id="import-progress-fill" style="width:0%"></div></div>
+      <div class="import-preview" id="import-preview"></div>
+      <div class="import-options" id="import-options" style="display:none">
+        <label class="import-option"><input type="checkbox" id="import-skip-dupes" checked> Ignorer les livres déjà dans la bibliothèque</label>
+        <label class="import-option"><input type="checkbox" id="import-skip-no-rating"> Ignorer les livres sans note</label>
+      </div>
+    </div>
+    <div class="import-footer">
+      <button class="btn-cancel" id="import-cancel">Annuler</button>
+      <button class="btn-submit" id="import-confirm" disabled>Importer</button>
+    </div>
+  </div>
 </div>
 
 <div id="modal-overlay" role="dialog" aria-modal="true">
@@ -724,6 +795,203 @@ document.querySelectorAll('.nav-tab').forEach(tab=>{
 });
 
 // STATS BAR — clickable to filter
+// ── IMPORT ──
+const SOURCE_INSTRUCTIONS = {
+  babelio: '<strong>Export depuis Babelio :</strong><br>Profil → Paramétrer le compte → Paramètres → <em>"Exporter ma bibliothèque"</em>',
+  goodreads: '<strong>Export depuis Goodreads :</strong><br>My Books → Import/Export → Export Library → <em>"Export Library"</em>',
+  storygraph: '<strong>Export depuis StoryGraph :</strong><br>Profile → Import/Export → <em>"Export StoryGraph Data"</em>'
+};
+
+let importData=null;
+let importSource='babelio';
+
+function openImport(){document.getElementById('import-overlay').classList.add('open');}
+function closeImport(){document.getElementById('import-overlay').classList.remove('open');importData=null;resetImportUI();}
+function resetImportUI(){
+  document.getElementById('import-confirm').disabled=true;
+  document.getElementById('import-preview').className='import-preview';
+  document.getElementById('import-options').style.display='none';
+  document.getElementById('import-file-input').value='';
+  document.getElementById('import-progress').className='import-progress';
+  document.getElementById('import-progress-fill').style.width='0%';
+}
+
+// More menu toggle
+const moreBtn=document.getElementById('more-menu-btn');
+const moreMenu=document.getElementById('more-menu');
+moreBtn.addEventListener('click',e=>{
+  e.stopPropagation();
+  const open=moreMenu.style.display==='block';
+  moreMenu.style.display=open?'none':'block';
+});
+document.addEventListener('click',()=>moreMenu.style.display='none');
+
+document.getElementById('import-btn').addEventListener('click',openImport);
+document.getElementById('import-close').addEventListener('click',closeImport);
+document.getElementById('import-cancel').addEventListener('click',closeImport);
+document.getElementById('import-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeImport();});
+
+// Source tabs
+document.querySelectorAll('.import-source-tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.import-source-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    importSource=tab.dataset.source;
+    document.getElementById('import-instructions').innerHTML=SOURCE_INSTRUCTIONS[importSource]||'';
+    resetImportUI();
+  });
+});
+
+// Drag & drop
+const dropZone=document.getElementById('import-drop-zone');
+dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('drag-over');});
+dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f)handleImportFile(f);});
+document.getElementById('import-file-input').addEventListener('change',e=>{const f=e.target.files[0];if(f)handleImportFile(f);});
+
+function handleImportFile(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const text=e.target.result;
+    importData=parseImportCSV(text,importSource);
+    showImportPreview(importData);
+  };
+  reader.readAsText(file,'utf-8');
+}
+
+function parseImportCSV(text,source){
+  // Detect separator
+  const firstLine=text.split('\n')[0];
+  const sep=firstLine.includes(';')?';':',';
+  const lines=text.split('\n').filter(l=>l.trim());
+  if(!lines.length) return [];
+
+  // Parse CSV respecting quotes
+  function parseLine(line){
+    const cells=[];let cur='';let inQ=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"'&&!inQ){inQ=true;}
+      else if(ch==='"'&&inQ&&line[i+1]==='"'){cur+='"';i++;}
+      else if(ch==='"'&&inQ){inQ=false;}
+      else if(ch===sep&&!inQ){cells.push(cur.trim());cur='';}
+      else cur+=ch;
+    }
+    cells.push(cur.trim());
+    return cells;
+  }
+
+  const header=parseLine(lines[0]).map(h=>h.toLowerCase().replace(/[`'']/g,"'").trim());
+  const books=[];
+
+  for(let i=1;i<lines.length;i++){
+    const cells=parseLine(lines[i]);
+    if(cells.length<2) continue;
+    const row={};
+    header.forEach((h,j)=>row[h]=cells[j]||'');
+
+    let book={_custom:true,_imported:true};
+
+    if(source==='babelio'){
+      // Babelio: ISBN;Titre;Auteur;Editeur;Date de publication;Date d'entrée dans Babelio;Statut;Note
+      book.t=row['titre']||row['title']||'';
+      book.a=row['auteur']||row['author']||'';
+      const isbn=(row['isbn']||'').replace(/[^0-9X]/g,'');
+      book.c=isbn?'https://covers.openlibrary.org/b/isbn/'+isbn+'-M.jpg':'';
+      const statut=(row['statut']||row['status']||'').toLowerCase();
+      book.s=statut.includes('cours')?'currently-reading':statut.includes('lire')?'to-read':statut.includes('abandonn')||statut.includes('abandon')?'did-not-finish':'read';
+      const note=parseFloat(row['note']||row['rating']||'0');
+      book.r=note>0?note.toFixed(1):'';
+      // Year from "date d'entrée" for read books
+      const dateEntry=row["date d'entrée dans babelio"]||row["date d`entrée dans babelio"]||row['date']||'';
+      book.y=book.s==='read'&&dateEntry?dateEntry.slice(0,4):'';
+      book.g='';book.f='';book.comment='';
+    } else if(source==='goodreads'){
+      // Goodreads: Title,Author,ISBN,My Rating,Average Rating,Publisher,Binding,Number of Pages,Year Published,Date Read,Exclusive Shelf,Bookshelves,My Review
+      book.t=row['title']||row['titre']||'';
+      book.a=(row['author']||row['author l-f']||'').replace(/,\s*/,' ');
+      const isbn=(row['isbn13']||row['isbn']||'').replace(/[^0-9X=]/g,'');
+      book.c=isbn?'https://covers.openlibrary.org/b/isbn/'+isbn+'-M.jpg':'';
+      const shelf=(row['exclusive shelf']||row['shelf']||'').toLowerCase();
+      book.s=shelf==='currently-reading'?'currently-reading':shelf==='to-read'?'to-read':shelf==='did-not-finish'?'did-not-finish':'read';
+      const rating=parseFloat(row['my rating']||'0');
+      book.r=rating>0?rating.toFixed(1):'';
+      const dateRead=row['date read']||'';
+      book.y=dateRead?dateRead.slice(dateRead.length-4):'';
+      book.g=(row['bookshelves']||'').split(',').map(s=>s.trim()).filter(Boolean).join(', ');
+      book.f='';book.comment=row['my review']||'';
+    } else {
+      // StoryGraph: same format as the user's existing CSV (since they came from StoryGraph)
+      book.t=row['title']||'';
+      book.a=row['authors']||row['author']||'';
+      const isbn=(row['isbn/uid']||row['isbn']||'').replace(/[^0-9X]/g,'');
+      book.c=isbn?'https://covers.openlibrary.org/b/isbn/'+isbn+'-M.jpg':'';
+      const status=(row['read status']||'').toLowerCase();
+      book.s=status.includes('currently')||status.includes('cours')?'currently-reading':status.includes('want')||status.includes('lire')?'to-read':status.includes('did not')||status.includes('abandon')?'did-not-finish':'read';
+      const rating=parseFloat(row['star rating']||row['rating']||'0');
+      book.r=rating>0?rating.toFixed(1):'';
+      book.y=row['date read']?row['date read'].slice(0,4):'';
+      book.g=(row['tags']||row['genres']||'').split(',').map(s=>s.trim()).filter(Boolean).join(', ');
+      book.f='';book.comment=row['review']||'';
+    }
+    if(book.t) books.push(book);
+  }
+  return books;
+}
+
+function showImportPreview(books){
+  const preview=document.getElementById('import-preview');
+  const opts=document.getElementById('import-options');
+  const confirm=document.getElementById('import-confirm');
+  if(!books.length){
+    preview.innerHTML='<span style="color:var(--dnf)">❌ Aucun livre trouvé. Vérifiez le format du fichier.</span>';
+    preview.classList.add('show');opts.style.display='none';confirm.disabled=true;
+    return;
+  }
+  const existing=new Set(BOOKS.map(b=>b.t.toLowerCase()));
+  const dupes=books.filter(b=>existing.has(b.t.toLowerCase())).length;
+  const byStatus={read:0,'to-read':0,'currently-reading':0,'did-not-finish':0};
+  books.forEach(b=>{if(byStatus[b.s]!==undefined)byStatus[b.s]++;});
+  preview.innerHTML='<strong>'+books.length+' livres détectés</strong>'
+    +' · <span style="color:var(--read)">'+byStatus.read+' lus</span>'
+    +' · <span style="color:var(--toread)">'+byStatus['to-read']+' à lire</span>'
+    +(byStatus['currently-reading']?' · <span style="color:var(--reading)">'+byStatus['currently-reading']+' en cours</span>':'')
+    +(dupes?'<br><span style="color:var(--gold)">⚠ '+dupes+' déjà présents dans ta bibliothèque</span>':'');
+  preview.classList.add('show');opts.style.display='flex';confirm.disabled=false;
+}
+
+document.getElementById('import-confirm').addEventListener('click',()=>{
+  if(!importData||!importData.length) return;
+  const skipDupes=document.getElementById('import-skip-dupes').checked;
+  const skipNoRating=document.getElementById('import-skip-no-rating').checked;
+  const existing=new Set(BOOKS.map(b=>b.t.toLowerCase()));
+  let toImport=importData;
+  if(skipDupes) toImport=toImport.filter(b=>!existing.has(b.t.toLowerCase()));
+  if(skipNoRating) toImport=toImport.filter(b=>b.r);
+
+  // Show progress
+  const progress=document.getElementById('import-progress');
+  const fill=document.getElementById('import-progress-fill');
+  progress.classList.add('show');
+  fill.style.width='0%';
+
+  // Add books
+  const custom=loadCustom();
+  let added=0;
+  toImport.forEach((b,i)=>{
+    BOOKS.unshift(b);custom.unshift(b);
+    if(b.comment){const c=loadComments();c[bk(b)]=b.comment;saveComments(c);}
+    added++;
+    fill.style.width=Math.round((i+1)/toImport.length*100)+'%';
+  });
+  saveCustom(custom);
+  buildStats();render();
+  closeImport();
+  showToast('✓ '+added+' livres importés !');
+  addLog('sync-ok','📥 Import '+importSource,''+added+' livres ajoutés');
+  if(getToken()) setTimeout(()=>pushToGitHub(getAllBooksForSync(),'📥 Import '+importSource+': '+added+' livres'),500);
+});
+
 function openNextReadSuggestion(){
   const toRead=BOOKS.filter(b=>b.s==='to-read');
   if(!toRead.length){showToast('Aucun livre dans la liste "À lire" !','warn');return;}
