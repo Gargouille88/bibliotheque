@@ -1034,6 +1034,10 @@ document.getElementById('submit-form').addEventListener('click',()=>{
   const custom=loadCustom();custom.unshift(nb);saveCustom(custom);BOOKS.unshift(nb);
   if(year){const sel=document.getElementById('year-select');if(![...sel.options].some(o=>o.value===year)){const opt=document.createElement('option');opt.value=year;opt.textContent=year;let ins=false;for(let i=1;i<sel.options.length;i++){if(parseInt(sel.options[i].value)>parseInt(year)){sel.insertBefore(opt,sel.options[i]);ins=true;break;}}if(!ins)sel.appendChild(opt);}}
   buildStats();render();closeForm();showToast(`« ${title} » ajouté !`);
+  // Sync GitHub — titre capturé ici, avant que closeForm() vide le formulaire
+  if(getToken()){
+    setTimeout(()=>pushToGitHub(getAllBooksForSync(),'📚 Ajout: '+title), 300);
+  }
 });
 
 // ── EXPORT ──
@@ -1174,16 +1178,6 @@ document.getElementById('setup-confirm').addEventListener('click',async()=>{
   }catch(e){
     showSyncBar('Erreur : '+e.message,'error');
   }
-});
-
-// Sync on book add — title captured BEFORE form reset
-document.getElementById('submit-form').addEventListener('click',()=>{
-  if(!getToken()) return;
-  const title=document.getElementById('f-title').value.trim(); // capture avant resetForm()
-  if(!title) return;
-  setTimeout(async()=>{
-    await pushToGitHub(getAllBooksForSync(),'📚 Ajout: '+title);
-  },500);
 });
 
 buildStats();render();updateSyncBtn();
