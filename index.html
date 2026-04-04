@@ -1659,26 +1659,14 @@ function buildFavorites(mode){
 
 function buildCurrent(){
   const cur=BOOKS.filter(b=>b.s==='currently-reading');
-  document.getElementById('current-sub').textContent=cur.length+' livre'+(cur.length>1?'s':'')+' en cours';
-  const cards=document.getElementById('current-cards');cards.innerHTML='';
+  const sub=document.getElementById('current-sub');
+  if(sub) sub.textContent=cur.length+' livre'+(cur.length>1?'s':'')+' en cours';
+  const cards=document.getElementById('current-cards');
+  if(!cards) return;
+  cards.innerHTML='';
+  cards.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:1.2rem;padding:1.5rem 2rem;max-width:1500px;margin:0 auto';
   if(!cur.length){cards.innerHTML='<p class="empty-state">Aucun livre en cours.</p>';return;}
-  cur.forEach(b=>{
-    const card=document.createElement('div');card.className='current-card';card.tabIndex=0;
-    const covDiv=document.createElement('div');covDiv.className='cur-cover cover-wrap';covDiv.appendChild(makeCover(b));
-    const info=document.createElement('div');info.className='cur-info';
-    const genres=b.g?b.g.split(',').map(g=>g.trim()).filter(Boolean):[];
-    const cp=getProgress(b);
-    const cpPct=cp?(cp.pct!=null?cp.pct:(cp.pages_read&&cp.total_pages?Math.round(cp.pages_read/cp.total_pages*100):null)):null;
-    info.innerHTML='<div class="cur-title">'+b.t+'</div><div class="cur-author">'+(b.a||'')+'</div>'
-      +genres.map(g=>'<span class="cur-tag">'+g+'</span>').join(' ')
-      +(b.r?'<div class="card-rating" style="margin-top:0.4rem">'+stars(b.r)+'</div>':'')
-      const cpPages=getBookPages(b);
-    +(cpPages?'<div style="font-size:0.7rem;color:var(--ink3);margin-top:0.3rem">'+cpPages+' pages'+(cp&&cp.pages_read?' — '+cp.pages_read+' lues':'')+' </div>':'')
-    +(cpPct!=null?'<div class="progress-wrap" style="margin-top:0.5rem"><div class="progress-lbl"><span>Progression</span><strong>'+cpPct+'%</strong></div><div class="progress-bar-bg"><div class="progress-bar-fill" style="width:'+cpPct+'%"></div></div>'+(cp.pages_read&&cp.total_pages?'<div style="font-size:0.65rem;color:var(--ink3);margin-top:0.2rem">'+cp.pages_read+' / '+cp.total_pages+' pages</div>':'')+'</div>':'');
-    card.appendChild(covDiv);card.appendChild(info);
-    card.addEventListener('click',()=>openModal(b));
-    cards.appendChild(card);
-  });
+  cur.forEach(b=>cards.appendChild(makeCard(b,false)));
 }
 
 function buildStatsPage(statsYear){
