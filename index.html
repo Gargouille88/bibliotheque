@@ -459,14 +459,14 @@ header h1 em{font-style:normal;border-bottom:3px solid var(--accent);padding-bot
 .work-dupe-meta{font-size:0.65rem;color:var(--ink3);margin-top:2px}
 .work-dupe-del{padding:0.18rem 0.5rem;border:1px solid var(--dnf);border-radius:2px;background:transparent;font-family:'DM Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;color:var(--dnf);transition:all var(--transition);margin-top:0.35rem;display:block}
 .work-dupe-del:hover{background:var(--dnf);color:#fff}
-footer#app-footer{background:var(--ink);padding:1.2rem 2rem;margin-top:3rem}
-.footer-inner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.8rem}
-.footer-tagline{font-family:'EB Garamond',serif;font-size:0.85rem;color:rgba(255,255,255,0.25);letter-spacing:0.1em;text-transform:uppercase}
-.footer-links{display:flex;align-items:center;gap:0.6rem}
-.footer-link{background:none;border:none;font-family:'DM Sans',sans-serif;font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.45);cursor:pointer;padding:0.3rem 0.6rem;border-radius:2px;transition:all var(--transition)}
-.footer-link:hover{color:#fff;background:rgba(255,255,255,0.08)}
-.footer-link.active{color:var(--bg);background:var(--accent)}
-.footer-sep{color:rgba(255,255,255,0.15);font-size:0.7rem}
+
+
+
+
+
+
+
+
 .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--ink);color:var(--bg);padding:0.55rem 1.1rem;border-radius:2px;font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;z-index:2000;opacity:0;transform:translateY(8px);transition:opacity 0.2s,transform 0.2s;pointer-events:none}
 .toast.show{opacity:1;transform:translateY(0)}.toast.warn{background:var(--lent)}.toast.danger{background:#b91c1c}
 @media(max-width:600px){
@@ -584,6 +584,8 @@ footer#app-footer{background:var(--ink);padding:1.2rem 2rem;margin-top:3rem}
         <button class="action-btn" id="more-menu-btn" title="Plus d'actions">··· Plus</button>
         <div class="more-menu" id="more-menu" style="display:none">
           <button class="more-menu-item" id="import-btn">⬆ Importer</button>
+          <button class="more-menu-item" id="journal-btn">📋 Journal</button>
+          <button class="more-menu-item" id="travail-btn">✦ Travail</button>
           <button class="more-menu-item" id="batch-covers-btn">🖼 Couvertures manquantes</button>
           <button class="more-menu-item" id="export-btn">↓ Exporter CSV</button>
         </div>
@@ -936,21 +938,6 @@ updateLastUpdateDisplay();
 
 // NAV
 // Footer links for Journal & Travail
-document.querySelectorAll('.footer-link[data-page]').forEach(link=>{
-  link.addEventListener('click',()=>{
-    const page=link.dataset.page;
-    // Deactivate nav tabs
-    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.querySelectorAll('.footer-link').forEach(l=>l.classList.remove('active'));
-    document.querySelectorAll('.footer-link').forEach(l=>l.classList.remove('active'));
-    // Activate page
-    document.getElementById('page-'+page)?.classList.add('active');
-    link.classList.add('active');
-    if(page==='log') buildLog();
-    if(page==='work') buildWork();
-    // Scroll to top
-    window.scrollTo({top:0,behavior:'smooth'});
   });
 });
 
@@ -1006,6 +993,22 @@ moreBtn.addEventListener('click',e=>{
 document.addEventListener('click',()=>moreMenu.style.display='none');
 
 document.getElementById('import-btn').addEventListener('click',openImport);
+document.getElementById('journal-btn').addEventListener('click',()=>{
+  moreMenu.style.display='none';
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-log')?.classList.add('active');
+  buildLog();
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+document.getElementById('travail-btn').addEventListener('click',()=>{
+  moreMenu.style.display='none';
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-work')?.classList.add('active');
+  buildWork();
+  window.scrollTo({top:0,behavior:'smooth'});
+});
 document.getElementById('import-close').addEventListener('click',closeImport);
 document.getElementById('import-cancel').addEventListener('click',closeImport);
 document.getElementById('import-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeImport();});
@@ -2849,15 +2852,6 @@ document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible') checkForUpdates();
 });
 </script>
-<footer id="app-footer">
-  <div class="footer-inner">
-    <span class="footer-tagline">Bibliothèque</span>
-    <div class="footer-links">
-      <button class="footer-link" data-page="log">Journal d'activité</button>
-      <span class="footer-sep">·</span>
-      <button class="footer-link" data-page="work">✦ Travail</button>
-    </div>
-  </div>
-</footer>
+
 </body>
 </html>
