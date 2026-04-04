@@ -1842,6 +1842,42 @@ function buildStatsPage(){
   });
   wrap.appendChild(kGrid);
 
+  if(toRead.length){
+    const posOwned=toRead.filter(b=>b.own===true).length;
+    const posBuy=toRead.length-posOwned;
+    const pct=n=>((n/toRead.length)*100).toFixed(1);
+    const posSec=document.createElement('div');
+    posSec.style.cssText='margin-bottom:2.5rem;padding:1rem 1.2rem;border:1px solid var(--line);border-radius:2px;display:flex;align-items:center;flex-wrap:wrap;gap:1.5rem';
+    const posTitle=document.createElement('div');
+    posTitle.style.cssText='font-size:0.68rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--ink3);font-weight:600;white-space:nowrap';
+    posTitle.textContent='Livres à lire';
+    const barWrap=document.createElement('div');
+    barWrap.style.cssText='flex:1;min-width:200px';
+    const bar=document.createElement('div');
+    bar.style.cssText='height:10px;border-radius:3px;overflow:hidden;background:var(--surface2);display:flex;margin-bottom:0.5rem';
+    const oBar=document.createElement('div');
+    oBar.style.cssText='height:100%;background:#16a34a;width:'+pct(posOwned)+'%';
+    const bBar=document.createElement('div');
+    bBar.style.cssText='height:100%;background:#e05c2a;width:'+pct(posBuy)+'%';
+    bar.appendChild(oBar);bar.appendChild(bBar);barWrap.appendChild(bar);
+    const leg=document.createElement('div');
+    leg.style.cssText='display:flex;gap:1.2rem;font-size:0.72rem;flex-wrap:wrap';
+    const mkLegItem=(icon,label,n,c)=>{const s=document.createElement('span');s.style.cssText='display:flex;align-items:center;gap:0.3rem';s.innerHTML='<span style="width:9px;height:9px;border-radius:1px;background:'+c+';display:inline-block;flex-shrink:0"></span><span style="color:var(--ink2)">'+icon+' '+label+'</span><strong style="color:var(--ink)">'+n+'</strong><span style="color:var(--ink3)">('+pct(n)+'%)</span>';return s;};
+    leg.appendChild(mkLegItem('📦','Possédés',posOwned,'#16a34a'));
+    leg.appendChild(mkLegItem('🛒','À acheter',posBuy,'#e05c2a'));
+    barWrap.appendChild(leg);
+    const posKpis=document.createElement('div');
+    posKpis.style.cssText='display:flex;gap:1.5rem;flex-shrink:0';
+    [{l:'Total à lire',v:toRead.length},{l:'Possédés',v:posOwned},{l:'À acheter',v:posBuy}].forEach(function(o){
+      const k=document.createElement('div');k.style.cssText='text-align:center';
+      const vEl=document.createElement('div');vEl.style.cssText='font-size:1.7rem;font-weight:400;color:var(--ink);line-height:1;font-family:Georgia,serif';vEl.textContent=o.v;
+      const lEl=document.createElement('div');lEl.style.cssText='font-size:0.58rem;text-transform:uppercase;letter-spacing:0.09em;color:var(--ink3);margin-top:0.15rem';lEl.textContent=o.l;
+      k.appendChild(vEl);k.appendChild(lEl);posKpis.appendChild(k);
+    });
+    posSec.appendChild(posTitle);posSec.appendChild(barWrap);posSec.appendChild(posKpis);
+    wrap.appendChild(posSec);
+  }
+
   // ── 2. Bar chart: livres par année ───────────────────────────────────────
   if(years.length>1){
     const sec=document.createElement('div');sec.style.cssText='margin-bottom:2.5rem';
