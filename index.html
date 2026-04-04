@@ -109,6 +109,9 @@ header h1 em{font-style:normal;border-bottom:3px solid var(--accent);padding-bot
 .pl-title{font-family:'EB Garamond',serif;font-size:0.66rem;color:var(--ink);line-height:1.25;margin-bottom:0.2rem;word-break:break-word}
 .pl-author{font-size:0.57rem;color:var(--ink3);word-break:break-word;line-height:1.2}
 .status-dot{position:absolute;top:4px;right:4px;width:5px;height:5px;border-radius:0;border:1px solid rgba(255,255,255,0.7)}
+.cover-progress-overlay{position:absolute;bottom:0;left:0;right:0;height:4px;background:rgba(0,0,0,0.25)}
+.cover-progress-fill{height:100%;background:var(--accent);transition:width 0.3s}
+.cover-progress-pct{position:absolute;bottom:6px;right:5px;background:rgba(0,0,0,0.65);color:#fff;font-size:0.48rem;padding:1px 4px;border-radius:1px;letter-spacing:0.04em;font-family:'DM Sans',sans-serif;font-weight:500}
 .coup-badge{position:absolute;top:0;left:0;background:var(--accent);color:#fff;font-size:0.5rem;padding:2px 5px;border-radius:0;line-height:1.5;letter-spacing:0.06em;font-weight:600;text-transform:uppercase}
 .lent-badge{position:absolute;bottom:0;left:0;right:0;background:rgba(109,40,217,0.88);color:#fff;font-size:0.57rem;text-align:center;padding:3px 0;letter-spacing:0.04em}
 .sd-read{background:var(--read)}.sd-to-read{background:var(--toread)}.sd-did-not-finish{background:var(--dnf)}.sd-currently-reading{background:var(--reading)}
@@ -456,6 +459,14 @@ header h1 em{font-style:normal;border-bottom:3px solid var(--accent);padding-bot
 .work-dupe-meta{font-size:0.65rem;color:var(--ink3);margin-top:2px}
 .work-dupe-del{padding:0.18rem 0.5rem;border:1px solid var(--dnf);border-radius:2px;background:transparent;font-family:'DM Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;color:var(--dnf);transition:all var(--transition);margin-top:0.35rem;display:block}
 .work-dupe-del:hover{background:var(--dnf);color:#fff}
+footer#app-footer{background:var(--ink);padding:1.2rem 2rem;margin-top:3rem}
+.footer-inner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.8rem}
+.footer-tagline{font-family:'EB Garamond',serif;font-size:0.85rem;color:rgba(255,255,255,0.25);letter-spacing:0.1em;text-transform:uppercase}
+.footer-links{display:flex;align-items:center;gap:0.6rem}
+.footer-link{background:none;border:none;font-family:'DM Sans',sans-serif;font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.45);cursor:pointer;padding:0.3rem 0.6rem;border-radius:2px;transition:all var(--transition)}
+.footer-link:hover{color:#fff;background:rgba(255,255,255,0.08)}
+.footer-link.active{color:var(--bg);background:var(--accent)}
+.footer-sep{color:rgba(255,255,255,0.15);font-size:0.7rem}
 .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--ink);color:var(--bg);padding:0.55rem 1.1rem;border-radius:2px;font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;z-index:2000;opacity:0;transform:translateY(8px);transition:opacity 0.2s,transform 0.2s;pointer-events:none}
 .toast.show{opacity:1;transform:translateY(0)}.toast.warn{background:var(--lent)}.toast.danger{background:#b91c1c}
 @media(max-width:600px){
@@ -499,8 +510,6 @@ header h1 em{font-style:normal;border-bottom:3px solid var(--accent);padding-bot
   <button class="nav-tab" data-page="current">En cours</button>
   <button class="nav-tab" data-page="favorites">Coups de cœur</button>
   <button class="nav-tab" data-page="stats">Statistiques</button>
-  <button class="nav-tab" data-page="log">Journal</button>
-  <button class="nav-tab" data-page="work">✦ Travail</button>
 </nav>
 <div class="stats-bar" id="stats-bar"></div>
 <div class="page active" id="page-library">
@@ -538,6 +547,7 @@ header h1 em{font-style:normal;border-bottom:3px solid var(--accent);padding-bot
         <button class="filter-btn f-reading" data-filter="currently-reading">En cours</button>
         <button class="filter-btn f-dnf" data-filter="did-not-finish">Abandonnés</button>
         <button class="filter-btn" data-filter="priority" id="filter-priority">⚡ Bientôt</button>
+        <button class="filter-btn" data-filter="lent" id="filter-lent">📖 Prêtés</button>
         <div class="ctrl-sep"></div>
         <select id="year-select"><option value="">Toutes les années</option>        <option value="2014">2014</option>
         <option value="2015">2015</option>
@@ -590,7 +600,13 @@ header h1 em{font-style:normal;border-bottom:3px solid var(--accent);padding-bot
   <div class="current-cards" id="current-cards"></div>
 </div>
 <div class="page" id="page-favorites">
-  <div class="page-header"><h2>Coups de cœur</h2><p id="coup-sub"></p></div>
+  <div class="page-header" style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:0.5rem">
+    <div><h2>Coups de cœur</h2><p id="coup-sub"></p></div>
+    <div style="display:flex;gap:0.3rem">
+      <button class="filter-btn active" id="fav-mode-manual">♥ Mes favoris</button>
+      <button class="filter-btn" id="fav-mode-stars">★ 5 étoiles</button>
+    </div>
+  </div>
   <div class="fav-grid" id="grid-favorites"></div>
 </div>
 <div class="page" id="page-stats">
@@ -919,14 +935,38 @@ function updateLastUpdateDisplay(){
 updateLastUpdateDisplay();
 
 // NAV
+// Footer links for Journal & Travail
+document.querySelectorAll('.footer-link[data-page]').forEach(link=>{
+  link.addEventListener('click',()=>{
+    const page=link.dataset.page;
+    // Deactivate nav tabs
+    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.footer-link').forEach(l=>l.classList.remove('active'));
+    document.querySelectorAll('.footer-link').forEach(l=>l.classList.remove('active'));
+    // Activate page
+    document.getElementById('page-'+page)?.classList.add('active');
+    link.classList.add('active');
+    if(page==='log') buildLog();
+    if(page==='work') buildWork();
+    // Scroll to top
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+});
+
 document.querySelectorAll('.nav-tab').forEach(tab=>{
   tab.addEventListener('click',()=>{
     document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.footer-link').forEach(l=>l.classList.remove('active'));
     tab.classList.add('active');
     document.getElementById('page-'+tab.dataset.page).classList.add('active');
     if(tab.dataset.page==='stats') buildStatsPage();
-    if(tab.dataset.page==='favorites') buildFavorites();
+    if(tab.dataset.page==='favorites'){
+      buildFavorites();
+      document.getElementById('fav-mode-manual')?.addEventListener('click',()=>buildFavorites('manual'));
+      document.getElementById('fav-mode-stars')?.addEventListener('click',()=>buildFavorites('stars'));
+    }
     if(tab.dataset.page==='current') buildCurrent();
     if(tab.dataset.page==='log') buildLog();
     if(tab.dataset.page==='work') buildWork();
@@ -1499,6 +1539,26 @@ function makeCard(book,showCoup){
   const wrap=document.createElement('div');wrap.className='cover-wrap';wrap.appendChild(makeCover(book));
   const dot=document.createElement('div');dot.className='status-dot sd-'+book.s;wrap.appendChild(dot);
   if(showCoup&&isCoup){const cb=document.createElement('div');cb.className='coup-badge';cb.textContent='★ 5';wrap.appendChild(cb);}
+  // Progress overlay on cover for currently-reading
+  if(book.s==='currently-reading'){
+    const cp=getProgress(book);
+    let pct=null;
+    if(cp){
+      if(cp.pct!=null) pct=cp.pct;
+      else if(cp.pages_read&&cp.total_pages) pct=Math.round(cp.pages_read/cp.total_pages*100);
+    }
+    if(pct!=null){
+      const overlay=document.createElement('div');overlay.className='cover-progress-overlay';
+      const fill=document.createElement('div');fill.className='cover-progress-fill';
+      fill.style.width=pct+'%';
+      overlay.appendChild(fill);
+      wrap.appendChild(overlay);
+      const lbl=document.createElement('div');lbl.className='cover-progress-pct';
+      lbl.textContent=pct+'%';
+      wrap.appendChild(lbl);
+    }
+  }
+
   if(isLent){const lb=document.createElement('div');lb.className='lent-badge';const n=lent[bk(book)];lb.textContent=n?'prêté à '+n:'prêté';wrap.appendChild(lb);}
   if(isPriority(book)){const pb=document.createElement('div');pb.className='priority-badge';pb.textContent='⚡';wrap.appendChild(pb);}
   if(isFavorite(book)){const fb=document.createElement('div');fb.className='fav-badge';fb.textContent='♥';wrap.appendChild(fb);}
@@ -1539,8 +1599,11 @@ function render(){
   const advMax=parseFloat(document.getElementById('adv-rate-max')?.value||5);
   const advFormat=document.getElementById('adv-format')?.value||'';
   const visible=BOOKS.filter(b=>{
-    const mF=currentFilter==='all'||
-      (currentFilter==='priority'?isPriority(b):b.s===currentFilter);
+    const lentBooks=loadLent();
+    const mF=currentFilter==='all'
+      ||(currentFilter==='priority'?isPriority(b)
+      :(currentFilter==='lent'?!!lentBooks[bk(b)]
+      :b.s===currentFilter));
     const mY=!currentYear||b.y===currentYear;
     const mT=!currentTag||b.g.toLowerCase().includes(currentTag.toLowerCase());
     const mR=!b.r?true:(parseFloat(b.r)>=advMin&&parseFloat(b.r)<=advMax);
@@ -1569,14 +1632,28 @@ function render(){
   sorted.forEach(b=>grid.appendChild(makeCard(b,true)));
 }
 
-function buildFavorites(){
+function buildFavorites(mode){
+  if(!mode) mode=window._favMode||'manual';
+  window._favMode=mode;
+  // Update toggle buttons
+  document.getElementById('fav-mode-manual')?.classList.toggle('active', mode==='manual');
+  document.getElementById('fav-mode-stars')?.classList.toggle('active', mode==='stars');
   const manualFavs=loadFavorites();
-  const hasManuaFavs=Object.keys(manualFavs).length>0;
-  const favs=hasManuaFavs
-    ? BOOKS.filter(b=>!!manualFavs[bk(b)])
-    : BOOKS.filter(b=>parseFloat(b.r)===5);
-  document.getElementById('coup-sub').textContent=favs.length+' livre'+(favs.length>1?'s':'')+' '+(hasManuaFavs?'marqués comme coup de cœur':'notés 5 étoiles');
-  const grid=document.getElementById('grid-favorites');grid.innerHTML='';
+  const favs=mode==='stars'
+    ? BOOKS.filter(b=>parseFloat(b.r)===5)
+    : BOOKS.filter(b=>!!manualFavs[bk(b)]);
+  const label=mode==='stars'
+    ? favs.length+' livre'+(favs.length>1?'s':'')+' notés 5 étoiles'
+    : favs.length+' livre'+(favs.length>1?'s':'')+' marqués comme coup de cœur';
+  const sub=document.getElementById('coup-sub');
+  if(sub) sub.textContent=label;
+  const grid=document.getElementById('grid-favorites');
+  if(!grid) return;
+  grid.innerHTML='';
+  if(!favs.length){
+    grid.innerHTML='<p class="empty-state">'+(mode==='manual'?'Aucun coup de c&#x0153;ur — ouvre la fiche et clique sur ♥':'Aucun livre noté 5 étoiles')+'</p>';
+    return;
+  }
   favs.forEach(b=>grid.appendChild(makeCard(b,false)));
 }
 
