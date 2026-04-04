@@ -1900,12 +1900,12 @@ function buildStatsPage(){
     const readThisYear=read.filter(b=>b.y==CY).length;
     const goal=parseInt(localStorage.getItem('biblio_annual_goal')||'0');
     const pct=goal?Math.min(100,Math.round((readThisYear/goal)*100)):0;
-    const totalPg=read.filter(b=>b.pages&&parseInt(b.pages)>0).reduce((s,b)=>s+parseInt(b.pages),0);
+    const totalPg=read.reduce((s,b)=>s+getBookPages(b),0);
 
     // Pages par année
     const pgByYear={};
-    read.filter(b=>b.y&&b.pages&&parseInt(b.pages)>0).forEach(b=>{
-      pgByYear[b.y]=(pgByYear[b.y]||0)+parseInt(b.pages);
+    read.filter(b=>b.y&&getBookPages(b)>0).forEach(b=>{
+      pgByYear[b.y]=(pgByYear[b.y]||0)+getBookPages(b);
     });
     const pgYears=Object.keys(pgByYear).sort();
     const maxPg=pgYears.length?Math.max(...Object.values(pgByYear)):1;
@@ -1981,7 +1981,7 @@ function buildStatsPage(){
     // KPIs pages
     const pgKpis=document.createElement('div');
     pgKpis.style.cssText='display:flex;gap:1.5rem;margin-bottom:0.8rem';
-    [{l:'Total',v:totalPg.toLocaleString('fr-FR')},{l:'Cette année',v:(pgByYear[CY]||0).toLocaleString('fr-FR')},{l:'Livres avec pages',v:read.filter(b=>b.pages&&parseInt(b.pages)>0).length}].forEach(function(o){
+    [{l:'Total',v:totalPg.toLocaleString('fr-FR')},{l:'Cette année',v:(pgByYear[CY]||0).toLocaleString('fr-FR')},{l:'Livres avec pages',v:read.filter(b=>getBookPages(b)>0).length}].forEach(function(o){
       const k=document.createElement('div');k.style.textAlign='center';
       const vEl=document.createElement('div');vEl.style.cssText='font-size:1.5rem;font-weight:400;color:var(--ink);line-height:1;font-family:Georgia,serif';vEl.textContent=o.v;
       const lEl=document.createElement('div');lEl.style.cssText='font-size:0.58rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink3);margin-top:0.15rem';lEl.textContent=o.l;
