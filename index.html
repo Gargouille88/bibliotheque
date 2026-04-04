@@ -1238,41 +1238,55 @@ document.getElementById('import-confirm').addEventListener('click',()=>{
 
 function openNextReadSuggestion(){
   const toRead=BOOKS.filter(b=>b.s==='to-read');
-  if(!toRead.length){showToast('Aucun livre dans la liste "À lire" !','warn');return;}
-  // Filter by current tag/year if active, else all to-read
-  let pool=toRead;
-  if(currentTag) pool=pool.filter(b=>b.g&&b.g.toLowerCase().includes(currentTag.toLowerCase()));
-  if(!pool.length) pool=toRead;
-  let book=pool[Math.floor(Math.random()*pool.length)];
+  if(!toRead.length){showToast('Aucun livre dans la liste à lire !','warn');return;}
+  const owned=toRead.filter(b=>b.own===true);
+  const tobuy=toRead.filter(b=>!b.own);
 
-  document.getElementById('suggestion-overlay')?.remove();
-  const overlay=document.createElement('div');overlay.id='suggestion-overlay';overlay.className='suggestion-popup';
-  const covUrl=getCachedCover(book)||book.c||'';
-  const genres=book.g?book.g.split(',').map(g=>g.trim()).filter(Boolean):[];
-  overlay.innerHTML=`<div class="suggestion-box">
-    <div class="suggestion-box-header">
-      <h3>🎲 Que lire ensuite ?</h3>
-      <p>Tirage au hasard parmi ${pool.length} livre${pool.length>1?'s':''} à lire${currentTag?' ('+currentTag+')':''}</p>
-    </div>
-    <div class="suggestion-book">
-      <img class="suggestion-book-cover" src="${covUrl}" alt="" onerror="this.style.opacity=0.2">
-      <div class="suggestion-book-info">
-        <div class="suggestion-book-title">${book.t}</div>
-        <div class="suggestion-book-author">${book.a||''}</div>
-        <div class="suggestion-book-tags">${genres.map(g=>'<span class="tag tag-genre">'+g+'</span>').join('')}</div>
-      </div>
-    </div>
-    <div class="suggestion-box-footer">
-      <button class="btn-cancel" id="sug-close">Fermer</button>
-      <button class="action-btn" id="sug-reroll">🎲 Autre</button>
-      <button class="btn-submit" id="sug-open">Voir la fiche</button>
-    </div>
-  </div>`;
-  document.body.appendChild(overlay);
-  overlay.querySelector('#sug-close').addEventListener('click',()=>overlay.remove());
-  overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
-  overlay.querySelector('#sug-reroll').addEventListener('click',()=>{overlay.remove();openNextReadSuggestion();});
-  overlay.querySelector('#sug-open').addEventListener('click',()=>{overlay.remove();openModal(book);});
+  // Demander la source si les deux options existent
+  if(owned.length&&tobuy.length){
+    // Supprimer ancien popup si existe
+    document.getElementById('next-read-popup')?.remove();
+    const pop=document.createElement('div');
+    pop.id='next-read-popup';
+    pop.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg);border:2px solid var(--ink);border-radius:4px;padding:1.5rem 2rem;z-index:9999;box-shadow:4px 4px 0 var(--ink);min-width:280px;text-align:center';
+    pop.innerHTML='<div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);margin-bottom:1rem">Choisir parmi :</div>';
+    const mkBtn=(label,pool)=>{
+      const btn=document.createElement('button');
+      btn.className='btn-submit';
+      btn.textContent=label;
+      btn.style.cssText='display:block;width:100%;margin-bottom:0.6rem;font-size:0.8rem;padding:0.5rem 1rem';
+      btn.addEventListener('click',()=>{pop.remove();overlay.remove();_suggest(pool);});
+      return btn;
+    };
+    const overlay=document.createElement('div');
+    overlay.style.cssText='position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.3)';
+    overlay.addEventListener('click',()=>{pop.remove();overlay.remove();});
+    pop.appendChild(mkBtn('📦 Mes livres possédés ('+owned.length+')',owned));
+    pop.appendChild(mkBtn('🛒 À acheter ('+tobuy.length+')',tobuy));
+    pop.appendChild(mkBtn('🎲 Tous les deux ('+toRead.length+')',toRead));
+    const cancel=document.createElement('button');
+    cancel.textContent='Annuler';
+    cancel.className='action-btn';
+    cancel.style.cssText='display:block;width:100%;margin-top:0.2rem;font-size:0.75rem';
+    cancel.addEventListener('click',()=>{pop.remove();overlay.remove();});
+    pop.appendChild(cancel);
+    document.body.appendChild(overlay);
+    document.body.appendChild(pop);
+  } else {
+    // Une seule catégorie disponible — lancer directement
+    _suggest(owned.length?owned:tobuy.length?tobuy:toRead);
+  }
+}
+function _suggest(pool){
+  if(!pool.length){showToast('Aucun livre dans cette catégorie !','warn');return;}
+  // Keep existing suggestion logic: filter by tag/year if active
+  let p=pool;
+  if(currentTag) p=p.filter(b=>(b.g||'').toLowerCase().includes(currentTag.toLowerCase()));
+  if(!p.length) p=pool;
+  if(currentYear) p=p.filter(b=>!b.y||b.y===currentYear.toString());
+  if(!p.length) p=pool;
+  const book=p[Math.floor(Math.random()*p.length)];
+  openModal(book);
 }
 
 function buildWork(){
