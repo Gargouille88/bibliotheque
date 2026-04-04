@@ -607,6 +607,8 @@ body.view-mode::after{content:'Mode lecture';position:fixed;bottom:0.8rem;right:
         <option value="title-desc">Titre Z→A</option>
         <option value="pages-desc">Pages ↓</option>
       <option value="pub-asc">Éditeur A→Z</option>
+      <option value="pubyear-asc">Publication ↑</option>
+      <option value="pubyear-desc">Publication ↓</option>
       </select>
       </div>
     </div>
@@ -1775,6 +1777,8 @@ function render(){
   else if(currentSort==='added-desc') sorted.sort((a,b)=>(b._custom?1:0)-(a._custom?1:0));
   else if(currentSort==='pages-desc') sorted.sort((a,b)=>(getBookPages(b)||0)-(getBookPages(a)||0));
   else if(currentSort==='pub-asc') sorted.sort((a,b)=>(a.pub||'zzz').localeCompare(b.pub||'zzz'));
+  else if(currentSort==='pubyear-asc') sorted.sort((a,b)=>(a.pubYear||9999)-(b.pubYear||9999));
+  else if(currentSort==='pubyear-desc') sorted.sort((a,b)=>(b.pubYear||0)-(a.pubYear||0));
   const grid=document.getElementById('grid');
   grid.className=currentView==='list'?'list-view':'';
   grid.innerHTML='';
@@ -2262,6 +2266,38 @@ function buildStatsPage(){
     wrap.appendChild(pubSec);
   }
   page.appendChild(wrap);
+
+  // Frise chronologique injected below after page.appendChild
+  (function(){
+    var withYear=BOOKS.filter(function(b){return b.pubYear&&b.pubYear>0;});
+    if(!withYear.length)return;
+    var byCentury={};
+    withYear.forEach(function(b){var c=Math.ceil(b.pubYear/100);if(!byCentury[c])byCentury[c]=[];byCentury[c].push(b);});
+    var centuries=Object.keys(byCentury).map(Number).sort(function(a,b){return a-b;});
+    var maxC=Math.max.apply(null,centuries.map(function(c){return byCentury[c].length;}));
+    var cLabel=function(c){var rm={1:'Iᵉʳ',2:'IIᵉ',3:'IIIᵉ',4:'IVᵉ',5:'Vᵉ',6:'VIᵉ',7:'VIIᵉ',8:'VIIIᵉ',9:'IXᵉ',10:'Xᵉ',11:'XIᵉ',12:'XIIᵉ',13:'XIIIᵉ',14:'XIVᵉ',15:'XVᵉ',16:'XVIᵉ',17:'XVIIᵉ',18:'XVIIIᵉ',19:'XIXᵉ',20:'XXᵉ',21:'XXIᵉ'};return (rm[c]||c+'e')+' s.';};
+    var friSec=document.createElement('div');friSec.style.cssText='margin-top:2rem;margin-bottom:1rem';
+    var friH=document.createElement('h3');friH.textContent='Frise chronologique — '+withYear.length+' livres datés';
+    friH.style.cssText='font-size:0.8rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);font-weight:600;margin-bottom:1rem;border-top:3px solid var(--ink);padding-top:0.8rem';
+    friSec.appendChild(friH);
+    var list=document.createElement('div');list.style.cssText='display:flex;flex-direction:column;gap:0.35rem';
+    centuries.forEach(function(c){
+      var books=byCentury[c];var n=books.length;
+      var pct=((n/maxC)*100).toFixed(1);
+      var yearMin=Math.min.apply(null,books.map(function(b){return b.pubYear;}));
+      var yearMax=Math.max.apply(null,books.map(function(b){return b.pubYear;}));
+      var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:0.6rem;cursor:default';
+      row.addEventListener('mouseenter',function(e){showTip(e,'<strong>'+cLabel(c)+'</strong><br>'+n+' livre'+(n>1?'s':'')+' — de '+yearMin+' à '+yearMax);});
+      row.addEventListener('mousemove',moveTip);row.addEventListener('mouseleave',hideTip);
+      var lbl=document.createElement('div');lbl.style.cssText='width:68px;font-size:0.7rem;color:var(--ink3);text-align:right;flex-shrink:0';lbl.textContent=cLabel(c);
+      var barWrap=document.createElement('div');barWrap.style.cssText='flex:1;position:relative;height:20px';
+      var bar=document.createElement('div');bar.style.cssText='height:100%;width:'+pct+'%;background:var(--ink);opacity:0.15;border-radius:1px';
+      var cnt=document.createElement('span');cnt.style.cssText='position:absolute;top:50%;left:6px;transform:translateY(-50%);font-size:0.72rem;color:var(--ink2)';cnt.textContent=n+' livre'+(n>1?'s':'');
+      barWrap.appendChild(bar);barWrap.appendChild(cnt);row.appendChild(lbl);row.appendChild(barWrap);list.appendChild(row);
+    });
+    friSec.appendChild(list);
+    page.querySelector('div')?.appendChild(friSec)||page.appendChild(friSec);
+  })();
 }
 
 async function fetchPublisher(book){
@@ -2291,6 +2327,40 @@ async function fetchPublisher(book){
     }catch(e){}
   }
   return pub||null;
+}
+
+async function fetchPubYear(book){
+  const isbn=book.c?.match(/isbn\/(\d+)/)?.[1];
+  let orig=null,edition=null;
+  // OL search → first_publish_year (date originale)
+  try{
+    const q=isbn?'isbn='+isbn:'title='+encodeURIComponent(book.t.slice(0,30))+'&author='+encodeURIComponent((book.a||'').split(',')[0].trim());
+    const r=await fetch('https://openlibrary.org/search.json?'+q+'&limit=1&fields=first_publish_year');
+    const d=await r.json();
+    const y=d.docs?.[0]?.first_publish_year;
+    if(y&&y>0) orig=y;
+  }catch(e){}
+  // OL by ISBN → publish_date (édition spécifique)
+  if(!orig&&isbn){
+    try{
+      const r=await fetch('https://openlibrary.org/api/books?bibkeys=ISBN:'+isbn+'&jscmd=data&format=json');
+      const d=await r.json();
+      const info=d['ISBN:'+isbn];
+      const pub=info?.publish_date;
+      if(pub){const y=pub.match(/\d{4}/)?.[0];if(y)edition=parseInt(y);}
+    }catch(e){}
+  }
+  // Google Books fallback
+  if(!orig&&!edition){
+    try{
+      const q=isbn?'isbn:'+isbn:'intitle:'+encodeURIComponent(book.t.slice(0,25));
+      const r=await fetch('https://www.googleapis.com/books/v1/volumes?q='+q+'&maxResults=1');
+      const d=await r.json();
+      const y=d.items?.[0]?.volumeInfo?.publishedDate?.slice(0,4);
+      if(y)edition=parseInt(y);
+    }catch(e){}
+  }
+  return orig||edition||null;
 }
 function openModal(book){
   const isViewMode=document.body.classList.contains('view-mode');
@@ -2436,6 +2506,33 @@ function openModal(book){
     ownRow.appendChild(ownToggle);
     document.querySelector('#modal-overlay .modal-status-row')?.parentNode?.appendChild(ownRow);
   }
+
+  // Publication year field
+  (function(){
+    const pyRow=document.createElement('div');
+    pyRow.className='modal-status-row';pyRow.style.marginTop='0.3rem';
+    const pyLbl=document.createElement('span');pyLbl.className='modal-status-lbl';pyLbl.textContent='Publication originale';
+    const pyInp=document.createElement('input');
+    pyInp.id='modal-pubyear-input';pyInp.type='number';pyInp.min='1000';pyInp.max='2030';
+    pyInp.value=book.pubYear||'';pyInp.placeholder=book.pubYear?'':'…';
+    pyInp.style.cssText='width:90px;padding:0.22rem 0.45rem;border:1px solid var(--line);border-radius:2px;background:var(--bg);font-family:DM Sans,sans-serif;font-size:0.78rem;color:var(--ink);outline:none';
+    const pySave=document.createElement('button');pySave.className='modal-status-btn';pySave.textContent='OK';pySave.style.display='none';
+    pyInp.addEventListener('input',()=>{pySave.style.display=pyInp.value!=book.pubYear?'inline-block':'none';});
+    pySave.addEventListener('click',()=>{
+      book.pubYear=parseInt(pyInp.value)||undefined;pySave.style.display='none';
+      showToast('Année mise à jour');
+      if(getToken())setTimeout(()=>pushToGitHub(getAllBooksForSync(),'📅 PubYear: '+book.t.slice(0,35)),300);
+    });
+    pyRow.appendChild(pyLbl);pyRow.appendChild(pyInp);pyRow.appendChild(pySave);
+    document.querySelector('#modal-overlay .modal-status-row')?.parentNode?.appendChild(pyRow);
+    if(!book.pubYear){
+      fetchPubYear(book).then(y=>{
+        if(y){book.pubYear=y;pyInp.value=y;pyInp.placeholder='';
+          if(getToken())setTimeout(()=>pushToGitHub(getAllBooksForSync(),'📅 PubYear auto: '+book.t.slice(0,35)),300);
+        }
+      });
+    }
+  })();
 
   // Publisher field
   (function(){
