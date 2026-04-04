@@ -3013,19 +3013,35 @@ document.getElementById('submit-form').addEventListener('click',()=>{
 
 // EXPORT
 document.getElementById('export-btn').addEventListener('click',()=>{
-  document.getElementById('export-choice-pop')?.remove();
-  const btn=document.getElementById('export-btn');
-  const rect=btn.getBoundingClientRect();
-  const pop=document.createElement('div');
-  pop.id='export-choice-pop';
-  pop.style.cssText='position:fixed;z-index:9999;background:var(--bg);border:2px solid var(--ink);border-radius:3px;box-shadow:3px 3px 0 var(--ink);overflow:hidden;min-width:160px;top:'+(rect.bottom+6)+'px;left:'+rect.left+'px';
+  document.getElementById('export-modal')?.remove();
   const ov=document.createElement('div');
-  ov.style.cssText='position:fixed;inset:0;z-index:9998';
-  ov.addEventListener('click',()=>{pop.remove();ov.remove();});
-  const mkOpt=(icon,lbl,fn)=>{const b=document.createElement('button');b.style.cssText='display:block;width:100%;padding:0.5rem 1rem;text-align:left;font-size:0.78rem;border:none;background:none;cursor:pointer;color:var(--ink);font-family:DM Sans,sans-serif';b.textContent=icon+' '+lbl;b.onmouseenter=()=>b.style.background='var(--surface2)';b.onmouseleave=()=>b.style.background='none';b.onclick=()=>{pop.remove();ov.remove();fn();};return b;};
-  pop.appendChild(mkOpt('↓','Exporter CSV',exportCSV));
-  pop.appendChild(mkOpt('📄','Exporter PDF',exportPDF));
-  document.body.appendChild(ov);document.body.appendChild(pop);
+  ov.id='export-modal';
+  ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center';
+  const box=document.createElement('div');
+  box.style.cssText='background:var(--bg);border:2px solid var(--ink);border-radius:3px;padding:1.8rem 2rem;box-shadow:4px 4px 0 var(--ink);min-width:260px;text-align:center';
+  const title=document.createElement('div');
+  title.style.cssText='font-size:0.68rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--ink3);margin-bottom:1.2rem;font-weight:600';
+  title.textContent='Choisir le format d’export';
+  const mkBtn=(icon,lbl,fn)=>{
+    const b=document.createElement('button');
+    b.className='btn-submit';
+    b.style.cssText='display:block;width:100%;margin-bottom:0.6rem;font-size:0.82rem;padding:0.55rem 1rem';
+    b.textContent=icon+' '+lbl;
+    b.addEventListener('click',()=>{ov.remove();fn();});
+    return b;
+  };
+  const cancel=document.createElement('button');
+  cancel.className='action-btn';
+  cancel.style.cssText='display:block;width:100%;font-size:0.75rem;margin-top:0.3rem';
+  cancel.textContent='Annuler';
+  cancel.addEventListener('click',()=>ov.remove());
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
+  box.appendChild(title);
+  box.appendChild(mkBtn('↓','Exporter CSV',exportCSV));
+  box.appendChild(mkBtn('📄','Exporter PDF',exportPDF));
+  box.appendChild(cancel);
+  ov.appendChild(box);
+  document.body.appendChild(ov);
 });
 
 // TOAST
