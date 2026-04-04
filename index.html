@@ -2803,7 +2803,7 @@ document.getElementById('batch-covers-btn').addEventListener('click',async()=>{
   });
 })();
 
-(function(){const cl=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'').slice(0,20);const seen=new Set();const toRm=[];BOOKS.forEach((b,i)=>{const k=cl(b.t)+'|'+cl(b.a||'').slice(0,8);if(seen.has(k))toRm.push(i);else seen.add(k);});[...toRm].sort((a,b)=>b-a).forEach(i=>BOOKS.splice(i,1));if(toRm.length){addLog('🔧 '+toRm.length+' doublon(s) supprimé(s) au démarrage','info');}})();buildStats();render();updateSyncBtn();
+buildStats();render();updateSyncBtn();
 // If loaded with cache-bust param, clean the URL silently
 if(location.search.startsWith('?v=')) history.replaceState(null,'',location.pathname);
 
