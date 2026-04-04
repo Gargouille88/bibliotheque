@@ -1377,10 +1377,17 @@ function buildWork(){
         const star=document.createElement('span');star.className='work-star';
         star.textContent=val%1===0?'★':'½';star.title=val+'★';
         star.addEventListener('click',()=>{
-          book.r=val.toFixed(1);
-          if(book._custom){saveCustom(loadCustom().map(b=>(b.t===book.t&&b.a===book.a)?{...b,r:book.r}:b));}
+          const bi=BOOKS.indexOf(book);
+          if(bi<0)return;
+          BOOKS[bi].r=val.toFixed(1);
+          // Save to custom LS for custom books
+          if(BOOKS[bi]._custom){saveCustom(loadCustom().map(b=>(b.t===BOOKS[bi].t&&b.a===BOOKS[bi].a)?{...b,r:BOOKS[bi].r}:b));}
+          // Save rating override for ALL books in a dedicated LS key
+          const overrides=JSON.parse(localStorage.getItem('biblio_rating_overrides')||'{}');
+          overrides[BOOKS[bi].t+'||'+(BOOKS[bi].a||'')]=BOOKS[bi].r;
+          localStorage.setItem('biblio_rating_overrides',JSON.stringify(overrides));
           buildWork();buildStats();render();showToast(val+'★ enregistré');
-          if(getToken())setTimeout(()=>pushToGitHub(getAllBooksForSync(),'★ Note ajoutée: '+book.t.slice(0,40)),300);
+          if(getToken())pushToGitHub(getAllBooksForSync(),'★ Note: '+BOOKS[bi].t.slice(0,40));
         });
         star.addEventListener('mouseenter',()=>{
           [...starRow.querySelectorAll('.work-star')].forEach((s,i)=>{s.classList.toggle('on',i<=starRow.children.length&&s===star||[...starRow.children].indexOf(s)<=[...starRow.children].indexOf(star));});
@@ -2824,6 +2831,8 @@ document.getElementById('batch-covers-btn').addEventListener('click',async()=>{
   });
 })();
 
+// Apply rating overrides from localStorage
+(()=>{const ov=JSON.parse(localStorage.getItem('biblio_rating_overrides')||'{}');Object.entries(ov).forEach(([k,r])=>{const b=BOOKS.find(b=>b.t+'||'+(b.a||'')===k);if(b&&(!b.r||!parseFloat(b.r)))b.r=r;});})();
 buildStats();render();updateSyncBtn();
 // If loaded with cache-bust param, clean the URL silently
 if(location.search.startsWith('?v=')) history.replaceState(null,'',location.pathname);
