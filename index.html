@@ -2058,7 +2058,27 @@ function buildStatsPage(){
   wrap.appendChild(r5);
 
   // ── Top éditeurs ────────────────────────────────────────────────────────
-  const pc={};BOOKS.filter(b=>b.pub&&b.pub.trim()).forEach(b=>{const p=b.pub.trim();pc[p]=(pc[p]||0)+1;});
+  const _normPub=p=>{
+    if(!p) return p;
+    const l=p.toLowerCase().trim();
+    if(l.includes('gallimard')) return 'Gallimard';
+    if(l.includes('livre de poche')||l==='lgf/le livre de poche'||l==='livre de poche') return 'Le Livre de Poche';
+    if(l==='folio'||l.includes('folio classique')||l.includes('folio plus')) return 'Folio (Gallimard)';
+    if(l.includes('pocket')||l==='presses pocket') return 'Pocket';
+    if(l.includes('actes sud')) return 'Actes Sud';
+    if(l.includes('flammarion')) return 'Flammarion';
+    if(l.includes('albin michel')) return 'Albin Michel';
+    if(l.includes('grasset')) return 'Grasset';
+    if(l.includes('seuil')||l.includes('le seuil')) return 'Le Seuil';
+    if(l.includes('fayard')) return 'Fayard';
+    if(l.includes('robert laffont')||l.includes('laffont')) return 'Robert Laffont';
+    if(l.includes('stock')) return 'Stock';
+    if(l.includes('hach')||l==='lgf') return 'Hachette';
+    if(l.includes('belfond')) return 'Belfond';
+    if(l.includes('plon')) return 'Plon';
+    return p.trim();
+  };
+  const pc={};BOOKS.filter(b=>b.pub&&b.pub.trim()).forEach(b=>{const p=_normPub(b.pub.trim());pc[p]=(pc[p]||0)+1;});
   const topPubs=Object.entries(pc).sort((a,b)=>b[1]-a[1]).slice(0,10);
   if(topPubs.length){
     const pubSec=document.createElement('div');pubSec.style.cssText='margin-bottom:1rem';
