@@ -485,6 +485,28 @@ header h1 em{font-style:normal;border-bottom:3px solid var(--accent);padding-bot
   .nav-tab{padding:0.5rem 0.7rem;font-size:0.68rem}
   .list-view .card-author,.list-view .list-year{display:none}
 }
+
+/* ── Mode lecture seule (sans token GitHub) ── */
+body.view-mode .controls-row2,
+body.view-mode #sync-wrap,
+body.view-mode .dark-toggle,
+body.view-mode .header-right .last-update,
+body.view-mode [data-page="work"],
+body.view-mode #travail-btn,
+body.view-mode #journal-btn,
+body.view-mode .modal-status-row,
+body.view-mode .modal-comment-save,
+body.view-mode #modal-edit-rating,
+body.view-mode #modal-year-btn,
+body.view-mode .maction-btn,
+body.view-mode #modal-genre-btn,
+body.view-mode #modal-pages-tag,
+body.view-mode #modal-source-tag,
+body.view-mode .cover-picker-overlay
+{display:none!important}
+body.view-mode .modal-comment{pointer-events:none;opacity:0.6}
+body.view-mode #more-menu-btn{display:none!important}
+body.view-mode::after{content:'Mode lecture';position:fixed;bottom:0.8rem;right:1rem;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink3);opacity:0.5;pointer-events:none}
 </style>
 </head>
 <body>
@@ -1969,6 +1991,7 @@ function buildStatsPage(){
   page.appendChild(wrap);
 }
 function openModal(book){
+  const isViewMode=document.body.classList.contains('view-mode');
   currentModalBook=book;
   const lent=loadLent();const isLent=bk(book) in lent;const lentTo=lent[bk(book)]||'';
   const isCustom=!!book._custom;
@@ -2509,6 +2532,12 @@ function filterByAuthor(author){
 
 function closeModal(){document.getElementById('modal-overlay').classList.remove('open');document.body.style.overflow='';currentModalBook=null;document.getElementById('cover-picker-overlay')?.remove();}
 document.getElementById('close-modal').addEventListener('click',closeModal);
+// Lock modal if view-mode
+if(document.body.classList.contains('view-mode')){
+  setTimeout(()=>{
+    document.querySelectorAll('#modal-overlay select,#modal-overlay input,#modal-overlay button:not(#close-modal),#modal-overlay .es,#modal-overlay .work-star').forEach(el=>el.style.display='none');
+  },10);
+}
 document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
 
 function toggleLent(book){
@@ -2885,6 +2914,12 @@ document.getElementById('batch-covers-btn').addEventListener('click',async()=>{
 
 // Apply rating overrides from localStorage
 (()=>{const ov=JSON.parse(localStorage.getItem('biblio_rating_overrides')||'{}');Object.entries(ov).forEach(([k,r])=>{const b=BOOKS.find(b=>b.t+'||'+(b.a||'')===k);if(b&&(!b.r||!parseFloat(b.r)))b.r=r;});})();
+// Mode lecture seule si pas de token
+if(!getToken()){
+  document.body.classList.add('view-mode');
+  // Masquer l'onglet Travail dans la nav
+  document.querySelectorAll('[data-page="work"]').forEach(el=>el.style.display='none');
+}
 buildStats();render();updateSyncBtn();
 // If loaded with cache-bust param, clean the URL silently
 if(location.search.startsWith('?v=')) history.replaceState(null,'',location.pathname);
