@@ -622,7 +622,7 @@ body.view-mode::after{content:'Mode lecture';position:fixed;bottom:0.8rem;right:
           <button class="more-menu-item" id="import-btn">⬆ Importer</button>
           <button class="more-menu-item" id="journal-btn">📋 Journal</button>
           <button class="more-menu-item" id="travail-btn">✦ Travail</button>
-          <button class="more-menu-item" id="batch-covers-btn">🖼 Couvertures manquantes</button>
+          <button class="more-menu-item" id="batch-fetch-btn">✦ Compléter les données</button>
           <button class="more-menu-item" id="export-btn">↓ Exporter</button>
         </div>
       </div>
@@ -3385,45 +3385,144 @@ document.getElementById('log-clear-btn').addEventListener('click',()=>{
 
 // Batch cover fetch
 let batchRunning=false;
-document.getElementById('batch-covers-btn').addEventListener('click',async()=>{
-  if(batchRunning){showToast('Déjà en cours…','warn');return;}
-  const missing=BOOKS.filter(b=>!getCachedCover(b)&&b.s!=='to-read');
-  if(!missing.length){showToast('Toutes les couvertures sont déjà chargées ✓');return;}
-  batchRunning=true;
-  const btn=document.getElementById('batch-covers-btn');
-  btn.disabled=true;
-  showSyncBar('Chargement de '+missing.length+' couvertures…');
-  let done=0;let found=0;
-  for(const book of missing){
-    try{
-      // Try OL first via ISBN
-      if(book.c){
-        const img=new Image();
-        const ok=await new Promise(res=>{
-          img.onload=()=>res(img.naturalWidth>1);
-          img.onerror=()=>res(false);
-          img.src=book.c;
-          setTimeout(()=>res(false),4000);
-        });
-        if(ok){setCachedCover(book,book.c);found++;done++;
-          document.getElementById('sync-msg').textContent='Couvertures : '+done+'/'+missing.length+' ('+found+' trouvées)';
-          continue;}
+
+// ── Batch fetch modal ──────────────────────────────────────────────────────
+function openBatchFetchModal(){
+  document.getElementById('batch-fetch-modal')?.remove();
+  const ov=document.createElement('div');ov.id='batch-fetch-modal';
+  ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center';
+  const box=document.createElement('div');
+  box.style.cssText='background:var(--bg);border:2px solid var(--ink);border-radius:3px;padding:1.8rem 2rem;box-shadow:4px 4px 0 var(--ink);min-width:320px';
+  const ttl=document.createElement('div');ttl.style.cssText='font-size:0.68rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--ink3);font-weight:600;margin-bottom:1.2rem;text-align:center';
+  ttl.textContent='Compléter les données manquantes';box.appendChild(ttl);
+  // Stats missing
+  const stats=document.createElement('div');stats.style.cssText='font-size:0.7rem;color:var(--ink3);margin-bottom:1rem;display:grid;grid-template-columns:1fr 1fr;gap:0.3rem';
+  const missing=[
+    ['🏢 Éditeurs',BOOKS.filter(b=>!b.pub||!b.pub.trim()).length],
+    ['📅 Dates publication',BOOKS.filter(b=>!b.pubYear).length],
+    ['📰 Pages',BOOKS.filter(b=>!getBookPages(b)).length],
+    ['🖼 Couvertures',BOOKS.filter(b=>!b.c||b.c.length<10).length],
+  ];
+  missing.forEach(function(m){
+    const d=document.createElement('div');d.style.cssText='display:flex;justify-content:space-between;gap:0.5rem;padding:0.15rem 0';
+    d.innerHTML='<span>'+m[0]+'</span><span style="color:var(--ink);font-weight:600">'+m[1]+' manquants</span>';
+    stats.appendChild(d);
+  });
+  box.appendChild(stats);
+  // Checkboxes
+  const opts=[
+    {id:'fo-pub',label:'🏢 Éditeurs',desc:'via Open Library + Google Books'},
+    {id:'fo-year',label:'📅 Dates de publication',desc:'originale en priorité'},
+    {id:'fo-pages',label:'📰 Nombre de pages',desc:'via Open Library'},
+    {id:'fo-covers',label:'🖼 Couvertures',desc:'via Open Library + Google Books'},
+  ];
+  const chkWrap=document.createElement('div');chkWrap.style.cssText='display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1.2rem';
+  opts.forEach(function(o){
+    const row=document.createElement('label');row.style.cssText='display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.78rem;color:var(--ink2)';
+    const chk=document.createElement('input');chk.type='checkbox';chk.id=o.id;chk.checked=true;chk.style.cursor='pointer';
+    const lbl=document.createElement('span');lbl.innerHTML='<strong>'+o.label+'</strong> <span style="color:var(--ink3);font-size:0.68rem">'+o.desc+'</span>';
+    row.appendChild(chk);row.appendChild(lbl);chkWrap.appendChild(row);
+  });
+  box.appendChild(chkWrap);
+  // Buttons
+  const startBtn=document.createElement('button');startBtn.className='btn-submit';
+  startBtn.style.cssText='display:block;width:100%;margin-bottom:0.6rem;font-size:0.82rem;padding:0.6rem';
+  startBtn.textContent='▶ Lancer le fetch';
+  const cancelBtn=document.createElement('button');cancelBtn.className='action-btn';
+  cancelBtn.style.cssText='display:block;width:100%;font-size:0.75rem';cancelBtn.textContent='Annuler';
+  cancelBtn.onclick=()=>ov.remove();
+  ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  startBtn.onclick=function(){
+    const doP=document.getElementById('fo-pub')?.checked;
+    const doY=document.getElementById('fo-year')?.checked;
+    const doPg=document.getElementById('fo-pages')?.checked;
+    const doC=document.getElementById('fo-covers')?.checked;
+    ov.remove();
+    runBatchFetch({pub:doP,year:doY,pages:doPg,covers:doC});
+  };
+  box.appendChild(startBtn);box.appendChild(cancelBtn);
+  ov.appendChild(box);document.body.appendChild(ov);
+}
+
+async function runBatchFetch(opts){
+  const toProcess=BOOKS.filter(function(b){
+    return (opts.pub&&(!b.pub||!b.pub.trim()))
+      ||(opts.year&&!b.pubYear)
+      ||(opts.pages&&!getBookPages(b))
+      ||(opts.covers&&(!b.c||b.c.length<10));
+  });
+  if(!toProcess.length){showToast('Tout est déjà renseigné !');return;}
+
+  const ov2=document.createElement('div');ov2.id='batch-progress';
+  ov2.style.cssText='position:fixed;bottom:1.5rem;right:1.5rem;background:var(--ink);color:var(--bg);padding:1rem 1.4rem;border-radius:4px;font-size:0.78rem;z-index:9999;min-width:300px;box-shadow:0 4px 20px rgba(0,0,0,0.3)';
+  ov2.innerHTML='<div style="font-weight:600;margin-bottom:0.5rem">✦ Fetch en masse en cours…</div>'
+    +'<div style="height:4px;background:rgba(255,255,255,0.2);border-radius:2px;margin-bottom:0.5rem"><div id="bfill" style="height:100%;width:0%;background:#e05c2a;border-radius:2px;transition:width 0.3s"></div></div>'
+    +'<div id="btxt" style="color:rgba(255,255,255,0.6);font-size:0.7rem">0 / '+toProcess.length+' livres traités</div>'
+    +'<button id="bstop" style="margin-top:0.5rem;background:none;border:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.6);font-size:0.65rem;padding:0.15rem 0.5rem;cursor:pointer;border-radius:2px">Arrêter</button>';
+  document.body.appendChild(ov2);
+  window._bfRunning=true;
+  document.getElementById('bstop').onclick=function(){window._bfRunning=false;};
+
+  let done=0,found=0;
+  const BATCH=6,DELAY=500;
+
+  for(var i=0;i<toProcess.length;i+=BATCH){
+    if(!window._bfRunning)break;
+    var batch=toProcess.slice(i,i+BATCH);
+    await Promise.all(batch.map(async function(b){
+      const isbn=b.c?.match(/isbn\/(\d+)/)?.[1];
+      var changed=false;
+      // Publisher
+      if(opts.pub&&(!b.pub||!b.pub.trim())){
+        var pub=await fetchPublisher(b).catch(function(){return null;});
+        if(pub){b.pub=pub;changed=true;found++;}
       }
-      // Try Google Books
-      const url=await tryLoadCover(book);
-      if(url) found++;
+      // Publication year
+      if(opts.year&&!b.pubYear){
+        var yr=await fetchPubYear(b).catch(function(){return null;});
+        if(yr){b.pubYear=yr;changed=true;found++;}
+      }
+      // Pages
+      if(opts.pages&&!getBookPages(b)&&isbn){
+        try{
+          var r=await fetch('https://openlibrary.org/api/books?bibkeys=ISBN:'+isbn+'&jscmd=data&format=json');
+          var d=await r.json();var info=d['ISBN:'+isbn];
+          if(info?.number_of_pages){
+            var pg=loadPages();pk=bk(b);pg[pk]=info.number_of_pages;savePages(pg);changed=true;found++;
+          }
+        }catch(e){}
+      }
+      // Covers
+      if(opts.covers&&(!b.c||b.c.length<10)){
+        var cover=null;
+        if(isbn){cover='https://covers.openlibrary.org/b/isbn/'+isbn+'-L.jpg';}
+        if(!cover){
+          try{
+            var q='intitle:'+encodeURIComponent(b.t.slice(0,25));
+            var r2=await fetch('https://www.googleapis.com/books/v1/volumes?q='+q+'&maxResults=1');
+            var d2=await r2.json();
+            cover=d2.items?.[0]?.volumeInfo?.imageLinks?.thumbnail?.replace('http:','https:')||null;
+          }catch(e){}
+        }
+        if(cover){b.c=cover;changed=true;found++;}
+      }
       done++;
-      document.getElementById('sync-msg').textContent='Couvertures : '+done+'/'+missing.length+' ('+found+' trouvées)';
-    }catch(e){done++;}
-    // Rate limit: 1 request per 150ms
-    await new Promise(r=>setTimeout(r,150));
+    }));
+    var pct=Math.round((done/toProcess.length)*100);
+    var fill=document.getElementById('bfill');if(fill)fill.style.width=pct+'%';
+    var txt=document.getElementById('btxt');if(txt)txt.textContent=done+' / '+toProcess.length+' livres — '+found+' données ajoutées';
+    await new Promise(function(r){setTimeout(r,DELAY);});
   }
-  batchRunning=false;btn.disabled=false;
-  showSyncBar('✓ '+found+' couvertures trouvées sur '+missing.length,'success');
-  render();
-  addLog('cover','🖼 Chargement groupé',''+found+' couvertures trouvées sur '+missing.length);
-  if(getToken()) setTimeout(()=>pushToGitHub(getAllBooksForSync(),'🖼 Couvertures groupées'),300);
-});
+  var txt2=document.getElementById('btxt');if(txt2)txt2.textContent='✓ '+found+' données ajoutées — sauvegarde…';
+  pushToGitHub(getAllBooksForSync(),'✦ Fetch masse: '+found+' données complétées');
+  setTimeout(function(){
+    var fill2=document.getElementById('bfill');if(fill2)fill2.style.background='#16a34a';
+    var txt3=document.getElementById('btxt');if(txt3)txt3.textContent='✓ Sauvegardé ! '+found+' données sur '+toProcess.length+' livres';
+    setTimeout(function(){var o=document.getElementById('batch-progress');if(o)o.remove();},4000);
+  },2000);
+}
+document.getElementById('batch-fetch-btn')
+document.getElementById('batch-fetch-btn')?.addEventListener('click',function(){closeMoreMenu&&closeMoreMenu();openBatchFetchModal();});
 
 // Dark mode
 (function(){
