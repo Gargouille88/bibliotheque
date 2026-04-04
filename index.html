@@ -2106,7 +2106,7 @@ function openModal(book){
   statusBtn.addEventListener('click',()=>{
     const newStatus=statusSel.value;book.s=newStatus;
     if(book._custom){saveCustom(loadCustom().map(b=>(b.t===book.t&&b.a===book.a)?{...b,s:newStatus}:b));}
-    statusBtn.classList.remove('vis');buildStats();render();
+    statusBtn.classList.remove('vis');buildStats();buildCurrent();buildFavorites();render();
     // Update tag in modal
     const tagEl=document.querySelector('.tag.tag-'+newStatus.replace('-','-'));
     document.querySelectorAll('.modal-tags .tag[class*="tag-read"],tag[class*="tag-to"]').forEach(t=>{});
