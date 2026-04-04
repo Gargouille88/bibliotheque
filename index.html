@@ -507,6 +507,13 @@ body.view-mode .cover-picker-overlay
 body.view-mode .modal-comment{pointer-events:none;opacity:0.6}
 body.view-mode #more-menu-btn{display:none!important}
 body.view-mode::after{content:'Mode lecture';position:fixed;bottom:0.8rem;right:1rem;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink3);opacity:0.5;pointer-events:none}
+
+.badge-owned{position:absolute;top:4px;left:4px;background:#16a34a;color:#fff;font-size:0.55rem;padding:1px 4px;border-radius:2px;letter-spacing:0.04em;font-weight:600;z-index:2}
+.badge-tobuy{position:absolute;top:4px;left:4px;background:#e05c2a;color:#fff;font-size:0.55rem;padding:1px 4px;border-radius:2px;letter-spacing:0.04em;font-weight:600;z-index:2}
+.f-owned{border-color:#16a34a;color:#16a34a}
+.f-owned.active{background:#16a34a;color:#fff}
+.f-tobuy{border-color:#e05c2a;color:#e05c2a}
+.f-tobuy.active{background:#e05c2a;color:#fff}
 </style>
 </head>
 <body>
@@ -571,6 +578,8 @@ body.view-mode::after{content:'Mode lecture';position:fixed;bottom:0.8rem;right:
         <button class="filter-btn f-dnf" data-filter="did-not-finish">Abandonnés</button>
         <button class="filter-btn" data-filter="priority" id="filter-priority">⚡ Bientôt</button>
         <button class="filter-btn" data-filter="lent" id="filter-lent">📖 Prêtés</button>
+        <button class="filter-btn f-owned" data-filter="owned" id="filter-owned">📦 Possédés</button>
+        <button class="filter-btn f-tobuy" data-filter="tobuy" id="filter-tobuy">🛒 À acheter</button>
         <div class="ctrl-sep"></div>
         <select id="year-select"><option value="">Toutes les années</option>        <option value="2014">2014</option>
         <option value="2015">2015</option>
@@ -1648,6 +1657,13 @@ function makeCard(book,showCoup){
   const dot=document.createElement('div');dot.className='status-dot sd-'+book.s;wrap.appendChild(dot);
   if(showCoup&&isCoup){const cb=document.createElement('div');cb.className='coup-badge';cb.textContent='★ 5';wrap.appendChild(cb);}
   // Progress overlay on cover for currently-reading
+  // Owned/to-buy badge for to-read
+  if(book.s==='to-read'){
+    const obadge=document.createElement('span');
+    if(book.own===true){obadge.className='badge-owned';obadge.textContent='📦 Possédé';}
+    else{obadge.className='badge-tobuy';obadge.textContent='🛒 Acheter';}
+    wrap.appendChild(obadge);
+  }
   if(book.s==='currently-reading'){
     const cp=getProgress(book);
     let pct=0;
@@ -1711,6 +1727,8 @@ function render(){
     const mF=currentFilter==='all'
       ||(currentFilter==='priority'?isPriority(b)
       :(currentFilter==='lent'?!!lentBooks[bk(b)]
+      :currentFilter==='owned'?(b.s==='to-read'&&b.own===true)
+      :currentFilter==='tobuy'?(b.s==='to-read'&&!b.own)
       :b.s===currentFilter));
     const mY=!currentYear||b.y===currentYear;
     const mT=!currentTag||b.g.toLowerCase().includes(currentTag.toLowerCase());
@@ -1814,7 +1832,7 @@ function buildStatsPage(){
   // ── 1. KPIs ──────────────────────────────────────────────────────────────
   const kGrid=document.createElement('div');
   kGrid.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));border:1px solid var(--line);margin-bottom:2.5rem;background:var(--line);gap:1px';
-  [{l:'Total',v:BOOKS.length,s:'livres'},{l:'Lus',v:read.length,s:pct(read.length,BOOKS.length)},{l:'À lire',v:toRead.length,s:pct(toRead.length,BOOKS.length)},{l:'En cours',v:cur.length,s:'livres'},{l:'Abandonnés',v:dnf.length,s:'livres'},{l:'Note moy.',v:avgR,s:'sur 5'},{l:'Meill. année',v:bestYear,s:bestYear!=='—'?byYear[bestYear]+' lus':''},{l:'Auteurs',v:Object.keys(ac).length,s:'distincts'}].forEach(({l,v,s})=>{
+  [{l:'Total',v:BOOKS.length,s:'livres'},{l:'Lus',v:read.length,s:pct(read.length,BOOKS.length)},{l:'À lire',v:toRead.length,s:pct(toRead.length,BOOKS.length)},{l:'À acheter',v:toRead.filter(b=>!b.own).length,s:toRead.filter(b=>b.own).length+' possédés'},{l:'En cours',v:cur.length,s:'livres'},{l:'Abandonnés',v:dnf.length,s:'livres'},{l:'Note moy.',v:avgR,s:'sur 5'},{l:'Meill. année',v:bestYear,s:bestYear!=='—'?byYear[bestYear]+' lus':''},{l:'Auteurs',v:Object.keys(ac).length,s:'distincts'}].forEach(({l,v,s})=>{
     const c=document.createElement('div');
     c.style.cssText='background:var(--bg);padding:1.1rem 1rem;text-align:center';
     c.innerHTML='<div style="font-size:0.58rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);margin-bottom:0.25rem">'+l+'</div>'
@@ -2107,6 +2125,34 @@ function openModal(book){
   document.getElementById('modal-overlay').classList.add('open');
   document.body.style.overflow='hidden';
 
+  // Owned toggle (to-read only)
+  if(book.s==='to-read'){
+    const ownRow=document.createElement('div');
+    ownRow.className='modal-status-row';
+    ownRow.style.marginTop='0.3rem';
+    const ownLbl=document.createElement('span');
+    ownLbl.className='modal-status-lbl';
+    ownLbl.textContent='Possession';
+    const ownToggle=document.createElement('button');
+    ownToggle.id='modal-own-toggle';
+    ownToggle.style.cssText='font-size:0.72rem;padding:0.22rem 0.7rem;border-radius:2px;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--ink2);transition:all 0.15s';
+    function setOwnBtn(owned){
+      if(owned){ownToggle.textContent='📦 Possédé';ownToggle.style.borderColor='#16a34a';ownToggle.style.color='#16a34a';}
+      else{ownToggle.textContent='🛒 À acheter';ownToggle.style.borderColor='#e05c2a';ownToggle.style.color='#e05c2a';}
+    }
+    setOwnBtn(book.own===true);
+    ownToggle.addEventListener('click',()=>{
+      book.own=book.own===true?false:true;
+      setOwnBtn(book.own);
+      render();
+      showToast(book.own?'📦 Marqué comme possédé':'🛒 Marqué à acheter');
+      if(getToken())setTimeout(()=>pushToGitHub(getAllBooksForSync(),'📦 Possession: '+book.t.slice(0,40)),300);
+    });
+    ownRow.appendChild(ownLbl);
+    ownRow.appendChild(ownToggle);
+    document.querySelector('#modal-overlay .modal-status-row')?.parentNode?.appendChild(ownRow);
+  }
+
   // Genre selector
   (function(){
     // Create genre row dynamically and insert after status row
@@ -2259,6 +2305,9 @@ function openModal(book){
     const newStatus=statusSel.value;book.s=newStatus;
     if(book._custom){saveCustom(loadCustom().map(b=>(b.t===book.t&&b.a===book.a)?{...b,s:newStatus}:b));}
     statusBtn.classList.remove('vis');buildStats();buildCurrent();buildFavorites();render();
+    // Update owned badge if status changed away from to-read
+    const newS=statusSel.value;
+    if(newS!=='to-read'){delete book.own;}
     // Update tag in modal
     const tagEl=document.querySelector('.tag.tag-'+newStatus.replace('-','-'));
     document.querySelectorAll('.modal-tags .tag[class*="tag-read"],tag[class*="tag-to"]').forEach(t=>{});
