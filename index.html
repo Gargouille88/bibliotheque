@@ -2225,6 +2225,69 @@ function buildStatsPage(){
   r5.appendChild(avgSec);
   wrap.appendChild(r5);
 
+  // ── Note moyenne par genre ────────────────────────────────────────────────
+  (function(){
+    const byGenre={};
+    read.filter(b=>b.g&&b.g.trim()&&b.r&&parseFloat(b.r)).forEach(function(b){
+      const g=b.g.trim();
+      if(!byGenre[g])byGenre[g]={sum:0,count:0};
+      byGenre[g].sum+=parseFloat(b.r);byGenre[g].count++;
+    });
+    const genres=Object.entries(byGenre)
+      .map(function(e){return {g:e[0],avg:e[1].sum/e[1].count,count:e[1].count};})
+      .filter(function(e){return e.count>=3;}) // min 3 livres pour être représentatif
+      .sort(function(a,b){return b.avg-a.avg;});
+    if(!genres.length)return;
+
+    const sec=document.createElement('div');sec.style.cssText='margin-bottom:2rem';
+    const h3=document.createElement('h3');
+    h3.textContent='Note moyenne par genre (min. 3 livres notés)';
+    h3.style.cssText='font-size:0.8rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);font-weight:600;margin-bottom:1rem;border-top:3px solid var(--ink);padding-top:0.8rem';
+    sec.appendChild(h3);
+
+    const list=document.createElement('div');list.style.cssText='display:flex;flex-direction:column;gap:0.4rem';
+    const maxAvg=5;
+
+    genres.forEach(function(item){
+      const pct=((item.avg/maxAvg)*100).toFixed(1);
+      const stars=function(r){var s='';for(var i=1;i<=5;i++){s+=r>=i?'★':r>=i-0.5?'½':'☆';}return s;}(item.avg);
+
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:0.6rem;cursor:default';
+      row.addEventListener('mouseenter',function(e){
+        showTip(e,'<strong>'+item.g+'</strong><br>'
+          +item.avg.toFixed(2)+'★ de moyenne<br>'
+          +item.count+' livre'+(item.count>1?'s':'')+ ' notés');
+      });
+      row.addEventListener('mousemove',moveTip);
+      row.addEventListener('mouseleave',hideTip);
+
+      // Genre label
+      const lbl=document.createElement('div');
+      lbl.style.cssText='width:160px;font-size:0.72rem;color:var(--ink2);text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+      lbl.textContent=item.g;
+
+      // Bar
+      const barWrap=document.createElement('div');barWrap.style.cssText='flex:1;position:relative;height:22px';
+      const bar=document.createElement('div');
+      // Color from gold to red based on score: high=gold, low=muted
+      const hue=item.avg>=4.5?45:item.avg>=4?38:item.avg>=3.5?30:item.avg>=3?20:10;
+      bar.style.cssText='height:100%;width:'+pct+'%;background:hsl('+hue+',75%,52%);opacity:0.4;border-radius:1px;transition:width 0.5s ease';
+      const starsEl=document.createElement('span');
+      starsEl.style.cssText='position:absolute;top:50%;left:5px;transform:translateY(-50%);font-size:0.7rem;color:var(--ink2);letter-spacing:-0.5px';
+      starsEl.textContent=stars+' '+item.avg.toFixed(2);
+      const countEl=document.createElement('span');
+      countEl.style.cssText='position:absolute;top:50%;right:5px;transform:translateY(-50%);font-size:0.65rem;color:var(--ink3)';
+      countEl.textContent=item.count+' livres';
+      barWrap.appendChild(bar);barWrap.appendChild(starsEl);barWrap.appendChild(countEl);
+      row.appendChild(lbl);row.appendChild(barWrap);
+      list.appendChild(row);
+    });
+
+    sec.appendChild(list);
+    wrap.appendChild(sec);
+  })();
+
   // ── Top éditeurs ────────────────────────────────────────────────────────
   const _normPub=p=>{
     if(!p) return p;
