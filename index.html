@@ -883,7 +883,7 @@ function bk(b){return b.t+'||'+b.a;}
 
 (function(){
   // Normalize genre names (CSV encoding artifacts)
-  const GENRE_MAP={'litt-rature':'Littérature','d-veloppement-personnel':'Développement personnel','po-sie':'Poésie','essai':'Essai','histoire':'Histoire','philosophie':'Philosophie','bd':'BD','abandonn-':'Abandonné'};
+  const GENRE_MAP={'d-veloppement-personnel':'Développement personnel','po-sie':'Poésie','essai':'Essai','histoire':'Histoire','philosophie':'Philosophie','bd':'BD','abandonn-':'Abandonné'};
   BOOKS.forEach(b=>{
     if(b.g) b.g=b.g.split(',').map(t=>{t=t.trim();return GENRE_MAP[t.toLowerCase()]||t;}).filter(Boolean).join(', ');
     // #2: supprimer "abandonné" des genres si c'est déjà le statut
