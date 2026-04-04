@@ -2004,6 +2004,40 @@ function openModal(book){
   document.getElementById('modal-overlay').classList.add('open');
   document.body.style.overflow='hidden';
 
+  // Genre selector
+  (function(){
+    const genreSel=document.getElementById('modal-genre-sel');
+    const genreBtn=document.getElementById('modal-genre-btn');
+    if(!genreSel) return;
+    // Set current value
+    const cur=(book.g||'').split(',')[0].trim();
+    genreSel.value=cur||'';
+    genreBtn.style.display='none';
+    genreSel.addEventListener('change',()=>{
+      genreBtn.style.display='inline-block';
+    });
+    genreBtn.addEventListener('click',()=>{
+      const g=genreSel.value;
+      book.g=g;
+      if(book._custom){saveCustom(loadCustom().map(b=>(b.t===book.t&&b.a===book.a)?{...b,g}:b));}
+      genreBtn.style.display='none';
+      // Update genre tags in modal
+      document.querySelectorAll('.modal-tags .tag-genre').forEach(el=>el.remove());
+      if(g){
+        const tag=document.createElement('span');tag.className='tag tag-genre';tag.textContent=g;
+        document.querySelector('.modal-tags')?.appendChild(tag);
+      }
+      // Update tag-select dropdown
+      const tagSel=document.getElementById('tag-select');
+      if(tagSel&&g&&![...tagSel.options].some(o=>o.value===g)){
+        const opt=document.createElement('option');opt.value=g;opt.textContent=g;tagSel.appendChild(opt);
+      }
+      buildStats();render();
+      showToast('Genre mis à jour');
+      if(getToken())setTimeout(()=>pushToGitHub(getAllBooksForSync(),'✦ Genre: '+book.t.slice(0,40)),300);
+    });
+  })();
+
   // #5: Year edit
   if(book.s==='read'){
     const yearInput=document.getElementById('modal-year-input');
