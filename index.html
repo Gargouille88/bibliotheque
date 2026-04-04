@@ -1814,7 +1814,7 @@ function buildStatsPage(){
     sfWrap.appendChild(r);
   });
   // Formats
-  const fmtLabels={'paperback':'Papier','hardcover':'Relié','paperback':'Papier','hardcover':'Relié'};
+  const fmtLabels={'paperback':'Poche','hardcover':'Relié','paperback':'Poche','hardcover':'Relié'};
   const fmtTot=Object.values(fc).reduce((s,v)=>s+v,0);
   const fH=document.createElement('h4');fH.textContent='Formats';fH.style.cssText='font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);margin-top:0.8rem;margin-bottom:0.5rem';
   sfWrap.appendChild(fH);
