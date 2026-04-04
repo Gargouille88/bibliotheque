@@ -605,6 +605,7 @@ body.view-mode::after{content:'Mode lecture';position:fixed;bottom:0.8rem;right:
         <option value="title-asc">Titre A→Z</option>
         <option value="title-desc">Titre Z→A</option>
         <option value="pages-desc">Pages ↓</option>
+      <option value="pub-asc">Éditeur A→Z</option>
       </select>
       </div>
     </div>
@@ -1750,6 +1751,7 @@ function render(){
   else if(currentSort==='year-asc') sorted.sort((a,b)=>parseInt(a.y||0)-parseInt(b.y||0));
   else if(currentSort==='added-desc') sorted.sort((a,b)=>(b._custom?1:0)-(a._custom?1:0));
   else if(currentSort==='pages-desc') sorted.sort((a,b)=>(getBookPages(b)||0)-(getBookPages(a)||0));
+  else if(currentSort==='pub-asc') sorted.sort((a,b)=>(a.pub||'zzz').localeCompare(b.pub||'zzz'));
   const grid=document.getElementById('grid');
   grid.className=currentView==='list'?'list-view':'';
   grid.innerHTML='';
@@ -2054,7 +2056,57 @@ function buildStatsPage(){
   }
   r5.appendChild(avgSec);
   wrap.appendChild(r5);
+
+  // ── Top éditeurs ────────────────────────────────────────────────────────
+  const pc={};BOOKS.filter(b=>b.pub&&b.pub.trim()).forEach(b=>{const p=b.pub.trim();pc[p]=(pc[p]||0)+1;});
+  const topPubs=Object.entries(pc).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  if(topPubs.length){
+    const pubSec=document.createElement('div');pubSec.style.cssText='margin-bottom:1rem';
+    pubSec.appendChild(mkH('Top éditeurs ('+Object.keys(pc).length+' distincts)'));
+    const pubList=document.createElement('div');pubList.style.cssText='display:flex;flex-direction:column;gap:0.3rem';
+    const mP=topPubs[0][1];
+    topPubs.forEach(([pub,n],i)=>{
+      const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:0.5rem';
+      row.addEventListener('mouseenter',e=>showTip(e,'<strong>'+pub+'</strong><br>'+n+' livre'+(n>1?'s':'')));
+      row.addEventListener('mousemove',moveTip);row.addEventListener('mouseleave',hideTip);
+      row.innerHTML='<div style="flex:1;position:relative;height:22px"><div style="height:100%;width:'+((n/mP)*100).toFixed(1)+'%;background:var(--accent);opacity:0.3;border-radius:1px;transition:width 0.5s ease"></div>'
+        +'<span style="position:absolute;top:50%;left:5px;transform:translateY(-50%);font-size:0.72rem;color:var(--ink2)">'+pub+'</span>'
+        +'<span style="position:absolute;top:50%;right:5px;transform:translateY(-50%);font-size:0.68rem;color:var(--ink3)">'+n+'</span></div>';
+      pubList.appendChild(row);
+    });
+    pubSec.appendChild(pubList);
+    wrap.appendChild(pubSec);
+  }
   page.appendChild(wrap);
+}
+
+async function fetchPublisher(book){
+  const isbn=book.c?.match(/isbn\/(\d+)/)?.[1];
+  let pub=null;
+  if(isbn){
+    try{
+      const r=await fetch('https://openlibrary.org/api/books?bibkeys=ISBN:'+isbn+'&jscmd=data&format=json');
+      const d=await r.json();
+      const pubs=d['ISBN:'+isbn]?.publishers?.map(p=>p.name).filter(Boolean);
+      if(pubs?.length) pub=pubs[0];
+    }catch(e){}
+  }
+  if(!pub){
+    try{
+      const q=isbn?'isbn:'+isbn:'intitle:'+encodeURIComponent(book.t.slice(0,25))+(book.a?'+inauthor:'+encodeURIComponent(book.a.split(',')[0].trim()):'');
+      const r=await fetch('https://www.googleapis.com/books/v1/volumes?q='+q);
+      const d=await r.json();
+      pub=d.items?.[0]?.volumeInfo?.publisher||null;
+    }catch(e){}
+  }
+  if(!pub&&isbn){
+    try{
+      const r=await fetch('https://openlibrary.org/search.json?isbn='+isbn+'&limit=1');
+      const d=await r.json();
+      pub=d.docs?.[0]?.publisher?.[0]||null;
+    }catch(e){}
+  }
+  return pub||null;
 }
 function openModal(book){
   const isViewMode=document.body.classList.contains('view-mode');
@@ -2124,7 +2176,7 @@ function openModal(book){
     +progressSection
     +'<div class="modal-tags">'
     +'<span class="tag tag-'+book.s+'">'+STATUS_LABELS[book.s]+'</span>'
-    +(book.f?'<span class="tag tag-format">'+book.f+'</span>':'')
+    +(book.pub?'<span class="tag tag-format" style="border-left:2px solid var(--accent)">'+book.pub+'</span>':'')+(book.f?'<span class="tag tag-format">'+book.f+'</span>':'')
     +(book.y?'<span class="tag tag-year">📅 '+book.y+'</span>':'')
     +(isLent?'<span class="tag tag-lent">prêté'+(lentTo?' à '+lentTo:'')+'</span>':'')
     +genres.map(g=>'<span class="tag tag-genre">'+g+'</span>').join('')
@@ -2200,6 +2252,50 @@ function openModal(book){
     ownRow.appendChild(ownToggle);
     document.querySelector('#modal-overlay .modal-status-row')?.parentNode?.appendChild(ownRow);
   }
+
+  // Publisher field
+  (function(){
+    const pubRow=document.createElement('div');
+    pubRow.className='modal-status-row';pubRow.style.marginTop='0.3rem';
+    const pubLbl=document.createElement('span');pubLbl.className='modal-status-lbl';pubLbl.textContent='Éditeur';
+    const pubInp=document.createElement('input');
+    pubInp.id='modal-pub-input';
+    pubInp.type='text';
+    pubInp.value=book.pub||'';
+    pubInp.placeholder='Chargement…';
+    pubInp.style.cssText='padding:0.22rem 0.45rem;border:1px solid var(--line);border-radius:2px;background:var(--bg);font-family:DM Sans,sans-serif;font-size:0.78rem;color:var(--ink);outline:none;flex:1;min-width:0';
+    const pubSave=document.createElement('button');
+    pubSave.className='modal-status-btn';
+    pubSave.textContent='Sauvegarder';
+    pubSave.style.display='none';
+    pubInp.addEventListener('input',()=>{pubSave.style.display=pubInp.value!==book.pub?'inline-block':'none';});
+    pubSave.addEventListener('click',()=>{
+      book.pub=pubInp.value.trim();
+      pubSave.style.display='none';
+      showToast('Éditeur mis à jour');
+      render();
+      if(getToken())setTimeout(()=>pushToGitHub(getAllBooksForSync(),'🏢 Éditeur: '+book.t.slice(0,35)),300);
+    });
+    pubRow.appendChild(pubLbl);pubRow.appendChild(pubInp);pubRow.appendChild(pubSave);
+    document.querySelector('#modal-overlay .modal-status-row')?.parentNode?.appendChild(pubRow);
+    // Auto-fetch si pas d'éditeur stocké
+    if(!book.pub){
+      fetchPublisher(book).then(pub=>{
+        if(pub){
+          book.pub=pub;
+          pubInp.value=pub;
+          pubInp.placeholder='';
+          pubSave.style.display='none';
+          render();
+          if(getToken())setTimeout(()=>pushToGitHub(getAllBooksForSync(),'🏢 Éditeur auto: '+book.t.slice(0,35)),300);
+        } else {
+          pubInp.placeholder='Non trouvé — saisissez manuellement';
+        }
+      });
+    } else {
+      pubInp.placeholder='';
+    }
+  })();
 
   // Genre selector
   (function(){
