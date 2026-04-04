@@ -537,7 +537,7 @@ header h1 em{font-style:normal;border-bottom:3px solid var(--accent);padding-bot
         <span style="font-size:0.65rem;color:var(--ink3);margin-left:0.4rem;text-transform:uppercase;letter-spacing:0.07em">Format</span>
         <select id="adv-format" style="padding:0.2rem 0.35rem;border:1px solid var(--line);border-radius:2px;background:var(--bg);font-size:0.7rem;color:var(--ink2)">
           <option value="">Tous</option><option value="paperback">Poche</option><option value="hardcover">Relié</option>
-          <option value="digital">Numérique</option><option value="audio">Audio</option>
+          
         </select>
         <button class="filter-btn" id="adv-reset" style="font-size:0.65rem">✕ Reset</button>
       </div>
@@ -725,7 +725,7 @@ header h1 em{font-style:normal;border-bottom:3px solid var(--accent);padding-bot
         <div class="field-group"><label>ISBN</label><input type="text" id="f-isbn" placeholder="Détecté automatiquement" maxlength="17" autocomplete="off"></div>
         <div class="field-row">
           <div class="field-group"><label>Statut *</label><select id="f-status"><option value="to-read">À lire</option><option value="read">Lu</option><option value="currently-reading">En cours</option><option value="did-not-finish">Abandonné</option></select></div>
-          <div class="field-group"><label>Format</label><select id="f-format"><option value="">—</option><option value="paperback">Poche</option><option value="hardcover">Relié</option><option value="digital">Numérique</option><option value="audio">Audio</option></select></div>
+          <div class="field-group"><label>Format</label><select id="f-format"><option value="">—</option><option value="paperback">Poche</option><option value="hardcover">Relié</option></select></div>
         </div>
         <div class="field-group" id="date-read-group" style="display:none"><label>Date de lecture</label><input type="date" id="f-date-read" style="color-scheme:light"></div>
         <div class="field-group" id="pages-group" style="display:none">
@@ -1717,7 +1717,7 @@ function buildStatsPage(){
   const topAuth=Object.entries(ac).sort((a,b)=>b[1]-a[1]).slice(0,8);
   const gc={};read.filter(b=>b.g&&b.g.trim()).forEach(b=>{const g=b.g.trim();gc[g]=(gc[g]||0)+1;});
   const topGenres=Object.entries(gc).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  const fc={};read.forEach(b=>{if(b.f)fc[b.f]=(fc[b.f]||0)+1;});
+  const fc={};read.forEach(b=>{if(b.f&&b.f!=='digital'&&b.f!=='audio')fc[b.f]=(fc[b.f]||0)+1;});
   const rc={};[1,1.5,2,2.5,3,3.5,4,4.5,5].forEach(r=>rc[r]=0);
   withR.forEach(b=>{const r=Math.round(parseFloat(b.r)*2)/2;if(rc[r]!==undefined)rc[r]++;});
   const maxRc=Math.max(...Object.values(rc),1);
@@ -1814,7 +1814,7 @@ function buildStatsPage(){
     sfWrap.appendChild(r);
   });
   // Formats
-  const fmtLabels={'paperback':'Papier','digital':'Numérique','hardcover':'Relié','audio':'Audio'};
+  const fmtLabels={'paperback':'Papier','hardcover':'Relié','paperback':'Papier','hardcover':'Relié'};
   const fmtTot=Object.values(fc).reduce((s,v)=>s+v,0);
   const fH=document.createElement('h4');fH.textContent='Formats';fH.style.cssText='font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);margin-top:0.8rem;margin-bottom:0.5rem';
   sfWrap.appendChild(fH);
