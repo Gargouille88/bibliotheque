@@ -620,8 +620,7 @@ body.view-mode::after{content:'Mode lecture';position:fixed;bottom:0.8rem;right:
           <button class="more-menu-item" id="journal-btn">📋 Journal</button>
           <button class="more-menu-item" id="travail-btn">✦ Travail</button>
           <button class="more-menu-item" id="batch-covers-btn">🖼 Couvertures manquantes</button>
-          <button class="more-menu-item" id="export-btn">↓ Exporter CSV</button>
-        <button class="menu-item" id="pdf-btn">📄 Exporter PDF</button>
+          <button class="more-menu-item" id="export-btn">↓ Exporter</button>
         </div>
       </div>
       <button class="action-btn" id="sync-btn">⟳ GitHub</button>
@@ -3013,65 +3012,19 @@ document.getElementById('submit-form').addEventListener('click',()=>{
 
 // EXPORT
 document.getElementById('export-btn').addEventListener('click',()=>{
-  // Export full library as CSV
-  const STATUS_FR={'read':'Lu','to-read':'À lire','currently-reading':'En cours','did-not-finish':'Abandonné'};
-  const esc=v=>{v=String(v||'');return(v.includes(',')||v.includes('"')||v.includes('\n'))?'"'+v.replace(/"/g,'""')+'"':v;};
-  const header='Titre,Auteur,Statut,Note,Année,Genre,Format,Pages,Commentaire';
-  const rows=BOOKS.map(b=>[
-    esc(b.t),esc(b.a),esc(STATUS_FR[b.s]||b.s),esc(b.r),esc(b.y),esc(b.g),esc(b.f),
-    esc(getBookPages(b)||''),esc(loadComments()[bk(b)]||b.comment||'')
-  ].join(','));
-  const csv='\uFEFF'+header+'\n'+rows.join('\n'); // BOM for Excel
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;
-  a.download='bibliotheque_'+(new Date().toISOString().slice(0,10))+'.csv';
-  a.click();URL.revo
-// PDF EXPORT
-function exportPDF(){
-  const stars=r=>{if(!r||!parseFloat(r))return '';const n=parseFloat(r);let s='';for(let i=1;i<=5;i++){if(n>=i)s+='★';else if(n>=i-0.5)s+='½';else s+='☆';}return s;};
-  const statusLabel={read:'Lu','currently-reading':'En cours','to-read':'À lire','did-not-finish':'Abandonné'};
-  const statusColor={read:'#16a34a','currently-reading':'#d97706','to-read':'#2563eb','did-not-finish':'#dc2626'};
-  const date=new Date().toLocaleDateString('fr-FR',{year:'numeric',month:'long',day:'numeric'});
-  const groups={read:BOOKS.filter(b=>b.s==='read'),'currently-reading':BOOKS.filter(b=>b.s==='currently-reading'),'to-read':BOOKS.filter(b=>b.s==='to-read'),'did-not-finish':BOOKS.filter(b=>b.s==='did-not-finish')};
-  let rows='';
-  Object.entries(groups).forEach(([status,books])=>{
-    if(!books.length)return;
-    rows+='<tr class="grp"><td colspan="5" style="background:'+statusColor[status]+';color:#fff;padding:5px 10px;font-weight:600;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase">'+statusLabel[status]+' ('+books.length+')</td></tr>';
-    books.forEach((b,i)=>{
-      const bg=i%2===0?'#fff':'#f7f7f7';
-      const yr=b.y?(' <span style="color:#999;font-size:9.5px">'+b.y+'</span>'):'';
-      rows+='<tr style="background:'+bg+'">'
-        +'<td style="padding:4px 8px;font-size:10.5px;max-width:200px">'+b.t.replace(/</g,'&lt;')+yr+'</td>'
-        +'<td style="padding:4px 8px;font-size:10.5px;color:#444">'+(b.a||'').replace(/</g,'&lt;')+'</td>'
-        +'<td style="padding:4px 8px;font-size:9.5px;color:#666">'+(b.pub||'')+'</td>'
-        +'<td style="padding:4px 8px;font-size:9.5px;color:#666">'+(b.g||'')+'</td>'
-        +'<td style="padding:4px 8px;font-size:10.5px;color:#c04a1a;white-space:nowrap">'+stars(b.r)+'</td>'
-        +'</tr>';
-    });
-  });
-  const html='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Ma Bibliothèque</title>'
-    +'<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Georgia,serif;color:#1a1a1a;padding:20px 28px}'
-    +'h1{font-size:20px;font-weight:400;letter-spacing:0.05em;border-bottom:3px solid #1a1a1a;padding-bottom:7px;margin-bottom:4px}'
-    +'.sub{font-size:10px;color:#999;margin-bottom:16px;font-family:sans-serif}'
-    +'table{width:100%;border-collapse:collapse;font-family:sans-serif}'
-    +'thead th{background:#1a1a1a;color:#fff;padding:5px 8px;font-size:9.5px;text-transform:uppercase;letter-spacing:0.1em;text-align:left}'
-    +'td{border-bottom:1px solid #eee;vertical-align:top}'
-    +'@media print{body{padding:8px 12px}@page{margin:1.2cm;size:A4}tr{page-break-inside:avoid}}'
-    +'</style></head><body>'
-    +'<h1>Ma Bibliothèque</h1>'
-    +'<div class="sub">Export du '+date+' — '+BOOKS.length+' livres</div>'
-    +'<table><thead><tr><th>Titre</th><th>Auteur</th><th>Éditeur</th><th>Genre</th><th>Note</th></tr></thead>'
-    +'<tbody>'+rows+'</tbody></table>'
-    +'<script>window.onload=()=>{window.print();};<\/script>'
-    +'</body></html>';
-  const w=window.open('','_blank');
-  if(!w){showToast('Autorisez les popups pour exporter en PDF','warn');return;}
-  w.document.open();w.document.write(html);w.document.close();
-}
-
-document.getElementById('pdf-btn')?.addEventListener('click',()=>exportPDF());keObjectURL(url);
-  showToast(BOOKS.length+' livres exportés en CSV');
+  document.getElementById('export-choice-pop')?.remove();
+  const btn=document.getElementById('export-btn');
+  const rect=btn.getBoundingClientRect();
+  const pop=document.createElement('div');
+  pop.id='export-choice-pop';
+  pop.style.cssText='position:fixed;z-index:9999;background:var(--bg);border:2px solid var(--ink);border-radius:3px;box-shadow:3px 3px 0 var(--ink);overflow:hidden;min-width:160px;top:'+(rect.bottom+6)+'px;left:'+rect.left+'px';
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;z-index:9998';
+  ov.addEventListener('click',()=>{pop.remove();ov.remove();});
+  const mkOpt=(icon,lbl,fn)=>{const b=document.createElement('button');b.style.cssText='display:block;width:100%;padding:0.5rem 1rem;text-align:left;font-size:0.78rem;border:none;background:none;cursor:pointer;color:var(--ink);font-family:DM Sans,sans-serif';b.textContent=icon+' '+lbl;b.onmouseenter=()=>b.style.background='var(--surface2)';b.onmouseleave=()=>b.style.background='none';b.onclick=()=>{pop.remove();ov.remove();fn();};return b;};
+  pop.appendChild(mkOpt('↓','Exporter CSV',exportCSV));
+  pop.appendChild(mkOpt('📄','Exporter PDF',exportPDF));
+  document.body.appendChild(ov);document.body.appendChild(pop);
 });
 
 // TOAST
