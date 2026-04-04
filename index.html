@@ -1696,227 +1696,219 @@ function buildCurrent(){
   cur.forEach(b=>cards.appendChild(makeCard(b,false)));
 }
 
-function buildStatsPage(statsYear){
-  // Pie chart genres
-  (()=>{const pieSec=document.createElement('div');pieSec.className='stats-section';pieSec.style.marginTop='1.5rem';const pieTtl=document.createElement('h3');pieTtl.textContent='Répartition par genre';pieTtl.style.cssText='font-size:0.8rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);font-weight:600;margin-bottom:1rem;border-top:3px solid var(--ink);padding-top:0.8rem';pieSec.appendChild(pieTtl);const gc={};BOOKS.forEach(b=>{const g=(b.g&&b.g.trim())||'Sans genre';gc[g]=(gc[g]||0)+1;});const sorted=Object.entries(gc).sort((a,b)=>b[1]-a[1]);const tot=BOOKS.length;const COL=['#e05c2a','#2563eb','#16a34a','#9333ea','#dc2626','#d97706','#0891b2','#be185d','#4f46e5','#065f46','#7c3aed','#b45309','#374151','#6b7280'];const wrap=document.createElement('div');wrap.style.cssText='display:flex;flex-wrap:wrap;align-items:flex-start;gap:2rem;padding:0.5rem 0';const NS='http://www.w3.org/2000/svg';const svg=document.createElementNS(NS,'svg');const sz=220,cx=110,cy=110,r=100;svg.setAttribute('viewBox','0 0 220 220');svg.style.cssText='width:220px;height:220px;flex-shrink:0';let a=-Math.PI/2;sorted.forEach(([g,n],i)=>{const da=(n/tot)*2*Math.PI;const ea=a+da;const x1=(cx+r*Math.cos(a)).toFixed(2),y1=(cy+r*Math.sin(a)).toFixed(2),x2=(cx+r*Math.cos(ea)).toFixed(2),y2=(cy+r*Math.sin(ea)).toFixed(2);const p=document.createElementNS(NS,'path');p.setAttribute('d','M '+cx+' '+cy+' L '+x1+' '+y1+' A '+r+' '+r+' 0 '+(da>Math.PI?1:0)+' 1 '+x2+' '+y2+' Z');p.setAttribute('fill',COL[i%COL.length]);p.setAttribute('stroke','#fff');p.setAttribute('stroke-width','1.5');const title=document.createElementNS(NS,'title');title.textContent=g+' — '+n+' livres ('+((n/tot*100).toFixed(1))+'%)';p.appendChild(title);svg.appendChild(p);a=ea;});wrap.appendChild(svg);const leg=document.createElement('div');leg.style.cssText='display:flex;flex-direction:column;gap:0.4rem;font-size:0.74rem;justify-content:center;min-width:160px';sorted.forEach(([g,n],i)=>{const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:0.4rem';row.innerHTML='<span style="display:inline-block;width:11px;height:11px;border-radius:2px;flex-shrink:0;background:'+COL[i%COL.length]+'"></span><span style="color:var(--ink2);flex:1">'+g+'</span><span style="color:var(--ink3);white-space:nowrap">'+n+' ('+((n/tot*100).toFixed(1))+'%)</span>';leg.appendChild(row);});wrap.appendChild(leg);pieSec.appendChild(wrap);document.getElementById('page-stats').appendChild(pieSec);})();
-  const sel=document.getElementById('stats-year-select');
-  if(sel.options.length<=1){
-    const allYears=[...new Set(BOOKS.map(b=>b.y).filter(Boolean))].sort();
-    allYears.forEach(y=>{const o=document.createElement('option');o.value=y;o.textContent=y;sel.appendChild(o);});
-    sel.addEventListener('change',()=>buildStatsPage(sel.value));
-  }
-  if(statsYear===undefined) statsYear=sel.value;
-  else sel.value=statsYear;
-  const filterBooks=statsYear?BOOKS.filter(b=>b.y===statsYear):BOOKS;
-  const filterRead=filterBooks.filter(b=>b.s==='read');
-  document.getElementById('stats-year-info').textContent=statsYear?filterRead.length+' livres lus en '+statsYear:'';
-  const withRating=filterBooks.filter(b=>b.r&&parseFloat(b.r)>0);
-  const avgRating=withRating.length?(withRating.reduce((s,b)=>s+parseFloat(b.r),0)/withRating.length).toFixed(2):0;
-  // Reading goal
-  const goalKey='reading_goal_'+(statsYear||'all');
-  const goal=parseInt(localStorage.getItem(goalKey))||0;
-  const goalInput=document.getElementById('goal-input');
-  const goalSaveBtn=document.getElementById('goal-save-btn');
-  const goalProgressWrap=document.getElementById('goal-progress-wrap');
-  const goalBarFill=document.getElementById('goal-bar-fill');
-  const goalDetail=document.getElementById('goal-detail');
-  if(goalInput){
-    goalInput.value=goal||'';
-    function updateGoalBar(g){
-      if(!g){goalProgressWrap.style.display='none';return;}
-      goalProgressWrap.style.display='flex';
-      const read=filterRead.length;
-      const pct=Math.min(100,Math.round(read/g*100));
-      goalBarFill.style.width=pct+'%';
-      const rem=Math.max(0,g-read);
-      goalDetail.textContent=read+' / '+g+' livres ('+pct+'%)'+(rem>0?' · '+rem+' restants':'') ;
-    }
-    updateGoalBar(goal);
-    goalSaveBtn.onclick=()=>{
-      const g=parseInt(goalInput.value)||0;
-      localStorage.setItem(goalKey,g);
-      updateGoalBar(g);
-      showToast(g?'Objectif : '+g+' livres':'Objectif supprimé');
-    };
-  }
+function buildStatsPage(){
+  const page=document.getElementById('page-stats');
+  if(!page)return;
+  page.innerHTML='';
 
-  document.getElementById('kpi-grid').innerHTML=[
-    {l:'Livres lus',v:filterRead.length,s:statsYear?'en '+statsYear:'sur '+BOOKS.length+' total'},
-    {l:'Note moyenne',v:avgRating+'★',s:withRating.length+' livres notés'},
-    {l:'Coups de cœur',v:filterBooks.filter(b=>parseFloat(b.r)===5).length,s:'notés 5 étoiles'},
-    {l:'En cours de prêt',v:Object.keys(loadLent()).length,s:'livres prêtés'},
-    {l:'À lire',v:filterBooks.filter(b=>b.s==='to-read').length,s:'dans la liste'},
-    {l:'Abandonnés',v:filterBooks.filter(b=>b.s==='did-not-finish').length,s:'livres'},
-  ].map(k=>'<div class="kpi-card"><div class="kpi-label">'+k.l+'</div><div class="kpi-value">'+k.v+'</div><div class="kpi-sub">'+k.s+'</div></div>').join('');
+  // ── Data prep ──────────────────────────────────────────────────────────────
+  const read=BOOKS.filter(b=>b.s==='read');
+  const toRead=BOOKS.filter(b=>b.s==='to-read');
+  const cur=BOOKS.filter(b=>b.s==='currently-reading');
+  const dnf=BOOKS.filter(b=>b.s==='did-not-finish');
+  const withR=read.filter(b=>b.r&&parseFloat(b.r));
+  const withY=read.filter(b=>b.y);
+  const avgR=withR.length?(withR.reduce((s,b)=>s+parseFloat(b.r),0)/withR.length).toFixed(2):'—';
+  const byYear={};withY.forEach(b=>{byYear[b.y]=(byYear[b.y]||0)+1;});
+  const years=Object.keys(byYear).sort();
+  const maxYear=years.length?Math.max(...Object.values(byYear)):1;
+  const bestYear=years.length?years.reduce((b,y)=>byYear[y]>byYear[b]?y:b,years[0]):'—';
+  const ac={};read.forEach(b=>{if(b.a){const a=b.a.split(',')[0].trim();ac[a]=(ac[a]||0)+1;}});
+  const topAuth=Object.entries(ac).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const gc={};read.filter(b=>b.g&&b.g.trim()).forEach(b=>{const g=b.g.trim();gc[g]=(gc[g]||0)+1;});
+  const topGenres=Object.entries(gc).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const fc={};read.forEach(b=>{if(b.f)fc[b.f]=(fc[b.f]||0)+1;});
+  const rc={};[1,1.5,2,2.5,3,3.5,4,4.5,5].forEach(r=>rc[r]=0);
+  withR.forEach(b=>{const r=Math.round(parseFloat(b.r)*2)/2;if(rc[r]!==undefined)rc[r]++;});
+  const maxRc=Math.max(...Object.values(rc),1);
+  const gcAll={};BOOKS.forEach(b=>{const g=(b.g&&b.g.trim())||'Sans genre';gcAll[g]=(gcAll[g]||0)+1;});
+  const pieData=Object.entries(gcAll).sort((a,b)=>b[1]-a[1]);
+  const COL=['#e05c2a','#2563eb','#16a34a','#9333ea','#dc2626','#d97706','#0891b2','#be185d','#4f46e5','#065f46','#7c3aed','#b45309','#374151','#6b7280'];
+  const NS='http://www.w3.org/2000/svg';
+  const pct=(n,tot)=>tot?((n/tot)*100).toFixed(1)+'%':'0%';
+  const mkH=(t)=>{const h=document.createElement('h3');h.textContent=t;h.style.cssText='font-size:0.68rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--ink3);font-weight:600;margin-bottom:0.9rem;padding-bottom:0.35rem;border-bottom:1px solid var(--line)';return h;};
 
-  // Books per year
-  const byYear={...Object.fromEntries(BY_YEAR_DATA)};
-  loadCustom().filter(b=>b.s==='read'&&b.y).forEach(b=>{byYear[b.y]=(byYear[b.y]||0)+1;});
-  const yearEntries=Object.entries(byYear).sort((a,b)=>a[0].localeCompare(b[0]));
-  const maxY=Math.max(...yearEntries.map(([,n])=>n),1);
-  document.getElementById('chart-bars').innerHTML=yearEntries.map(([y,n])=>{
-    const h=Math.round((n/maxY)*110);
-    return '<div class="chart-bar-wrap"><span class="chart-bar-val">'+n+'</span><div class="chart-bar" style="height:'+h+'px" title="'+y+'"></div><span class="chart-bar-lbl">'+y+'</span></div>';
-  }).join('');
+  const wrap=document.createElement('div');wrap.style.cssText='padding:1.5rem 2rem;max-width:1400px;margin:0 auto';
 
-  // Avg rating per year
-  const avgRY={...Object.fromEntries(AVG_RATINGS_DATA)};
-  const avgEntries=Object.entries(avgRY).sort((a,b)=>a[0].localeCompare(b[0]));
-  const maxR=Math.max(...avgEntries.map(([,v])=>v),5);
-  document.getElementById('rt-bars').innerHTML=avgEntries.map(([y,v])=>{
-    const h=Math.round((v/maxR)*70);
-    return '<div class="rt-bar-wrap"><span class="rt-val">'+v+'</span><div class="rt-bar" style="height:'+h+'px" title="'+y+': '+v+'/5"></div><span class="rt-lbl">'+y+'</span></div>';
-  }).join('');
-
-  // Authors
-  const authCounts={};
-  (statsYear?filterRead:BOOKS.filter(b=>b.s==='read')).forEach(b=>{
-    if(!b.a) return;
-    b.a.split(',').forEach(a=>{a=a.trim();if(a&&a.length>2)authCounts[a]=(authCounts[a]||0)+1;});
+  // ── 1. KPIs ──────────────────────────────────────────────────────────────
+  const kGrid=document.createElement('div');
+  kGrid.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));border:1px solid var(--line);margin-bottom:2.5rem;background:var(--line);gap:1px';
+  [{l:'Total',v:BOOKS.length,s:'livres'},{l:'Lus',v:read.length,s:pct(read.length,BOOKS.length)},{l:'À lire',v:toRead.length,s:pct(toRead.length,BOOKS.length)},{l:'En cours',v:cur.length,s:'livres'},{l:'Abandonnés',v:dnf.length,s:'livres'},{l:'Note moy.',v:avgR,s:'sur 5'},{l:'Meill. année',v:bestYear,s:bestYear!=='—'?byYear[bestYear]+' lus':''},{l:'Auteurs',v:Object.keys(ac).length,s:'distincts'}].forEach(({l,v,s})=>{
+    const c=document.createElement('div');
+    c.style.cssText='background:var(--bg);padding:1.1rem 1rem;text-align:center';
+    c.innerHTML='<div style="font-size:0.58rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);margin-bottom:0.25rem">'+l+'</div>'
+      +'<div style="font-family:\'EB Garamond\',Georgia,serif;font-size:1.9rem;font-weight:400;color:var(--ink);line-height:1.1">'+v+'</div>'
+      +'<div style="font-size:0.6rem;color:var(--ink3);margin-top:0.15rem">'+s+'</div>';
+    kGrid.appendChild(c);
   });
-  const topA=Object.entries(authCounts).sort((a,b)=>b[1]-a[1]).slice(0,12);
-  const maxA=topA[0]?topA[0][1]:1;
-  document.getElementById('author-list').innerHTML=topA.map(([a,n],i)=>
-    '<div class="author-row"><span class="author-rank">'+(i+1)+'</span><span class="author-name" data-author="'+a.replace(/"/g,'&quot;')+'" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px" title="Filtrer par cet auteur">'+a+'</span><div class="author-bar-wrap"><div class="author-bar" style="width:'+Math.round((n/maxA)*100)+'%"></div></div><span class="author-count">'+n+'</span></div>'
-  ).join('');
-  document.querySelectorAll('.author-name[data-author]').forEach(el=>{
-    el.addEventListener('click',()=>filterByAuthor(el.dataset.author));
+  wrap.appendChild(kGrid);
+
+  // ── 2. Bar chart: livres par année ───────────────────────────────────────
+  if(years.length>1){
+    const sec=document.createElement('div');sec.style.cssText='margin-bottom:2.5rem';
+    sec.appendChild(mkH('Livres lus par année'));
+    const svgW=Math.max(500,years.length*56);const svgH=130;
+    const pL=30,pB=28,pT=14;const cH=svgH-pB-pT;
+    const svg=document.createElementNS(NS,'svg');
+    svg.setAttribute('viewBox','0 0 '+svgW+' '+svgH);
+    svg.style.cssText='width:100%;height:'+svgH+'px;overflow:visible';
+    const bW=Math.min(38,(svgW-pL)/years.length*0.65);
+    years.forEach((y,i)=>{
+      const n=byYear[y];const bH=Math.max(3,(n/maxYear)*cH);
+      const x=pL+(i+0.5)*((svgW-pL)/years.length)-bW/2;
+      const yp=pT+cH-bH;
+      const rect=document.createElementNS(NS,'rect');
+      rect.setAttribute('x',x.toFixed(1));rect.setAttribute('y',yp.toFixed(1));
+      rect.setAttribute('width',bW.toFixed(1));rect.setAttribute('height',bH.toFixed(1));
+      rect.setAttribute('fill',y===bestYear?'#e05c2a':'var(--ink)');rect.setAttribute('opacity','0.8');rect.setAttribute('rx','1');
+      const ti=document.createElementNS(NS,'title');ti.textContent=y+' — '+n+' livres';rect.appendChild(ti);svg.appendChild(rect);
+      const cnt=document.createElementNS(NS,'text');cnt.setAttribute('x',(x+bW/2).toFixed(1));cnt.setAttribute('y',(yp-4).toFixed(1));
+      cnt.setAttribute('text-anchor','middle');cnt.setAttribute('font-size','8.5');cnt.setAttribute('fill','var(--ink3)');cnt.textContent=n;svg.appendChild(cnt);
+      const lbl=document.createElementNS(NS,'text');lbl.setAttribute('x',(x+bW/2).toFixed(1));lbl.setAttribute('y',(svgH-8).toFixed(1));
+      lbl.setAttribute('text-anchor','middle');lbl.setAttribute('font-size','8.5');lbl.setAttribute('fill','var(--ink3)');lbl.textContent=y;svg.appendChild(lbl);
+    });
+    const sW=document.createElement('div');sW.style.cssText='overflow-x:auto';sW.appendChild(svg);
+    sec.appendChild(sW);wrap.appendChild(sec);
+  }
+
+  // ── 3. Row: Camembert + Statuts/Formats ─────────────────────────────────
+  const r3=document.createElement('div');
+  r3.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2.5rem';
+
+  // Pie
+  const pieSec=document.createElement('div');pieSec.appendChild(mkH('Répartition par genre'));
+  const pieRow=document.createElement('div');pieRow.style.cssText='display:flex;gap:1.2rem;align-items:flex-start;flex-wrap:wrap';
+  const pSvg=document.createElementNS(NS,'svg');pSvg.setAttribute('viewBox','0 0 180 180');pSvg.style.cssText='width:150px;height:150px;flex-shrink:0';
+  let ang=-Math.PI/2;const tot=BOOKS.length;
+  pieData.forEach(([g,n],i)=>{
+    const da=(n/tot)*2*Math.PI;const ea=ang+da;
+    const x1=(90+88*Math.cos(ang)).toFixed(2),y1=(90+88*Math.sin(ang)).toFixed(2);
+    const x2=(90+88*Math.cos(ea)).toFixed(2),y2=(90+88*Math.sin(ea)).toFixed(2);
+    const p=document.createElementNS(NS,'path');
+    p.setAttribute('d','M 90 90 L '+x1+' '+y1+' A 88 88 0 '+(da>Math.PI?1:0)+' 1 '+x2+' '+y2+' Z');
+    p.setAttribute('fill',COL[i%COL.length]);p.setAttribute('stroke','var(--bg)');p.setAttribute('stroke-width','1.5');
+    const ti=document.createElementNS(NS,'title');ti.textContent=g+' — '+n+' ('+((n/tot*100).toFixed(1))+'%)';p.appendChild(ti);pSvg.appendChild(p);ang=ea;
   });
+  pieRow.appendChild(pSvg);
+  const pLeg=document.createElement('div');pLeg.style.cssText='font-size:0.7rem;display:flex;flex-direction:column;gap:0.28rem;flex:1;min-width:100px;justify-content:center';
+  pieData.slice(0,12).forEach(([g,n],i)=>{
+    const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:0.35rem';
+    row.innerHTML='<span style="width:8px;height:8px;border-radius:1px;flex-shrink:0;background:'+COL[i%COL.length]+';display:inline-block"></span>'
+      +'<span style="color:var(--ink2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+g+'</span>'
+      +'<span style="color:var(--ink3);margin-left:0.3rem;flex-shrink:0">'+n+'</span>';
+    pLeg.appendChild(row);
+  });
+  if(pieData.length>12){const m=document.createElement('div');m.style.cssText='color:var(--ink3);font-size:0.62rem;margin-top:0.2rem';m.textContent='+'+(pieData.length-12)+' autres…';pLeg.appendChild(m);}
+  pieRow.appendChild(pLeg);pieSec.appendChild(pieRow);r3.appendChild(pieSec);
 
-  // Genres
-  const genreCounts={};
-  filterBooks.forEach(b=>{if(!b.g) return;b.g.split(',').forEach(g=>{g=g.trim();if(g&&g!=='abandonné')genreCounts[g]=(genreCounts[g]||0)+1;});});
-  const topG=Object.entries(genreCounts).sort((a,b)=>b[1]-a[1]);
-  const maxG=topG[0]?topG[0][1]:1;
-  document.getElementById('genres-wrap').innerHTML=topG.length?topG.map(([g,n])=>
-    '<div class="genre-bar-row"><span class="genre-name">'+g+'</span><div class="genre-bar-bg"><div class="genre-bar-fill" style="width:'+Math.round((n/maxG)*100)+'%"></div></div><span class="genre-count">'+n+'</span></div>'
-  ).join(''):'<p style="color:var(--ink3);font-style:italic;font-size:.82rem">Aucun genre renseigné pour cette sélection.</p>';
-
+  // Statuts + Formats
+  const sfSec=document.createElement('div');
+  sfSec.appendChild(mkH('Statuts & Formats'));
+  const sfWrap=document.createElement('div');sfWrap.style.cssText='display:flex;flex-direction:column;gap:1.2rem';
+  // Statuts
+  [{l:'Lu',n:read.length,c:'#16a34a'},{l:'À lire',n:toRead.length,c:'#2563eb'},{l:'En cours',n:cur.length,c:'#d97706'},{l:'Abandonné',n:dnf.length,c:'#dc2626'}].forEach(({l,n,c})=>{
+    const p=BOOKS.length?((n/BOOKS.length)*100).toFixed(1):0;
+    const r=document.createElement('div');
+    r.innerHTML='<div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--ink2);margin-bottom:0.25rem"><span>'+l+'</span><span style="color:var(--ink3)">'+n+' · '+p+'%</span></div>'
+      +'<div style="height:5px;background:var(--surface2);border-radius:2px;overflow:hidden"><div style="height:100%;width:'+p+'%;background:'+c+';transition:width 0.5s ease"></div></div>';
+    sfWrap.appendChild(r);
+  });
   // Formats
-  const fmtCounts={};filterBooks.forEach(b=>{const k=b.f||'';fmtCounts[k]=(fmtCounts[k]||0)+1;});
-  const total=filterBooks.length||1;
-  const formats={'paperback':'Poche','hardcover':'Relié','digital':'Numérique','audio':'Audio','':"Non renseigné"};
-  document.getElementById('format-grid').innerHTML=Object.entries(formats).map(([k,l])=>{
-    const n=fmtCounts[k]||0;
-    return '<div class="format-card"><div class="format-pct">'+Math.round(n/total*100)+'%</div><div class="format-lbl">'+l+'</div><div class="format-count">'+n+' livres</div></div>';
-  }).join('');
+  const fmtLabels={'paperback':'Papier','digital':'Numérique','hardcover':'Relié','audio':'Audio'};
+  const fmtTot=Object.values(fc).reduce((s,v)=>s+v,0);
+  const fH=document.createElement('h4');fH.textContent='Formats';fH.style.cssText='font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);margin-top:0.8rem;margin-bottom:0.5rem';
+  sfWrap.appendChild(fH);
+  Object.entries(fc).sort((a,b)=>b[1]-a[1]).forEach(([fmt,n])=>{
+    const p=fmtTot?((n/fmtTot)*100).toFixed(1):0;
+    const r=document.createElement('div');
+    r.innerHTML='<div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--ink2);margin-bottom:0.25rem"><span>'+(fmtLabels[fmt]||fmt)+'</span><span style="color:var(--ink3)">'+n+' · '+p+'%</span></div>'
+      +'<div style="height:5px;background:var(--surface2);border-radius:2px;overflow:hidden"><div style="height:100%;width:'+p+'%;background:var(--ink);opacity:0.6;transition:width 0.5s ease"></div></div>';
+    sfWrap.appendChild(r);
+  });
+  sfSec.appendChild(sfWrap);r3.appendChild(sfSec);
+  wrap.appendChild(r3);
 
-  // Pages stats
-  const pagesData=loadPages();
-  const booksWithPages=filterRead.filter(b=>getBookPages(b));
-  if(booksWithPages.length>0){
-    const totalPages=booksWithPages.reduce((s,b)=>s+(getBookPages(b)||0),0);
-    const avgPages=Math.round(totalPages/booksWithPages.length);
-    const maxPagesBook=booksWithPages.reduce((a,b)=>(getBookPages(b)||0)>(getBookPages(a)||0)?b:a,booksWithPages[0]);
-    const existingSection=document.getElementById('stats-pages-section');
-    if(!existingSection){
-      const sec=document.createElement('div');sec.className='stats-section';sec.id='stats-pages-section';
-      sec.innerHTML='<h2>Pages lues</h2><div class="kpi-grid">'
-        +'<div class="kpi-card"><div class="kpi-label">Total pages lues</div><div class="kpi-value">'+totalPages.toLocaleString('fr-FR')+'</div><div class="kpi-sub">'+booksWithPages.length+' livres avec données</div></div>'
-        +'<div class="kpi-card"><div class="kpi-label">Moyenne par livre</div><div class="kpi-value">'+avgPages+'</div><div class="kpi-sub">pages par livre</div></div>'
-        +'<div class="kpi-card"><div class="kpi-label">Plus long lu</div><div class="kpi-value" style="font-size:1rem;line-height:1.2">'+maxPagesBook.t.slice(0,25)+(maxPagesBook.t.length>25?'…':'')+'</div><div class="kpi-sub">'+getBookPages(maxPagesBook)+' pages</div></div>'
-        +'</div>';
-      document.querySelector('.stats-page').appendChild(sec);
-    } else {
-      existingSection.querySelector('.kpi-grid').innerHTML=
-        '<div class="kpi-card"><div class="kpi-label">Total pages lues</div><div class="kpi-value">'+totalPages.toLocaleString('fr-FR')+'</div><div class="kpi-sub">'+booksWithPages.length+' livres avec données</div></div>'
-        +'<div class="kpi-card"><div class="kpi-label">Moyenne par livre</div><div class="kpi-value">'+avgPages+'</div><div class="kpi-sub">pages par livre</div></div>'
-        +'<div class="kpi-card"><div class="kpi-label">Plus long lu</div><div class="kpi-value" style="font-size:1rem;line-height:1.2">'+maxPagesBook.t.slice(0,25)+(maxPagesBook.t.length>25?'…':'')+'</div><div class="kpi-sub">'+getBookPages(maxPagesBook)+' pages</div></div>';
+  // ── 4. Row: Notes + Auteurs ───────────────────────────────────────────────
+  const r4=document.createElement('div');
+  r4.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2.5rem';
+
+  // Notes
+  const notSec=document.createElement('div');notSec.appendChild(mkH('Distribution des notes ('+withR.length+' livres notés)'));
+  const notList=document.createElement('div');notList.style.cssText='display:flex;flex-direction:column;gap:0.4rem';
+  const stars={'5':'★★★★★','4.5':'★★★★½','4':'★★★★','3.5':'★★★½','3':'★★★','2.5':'★★½','2':'★★','1.5':'★½','1':'★'};
+  [5,4.5,4,3.5,3,2.5,2,1.5,1].forEach(r=>{
+    const n=rc[r]||0;
+    const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:0.5rem';
+    row.innerHTML='<span style="font-size:0.65rem;color:var(--accent);width:50px;text-align:right;flex-shrink:0;letter-spacing:-1px">'+stars[r]+'</span>'
+      +'<div style="flex:1;height:8px;background:var(--surface2);border-radius:2px;overflow:hidden"><div style="height:100%;width:'+((n/maxRc)*100).toFixed(1)+'%;background:var(--accent);transition:width 0.5s ease"></div></div>'
+      +'<span style="font-size:0.68rem;color:var(--ink3);width:24px;flex-shrink:0;text-align:right">'+n+'</span>';
+    notList.appendChild(row);
+  });
+  notSec.appendChild(notList);r4.appendChild(notSec);
+
+  // Auteurs
+  const aSec=document.createElement('div');aSec.appendChild(mkH('Top auteurs'));
+  const aList=document.createElement('div');aList.style.cssText='display:flex;flex-direction:column;gap:0.3rem';
+  const mA=topAuth[0]?.[1]||1;
+  topAuth.forEach(([auth,n],i)=>{
+    const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:0.5rem;cursor:pointer;border-radius:2px;padding:1px 0';
+    row.innerHTML='<span style="font-size:0.62rem;color:var(--ink3);width:14px;text-align:right;flex-shrink:0">'+(i+1)+'</span>'
+      +'<div style="flex:1;position:relative;height:22px"><div style="height:100%;width:'+((n/mA)*100).toFixed(1)+'%;background:var(--ink);opacity:0.1;border-radius:1px;transition:width 0.5s ease"></div>'
+      +'<span style="position:absolute;top:50%;left:5px;transform:translateY(-50%);font-size:0.72rem;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 34px)">'+auth+'</span>'
+      +'<span style="position:absolute;top:50%;right:5px;transform:translateY(-50%);font-size:0.68rem;color:var(--ink3)">'+n+'</span></div>';
+    row.addEventListener('click',()=>{document.querySelector('[data-page="library"]')?.click();currentAuthorFilter=auth;render();});
+    aList.appendChild(row);
+  });
+  aSec.appendChild(aList);r4.appendChild(aSec);
+  wrap.appendChild(r4);
+
+  // ── 5. Row: Genres lus + Note moyenne par année ───────────────────────────
+  const r5=document.createElement('div');
+  r5.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:1rem';
+
+  // Genres lus
+  const gSec=document.createElement('div');gSec.appendChild(mkH('Top genres lus'));
+  const gList=document.createElement('div');gList.style.cssText='display:flex;flex-direction:column;gap:0.3rem';
+  const mG=topGenres[0]?.[1]||1;
+  topGenres.forEach(([g,n],i)=>{
+    const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:0.5rem';
+    row.innerHTML='<div style="flex:1;position:relative;height:22px"><div style="height:100%;width:'+((n/mG)*100).toFixed(1)+'%;background:'+COL[i%COL.length]+';opacity:0.25;border-radius:1px"></div>'
+      +'<span style="position:absolute;top:50%;left:5px;transform:translateY(-50%);font-size:0.72rem;color:var(--ink2)">'+g+'</span>'
+      +'<span style="position:absolute;top:50%;right:5px;transform:translateY(-50%);font-size:0.68rem;color:var(--ink3)">'+n+'</span></div>';
+    gList.appendChild(row);
+  });
+  gSec.appendChild(gList);r5.appendChild(gSec);
+
+  // Note moyenne par année (sparkline)
+  const avgSec=document.createElement('div');avgSec.appendChild(mkH('Note moyenne par année'));
+  const byYR={};withR.filter(b=>b.y).forEach(b=>{if(!byYR[b.y])byYR[b.y]={s:0,c:0};byYR[b.y].s+=parseFloat(b.r);byYR[b.y].c++;});
+  const avgYrs=Object.entries(byYR).map(([y,d])=>({y,a:d.s/d.c})).sort((a,b)=>a.y-b.y);
+  if(avgYrs.length){
+    const aW=Math.max(300,avgYrs.length*50);const aH=100;const pL2=10,pB2=22,pT2=14;const cH2=aH-pB2-pT2;
+    const aSvg=document.createElementNS(NS,'svg');aSvg.setAttribute('viewBox','0 0 '+aW+' '+aH);aSvg.style.cssText='width:100%;height:'+aH+'px;overflow:visible';
+    const pts=avgYrs.map(({y,a},i)=>({
+      x:(pL2+(i+0.5)*((aW-pL2*2)/avgYrs.length)).toFixed(2),
+      y:(pT2+cH2*(1-((a-1)/4))).toFixed(2),avg:a,year:y
+    }));
+    if(pts.length>1){
+      const pl=document.createElementNS(NS,'polyline');pl.setAttribute('points',pts.map(p=>p.x+','+p.y).join(' '));
+      pl.setAttribute('fill','none');pl.setAttribute('stroke','#e05c2a');pl.setAttribute('stroke-width','1.5');aSvg.appendChild(pl);
     }
+    pts.forEach(({x,y,avg,year})=>{
+      const ci=document.createElementNS(NS,'circle');ci.setAttribute('cx',x);ci.setAttribute('cy',y);ci.setAttribute('r','3.5');
+      ci.setAttribute('fill','#e05c2a');ci.setAttribute('stroke','var(--bg)');ci.setAttribute('stroke-width','1.5');
+      const ti=document.createElementNS(NS,'title');ti.textContent=year+' — '+avg.toFixed(2)+'★';ci.appendChild(ti);aSvg.appendChild(ci);
+      const vl=document.createElementNS(NS,'text');vl.setAttribute('x',x);vl.setAttribute('y',(parseFloat(y)-7).toFixed(2));
+      vl.setAttribute('text-anchor','middle');vl.setAttribute('font-size','8');vl.setAttribute('fill','var(--ink3)');vl.textContent=avg.toFixed(1);aSvg.appendChild(vl);
+      const yl=document.createElementNS(NS,'text');yl.setAttribute('x',x);yl.setAttribute('y',(aH-6).toFixed(2));
+      yl.setAttribute('text-anchor','middle');yl.setAttribute('font-size','8');yl.setAttribute('fill','var(--ink3)');yl.textContent=year.slice(2);aSvg.appendChild(yl);
+    });
+    avgSec.appendChild(aSvg);
   }
-
-  // #10 Trends
-  (function(){
-    const tc=document.getElementById('trends-content');
-    if(!tc) return;
-    tc.innerHTML='';
-    // Most active months across all years
-    const byMonth={};
-    BOOKS.filter(b=>b.s==='read'&&b.y).forEach(b=>{
-      const key=b.y;
-      byMonth[key]=(byMonth[key]||0)+1;
-    });
-    const yearsSorted=Object.entries(byMonth).sort((a,b)=>b[1]-a[1]);
-    if(yearsSorted.length>0){
-      const [bestYear,bestCount]=yearsSorted[0];
-      const bestCard=document.createElement('div');
-      bestCard.style.cssText='background:var(--surface2);border-top:3px solid var(--accent);padding:0.8rem 1rem';
-      bestCard.innerHTML='<div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);margin-bottom:0.25rem">Meilleure année</div>'
-        +'<div style="font-family:EB Garamond,serif;font-size:2rem;color:var(--ink);line-height:1">'+bestYear+'</div>'
-        +'<div style="font-size:0.72rem;color:var(--ink2);margin-top:0.15rem">'+bestCount+' livres lus</div>';
-      tc.appendChild(bestCard);
-    }
-    // Rating trend: last 3 years
-    const rByYear={};
-    BOOKS.filter(b=>b.s==='read'&&b.y&&b.r).forEach(b=>{
-      if(!rByYear[b.y])rByYear[b.y]=[];
-      rByYear[b.y].push(parseFloat(b.r));
-    });
-    const recentYears=Object.keys(rByYear).sort().slice(-5);
-    if(recentYears.length>=2){
-      const trendDiv=document.createElement('div');
-      trendDiv.innerHTML='<div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);margin-bottom:0.6rem;font-weight:500">Évolution de la note moyenne</div>';
-      const bars=document.createElement('div');bars.style.cssText='display:flex;align-items:flex-end;gap:0.6rem;height:60px;margin-bottom:0.4rem';
-      const maxR=5;
-      recentYears.forEach(yr=>{
-        const avg=(rByYear[yr].reduce((a,b)=>a+b,0)/rByYear[yr].length).toFixed(1);
-        const h=Math.round((parseFloat(avg)/maxR)*55);
-        const barWrap=document.createElement('div');barWrap.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px;flex:1';
-        barWrap.innerHTML='<span style="font-size:0.6rem;color:var(--ink2);font-weight:500">'+avg+'</span>'
-          +'<div style="width:100%;height:'+h+'px;background:var(--ink);border-radius:0"></div>'
-          +'<span style="font-size:0.58rem;color:var(--ink3)">'+yr+'</span>';
-        bars.appendChild(barWrap);
-      });
-      trendDiv.appendChild(bars);
-      // Trend indicator
-      const first=rByYear[recentYears[0]];const last=rByYear[recentYears[recentYears.length-1]];
-      const avgFirst=(first.reduce((a,b)=>a+b,0)/first.length);
-      const avgLast=(last.reduce((a,b)=>a+b,0)/last.length);
-      const diff=(avgLast-avgFirst).toFixed(2);
-      const arrow=parseFloat(diff)>0.1?'↗ En hausse':parseFloat(diff)<-0.1?'↘ En baisse':'→ Stable';
-      trendDiv.innerHTML+='<div style="font-size:0.72rem;color:var(--ink2)">'
-        +arrow+' de '+Math.abs(diff)+'★ entre '+recentYears[0]+' et '+recentYears[recentYears.length-1]+'</div>';
-      tc.appendChild(trendDiv);
-    }
-    // Top author by period
-    const authByDecade={};
-    BOOKS.filter(b=>b.s==='read'&&b.y&&b.a).forEach(b=>{
-      const decade=Math.floor(parseInt(b.y)/5)*5+'s';
-      if(!authByDecade[decade])authByDecade[decade]={};
-      b.a.split(',').forEach(a=>{a=a.trim();if(a.length>2)authByDecade[decade][a]=(authByDecade[decade][a]||0)+1;});
-    });
-    const decades=Object.keys(authByDecade).sort();
-    if(decades.length>1){
-      const authDiv=document.createElement('div');
-      authDiv.innerHTML='<div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);margin-bottom:0.5rem;font-weight:500">Auteur dominant par période</div>';
-      const rows=document.createElement('div');rows.style.cssText='display:flex;flex-direction:column;gap:0.3rem';
-      decades.forEach(dec=>{
-        const top=Object.entries(authByDecade[dec]).sort((a,b)=>b[1]-a[1])[0];
-        if(!top)return;
-        const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:0.6rem;font-size:0.78rem';
-        row.innerHTML='<span style="color:var(--ink3);font-size:0.65rem;width:35px;flex-shrink:0">'+dec+'</span>'
-          +'<span style="color:var(--ink);cursor:pointer;text-decoration:underline dotted" data-author="'+top[0].replace(/"/g,'&quot;')+'">'+top[0]+'</span>'
-          +'<span style="color:var(--ink3);font-size:0.68rem">('+top[1]+' livres)</span>';
-        rows.appendChild(row);
-      });
-      authDiv.appendChild(rows);
-      tc.appendChild(authDiv);
-      tc.querySelectorAll('[data-author]').forEach(el=>{
-        el.addEventListener('click',()=>filterByAuthor(el.dataset.author));
-      });
-    }
-  })();
-
-  // Ratings
-  const rb={'5':0,'4':0,'3':0,'2':0,'1':0};
-  filterBooks.forEach(b=>{if(b.r){const r=Math.round(parseFloat(b.r));if(r>=1&&r<=5)rb[r]++;}});
-  const maxRB=Math.max(...Object.values(rb),1);
-  document.getElementById('ratings-dist').innerHTML=['5','4','3','2','1'].map(r=>
-    '<div class="rating-row"><div class="rating-lbl-d">'+Array(parseInt(r)).fill('<span class="star on" style="font-size:.6rem">★</span>').join('')+'</div><div class="rating-bar-bg"><div class="rating-bar-fill" style="width:'+Math.round(rb[r]/maxRB*100)+'%"></div></div><span class="rating-count-d">'+rb[r]+'</span></div>'
-  ).join('');
+  r5.appendChild(avgSec);
+  wrap.appendChild(r5);
+  page.appendChild(wrap);
 }
-
-// MODAL
 function openModal(book){
   currentModalBook=book;
   const lent=loadLent();const isLent=bk(book) in lent;const lentTo=lent[bk(book)]||'';
