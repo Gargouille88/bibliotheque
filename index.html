@@ -1542,17 +1542,17 @@ function makeCard(book,showCoup){
   // Progress overlay on cover for currently-reading
   if(book.s==='currently-reading'){
     const cp=getProgress(book);
-    let pct=null;
+    let pct=0;
     if(cp){
       if(cp.pct!=null) pct=cp.pct;
       else if(cp.pages_read&&cp.total_pages) pct=Math.round(cp.pages_read/cp.total_pages*100);
     }
-    if(pct!=null){
-      const overlay=document.createElement('div');overlay.className='cover-progress-overlay';
-      const fill=document.createElement('div');fill.className='cover-progress-fill';
-      fill.style.width=pct+'%';
-      overlay.appendChild(fill);
-      wrap.appendChild(overlay);
+    const overlay=document.createElement('div');overlay.className='cover-progress-overlay';
+    const fill=document.createElement('div');fill.className='cover-progress-fill';
+    fill.style.width=pct+'%';
+    overlay.appendChild(fill);
+    wrap.appendChild(overlay);
+    if(pct>0){
       const lbl=document.createElement('div');lbl.className='cover-progress-pct';
       lbl.textContent=pct+'%';
       wrap.appendChild(lbl);
