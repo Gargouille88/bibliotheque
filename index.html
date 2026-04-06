@@ -470,20 +470,77 @@ header h1 em{font-style:normal;border-bottom:3px solid var(--accent);padding-bot
 
 .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--ink);color:var(--bg);padding:0.55rem 1.1rem;border-radius:2px;font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;z-index:2000;opacity:0;transform:translateY(8px);transition:opacity 0.2s,transform 0.2s;pointer-events:none}
 .toast.show{opacity:1;transform:translateY(0)}.toast.warn{background:var(--lent)}.toast.danger{background:#b91c1c}
-@media(max-width:600px){
-  header{padding:1.5rem 1rem;flex-direction:column;align-items:flex-start}
-  .header-right{position:static;transform:none;text-align:center}
-  #grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:1rem;padding:1.2rem}
-  .modal-body,.form-inner{flex-direction:column}
-  .modal-cover-wrap{width:100%;display:flex;justify-content:center}
-  .modal-cover-wrap .cover-wrap{width:95px}
-  .form-preview-col{width:100%;flex-direction:row}
-  .preview-cover{width:58px}
-  .field-row{grid-template-columns:1fr}
-  .controls-row2{flex-wrap:wrap}
-  .author-bar-wrap{display:none}
-  .nav-tab{padding:0.5rem 0.7rem;font-size:0.68rem}
+@media(max-width:700px){
+  /* Header compact */
+  header{padding:0.5rem 1rem;flex-direction:row;align-items:center;justify-content:space-between;gap:0.5rem;min-height:0}
+  header h1{font-size:1.05rem;letter-spacing:0.06em;margin:0}
+  .header-sub,.last-update{display:none!important}
+  .header-right{position:static;transform:none;display:flex;align-items:center;gap:0.4rem;flex-shrink:0}
+  .dark-toggle{font-size:0.62rem;padding:0.18rem 0.45rem}
+
+  /* Nav: scroll horizontal une seule ligne */
+  .nav-tabs{overflow-x:auto;overflow-y:hidden;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;display:block;padding:0}
+  .nav-tabs::-webkit-scrollbar{display:none}
+  .nav-tab{display:inline-block;padding:0.5rem 0.85rem;font-size:0.7rem;white-space:nowrap;vertical-align:top}
+
+  /* Stats bar 2x2 */
+  .stats-bar{display:grid;grid-template-columns:1fr 1fr;gap:0}
+  .stat-item{padding:0.3rem 0.5rem;font-size:0.72rem}
+
+  /* Controls compacts */
+  .controls{padding:0.5rem 0.7rem}
+  .controls-row1{display:flex;gap:0.4rem;margin-bottom:0.4rem}
+  #search{flex:1;font-size:0.82rem;padding:0.38rem 0.5rem}
+  #adv-toggle,#adv-reset{font-size:0.7rem;padding:0.38rem 0.55rem;white-space:nowrap}
+
+  /* Filtres rapides: scroll horizontal */
+  .filter-group{overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;display:block;padding-bottom:0.25rem}
+  .filter-group::-webkit-scrollbar{display:none}
+  .filter-btn{display:inline-block;font-size:0.66rem;padding:0.25rem 0.5rem;margin-right:0.25rem;white-space:nowrap}
+  #year-select,#sort-select{font-size:0.75rem;padding:0.28rem 0.35rem;max-width:48%}
+  #genre-select{font-size:0.75rem;padding:0.28rem 0.35rem;width:100%}
+
+  /* Controls row2: scroll horizontal */
+  .controls-row2{overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;display:flex;flex-wrap:nowrap;padding:0.3rem 0.7rem;gap:0.4rem;border-top:1px solid var(--line)}
+  .controls-row2::-webkit-scrollbar{display:none}
+  .controls-row2>*{flex-shrink:0;font-size:0.66rem;padding:0.22rem 0.45rem;white-space:nowrap}
+  #count-label{font-size:0.7rem;flex-shrink:0}
+  .view-toggle{flex-shrink:0}
+
+  /* Grille 3 colonnes */
+  #grid{grid-template-columns:repeat(3,1fr);gap:0.5rem;padding:0.7rem}
+  .card-cover{height:95px}
+  .card-info{padding:0.25rem 0.25rem 0.35rem}
+  .card-title{font-size:0.65rem;line-height:1.2;-webkit-line-clamp:2;max-height:2.4em}
+  .card-author{font-size:0.58rem}
+  .badge-owned,.badge-tobuy{font-size:0.46rem;padding:1px 3px}
+  .cover-badge{font-size:0.6rem;padding:2px 3px}
+
+  /* Vue liste mobile */
+  .list-view .list-card{padding:0.45rem 0.7rem;gap:0.55rem}
+  .list-view .list-cover{width:32px;height:46px}
+  .list-view .list-title{font-size:0.8rem}
   .list-view .card-author,.list-view .list-year{display:none}
+
+  /* Modale plein écran (bottom sheet) */
+  #modal-overlay{align-items:flex-end;padding:0}
+  .modal-box{width:100%!important;max-width:100%!important;border-radius:14px 14px 0 0;max-height:93vh;overflow-y:auto}
+  .modal-body{flex-direction:column}
+  .modal-cover-wrap{width:100%;display:flex;justify-content:center;padding-bottom:0.6rem}
+  .modal-cover-wrap .cover-wrap{width:75px}
+  .author-bar-wrap{display:none}
+
+  /* Formulaire ajout: bottom sheet */
+  #form-overlay{align-items:flex-end;padding:0}
+  .form-box{width:100%!important;border-radius:14px 14px 0 0;max-height:93vh;overflow-y:auto}
+  .form-inner{flex-direction:column}
+  .form-preview-col{width:100%;flex-direction:row;gap:0.5rem}
+  .preview-cover{width:55px}
+  .field-row{grid-template-columns:1fr}
+
+  /* Stats: une colonne */
+  #page-stats .stats-section>div[style*="1fr 1fr"]{grid-template-columns:1fr!important}
+  #page-stats>div>div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
 }
 
 /* ── Mode lecture seule (sans token GitHub) ── */
@@ -516,26 +573,6 @@ body.view-mode::after{content:'Mode lecture';position:fixed;bottom:0.8rem;right:
 .f-tobuy.active{background:#e05c2a;color:#fff}
 /* cache-bust:1775325882418 */
 
-/* ── Widget mobile En cours ── */
-#mobile-encours{display:none;padding:0.8rem 1rem;background:var(--bg);border-bottom:1px solid var(--line)}
-#mobile-encours .mec-title{font-size:0.62rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--ink3);font-weight:600;margin-bottom:0.6rem}
-#mobile-encours .mec-card{display:flex;gap:0.8rem;align-items:flex-start;padding:0.7rem;border:1px solid var(--line);border-radius:3px;background:var(--surface2);margin-bottom:0.5rem}
-#mobile-encours .mec-cover{width:48px;height:68px;object-fit:cover;border-radius:2px;flex-shrink:0;background:var(--line)}
-#mobile-encours .mec-info{flex:1;min-width:0}
-#mobile-encours .mec-book-title{font-size:0.82rem;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:0.25rem}
-#mobile-encours .mec-prog-bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:0.3rem}
-#mobile-encours .mec-prog-fill{height:100%;background:#e05c2a;border-radius:3px;transition:width 0.4s}
-#mobile-encours .mec-pages-row{display:flex;align-items:center;gap:0.35rem;margin-bottom:0.5rem;flex-wrap:wrap}
-#mobile-encours .mec-pages-input{width:60px;padding:0.2rem 0.3rem;border:1px solid var(--line);border-radius:2px;font-size:0.78rem;text-align:center;background:var(--bg);color:var(--ink);outline:none;font-family:DM Sans,sans-serif}
-#mobile-encours .mec-pages-label{font-size:0.68rem;color:var(--ink3)}
-#mobile-encours .mec-quick-btn{padding:0.18rem 0.4rem;font-size:0.65rem;border:1px solid var(--line);border-radius:2px;background:var(--bg);color:var(--ink2);cursor:pointer;font-family:DM Sans,sans-serif}
-#mobile-encours .mec-quick-btn:active{background:var(--ink);color:var(--bg)}
-#mobile-encours .mec-done-btn{width:100%;padding:0.35rem;font-size:0.72rem;border:none;border-radius:2px;background:#16a34a;color:#fff;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;letter-spacing:0.05em}
-#mobile-encours .mec-stars{display:flex;gap:0.2rem;margin-top:0.4rem;display:none}
-#mobile-encours .mec-star{font-size:1.2rem;cursor:pointer;color:var(--line);transition:color 0.15s}
-#mobile-encours .mec-star.on{color:#e05c2a}
-#mobile-encours .mec-save-rating{margin-top:0.4rem;width:100%;padding:0.3rem;font-size:0.72rem;border:none;border-radius:2px;background:#e05c2a;color:#fff;cursor:pointer;font-family:DM Sans,sans-serif;display:none}
-@media(max-width:700px){#mobile-encours{display:block}}
 </style>
 </head>
 <body>
@@ -565,7 +602,6 @@ body.view-mode::after{content:'Mode lecture';position:fixed;bottom:0.8rem;right:
 </nav>
 <div class="stats-bar" id="stats-bar"></div>
 <div class="page active" id="page-library">
-  <div id="mobile-encours"></div>
   <div class="controls">
     <div class="controls-row1">
       <div class="search-wrap">
@@ -1763,134 +1799,6 @@ function makeCard(book,showCoup){
   return card;
 }
 
-
-function buildMobileEnCours(){
-  const wrap=document.getElementById('mobile-encours');
-  if(!wrap||window.innerWidth>700)return;
-  wrap.innerHTML='';
-  const cur=BOOKS.filter(b=>b.s==='currently-reading');
-  if(!cur.length){wrap.style.display='none';return;}
-  wrap.style.display='block';
-  const ttl=document.createElement('div');ttl.className='mec-title';
-  ttl.textContent='📖 En cours ('+cur.length+')';
-  wrap.appendChild(ttl);
-  cur.forEach(function(book){
-    const prog=loadProgress()[bk(book)]||{};
-    const pagesRead=prog.pages_read||0;
-    const totalPages=prog.total_pages||getBookPages(book)||0;
-    const pct=totalPages>0?Math.min(100,Math.round((pagesRead/totalPages)*100)):0;
-
-    const card=document.createElement('div');card.className='mec-card';
-
-    // Cover
-    const img=document.createElement(book.c&&book.c.length>10?'img':'div');
-    img.className='mec-cover';
-    if(book.c&&book.c.length>10){img.src=book.c;img.alt=book.t;}
-    card.appendChild(img);
-
-    // Info
-    const info=document.createElement('div');info.className='mec-info';
-
-    const titleEl=document.createElement('div');titleEl.className='mec-book-title';
-    titleEl.textContent=book.t;titleEl.title=book.t;
-    info.appendChild(titleEl);
-
-    // Progress bar
-    const barWrap=document.createElement('div');barWrap.className='mec-prog-bar';
-    const fill=document.createElement('div');fill.className='mec-prog-fill';
-    fill.style.width=pct+'%';fill.id='mec-fill-'+BOOKS.indexOf(book);
-    barWrap.appendChild(fill);info.appendChild(barWrap);
-
-    // Pages row
-    const pgRow=document.createElement('div');pgRow.className='mec-pages-row';
-    const pgInp=document.createElement('input');
-    pgInp.type='number';pgInp.className='mec-pages-input';
-    pgInp.value=pagesRead;pgInp.min='0';pgInp.max=totalPages||9999;
-
-    const pgLabel=document.createElement('span');pgLabel.className='mec-pages-label';
-    pgLabel.textContent='/ '+(totalPages||'?')+' p.';
-
-    const savePages=function(){
-      const bi=BOOKS.indexOf(book);
-      const np=parseInt(pgInp.value)||0;
-      const tp=totalPages||parseInt(pgInp.max)||0;
-      const pg=loadProgress();pk=bk(book);
-      if(!pg[pk])pg[pk]={pages_read:0,total_pages:tp,pct:null};
-      pg[pk].pages_read=np;
-      pg[pk].pct=tp>0?Math.round((np/tp)*100):null;
-      saveProgress(pg);
-      // Update fill
-      const f=document.getElementById('mec-fill-'+bi);
-      if(f)f.style.width=(tp>0?Math.min(100,Math.round((np/tp)*100)):0)+'%';
-      // Update cover progress bar in grid too
-      render();
-    };
-
-    pgInp.addEventListener('change',savePages);
-    pgInp.addEventListener('blur',savePages);
-
-    pgRow.appendChild(pgInp);pgRow.appendChild(pgLabel);
-
-    // Quick +/- buttons
-    ['+10','+25','+50'].forEach(function(lbl){
-      const btn=document.createElement('button');btn.className='mec-quick-btn';btn.textContent=lbl;
-      btn.addEventListener('click',function(){
-        pgInp.value=Math.min(parseInt(pgInp.max)||9999,(parseInt(pgInp.value)||0)+parseInt(lbl));
-        savePages();
-      });
-      pgRow.appendChild(btn);
-    });
-    info.appendChild(pgRow);
-
-    // Done button
-    const doneBtn=document.createElement('button');doneBtn.className='mec-done-btn';
-    doneBtn.textContent='✓ Marquer comme lu';
-    doneBtn.addEventListener('click',function(){
-      doneBtn.style.display='none';
-      starsWrap.style.display='flex';
-      savRating.style.display='block';
-    });
-    info.appendChild(doneBtn);
-
-    // Stars for rating
-    const starsWrap=document.createElement('div');starsWrap.className='mec-stars';
-    let currentRating=0;
-    [1,2,3,4,5].forEach(function(n){
-      const s=document.createElement('span');s.className='mec-star';s.textContent='★';s.dataset.v=n;
-      s.addEventListener('click',function(){
-        currentRating=n;
-        starsWrap.querySelectorAll('.mec-star').forEach(function(st,i){
-          st.classList.toggle('on',i<n);
-        });
-      });
-      s.addEventListener('mouseover',function(){
-        starsWrap.querySelectorAll('.mec-star').forEach(function(st,i){st.classList.toggle('on',i<n);});
-      });
-      s.addEventListener('mouseout',function(){
-        starsWrap.querySelectorAll('.mec-star').forEach(function(st,i){st.classList.toggle('on',i<currentRating);});
-      });
-      starsWrap.appendChild(s);
-    });
-    info.appendChild(starsWrap);
-
-    // Save rating + mark as read
-    const savRating=document.createElement('button');savRating.className='mec-save-rating';
-    savRating.textContent='Enregistrer';
-    savRating.addEventListener('click',function(){
-      book.s='read';
-      if(currentRating>0)book.r=currentRating.toFixed(1);
-      const pg=loadProgress();delete pg[bk(book)];saveProgress(pg);
-      if(book._custom)saveCustom(loadCustom().map(b=>(b.t===book.t&&b.a===book.a)?{...b,s:'read',r:book.r}:b));
-      buildCurrent();buildStats();render();buildMobileEnCours();
-      showToast('✓ Terminé ! Note : '+currentRating+'★');
-      if(getToken())setTimeout(()=>pushToGitHub(getAllBooksForSync(),'✓ Lu: '+book.t.slice(0,40)),300);
-    });
-    info.appendChild(savRating);
-
-    card.appendChild(info);
-    wrap.appendChild(card);
-  });
-}
 
 function render(){
   const q=currentSearch.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -3766,8 +3674,7 @@ if(!getToken()){
   // Masquer l'onglet Travail dans la nav
   document.querySelectorAll('[data-page="work"]').forEach(el=>el.style.display='none');
 }
-buildStats();render();updateSyncBtn();buildMobileEnCours();
-// If loaded with cache-bust param, clean the URL silently
+buildStats();render();updateSyncBtn();// If loaded with cache-bust param, clean the URL silently
 if(location.search.startsWith('?v=')) history.replaceState(null,'',location.pathname);
 
 if(!getToken()&&!localStorage.getItem('setup_dismissed')){setTimeout(()=>openSetup(),1200);}
