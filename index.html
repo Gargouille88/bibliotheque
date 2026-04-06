@@ -574,14 +574,25 @@ body.view-mode::after{content:'Mode lecture';position:fixed;bottom:0.8rem;right:
 /* cache-bust:1775325882418 */
 
 
-/* ── Slider pages mobile ── */
-#mobile-page-slider-wrap{display:none}
+/* ── Slider pages + boutons mobile ── */
+#mobile-progress-actions{display:none}
 @media(max-width:700px){
-  #mobile-page-slider-wrap{display:block;padding:0.8rem 0 0.2rem;width:100%}
-  #mobile-page-slider{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;background:linear-gradient(to right,var(--accent) 0%,var(--accent) var(--slider-pct,0%),var(--line) var(--slider-pct,0%),var(--line) 100%);outline:none;cursor:pointer}
-  #mobile-page-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:24px;height:24px;border-radius:50%;background:var(--ink);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.25)}
-  #mobile-page-slider::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:var(--ink);cursor:pointer;border:none;box-shadow:0 1px 4px rgba(0,0,0,0.25)}
-  #mobile-slider-label{text-align:center;font-size:0.82rem;color:var(--ink2);margin-top:0.4rem;font-variant-numeric:tabular-nums}
+  .progress-mode-btns,.progress-input-group,.progress-save-btn{display:none!important}
+  #mobile-progress-actions{display:block;padding:0.8rem 0;width:100%}
+  #mobile-slider-value{text-align:center;font-size:1.1rem;font-weight:600;color:var(--ink);margin-bottom:0.3rem;font-variant-numeric:tabular-nums}
+  #mobile-slider-sub{text-align:center;font-size:0.72rem;color:var(--ink3);margin-bottom:0.9rem}
+  #mobile-page-slider{-webkit-appearance:none;appearance:none;width:calc(100% + 2rem);margin-left:-1rem;height:8px;border-radius:4px;background:linear-gradient(to right,var(--accent) 0%,var(--accent) var(--slider-pct,0%),var(--line) var(--slider-pct,0%),var(--line) 100%);outline:none;cursor:pointer;display:block;margin-bottom:1.2rem}
+  #mobile-page-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:30px;height:30px;border-radius:50%;background:var(--ink);cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.3)}
+  #mobile-page-slider::-moz-range-thumb{width:30px;height:30px;border-radius:50%;background:var(--ink);cursor:pointer;border:none;box-shadow:0 2px 6px rgba(0,0,0,0.3)}
+  #mobile-save-progress-btn{display:block;width:100%;padding:0.9rem;font-size:0.9rem;font-weight:600;background:var(--ink);color:var(--bg);border:none;border-radius:4px;cursor:pointer;font-family:DM Sans,sans-serif;margin-bottom:0.6rem}
+  #mobile-save-progress-btn:active{opacity:0.8}
+  #mobile-mark-read-btn{display:block;width:100%;padding:0.9rem;font-size:0.9rem;font-weight:600;background:#16a34a;color:#fff;border:none;border-radius:4px;cursor:pointer;font-family:DM Sans,sans-serif}
+  #mobile-mark-read-btn:active{opacity:0.8}
+  #mobile-rating-wrap{display:none;padding-top:0.8rem}
+  .mobile-stars{display:flex;justify-content:center;gap:0.5rem;margin-bottom:0.7rem}
+  .mobile-star{font-size:2rem;cursor:pointer;color:var(--line);transition:color 0.15s;-webkit-tap-highlight-color:transparent}
+  .mobile-star.on{color:#e05c2a}
+  #mobile-confirm-read-btn{display:block;width:100%;padding:0.9rem;font-size:0.9rem;font-weight:600;background:#16a34a;color:#fff;border:none;border-radius:4px;cursor:pointer;font-family:DM Sans,sans-serif}
 }
 </style>
 </head>
@@ -2495,6 +2506,7 @@ async function fetchPubYear(book){
   return orig||edition||null;
 }
 function openModal(book){
+  window._currentModalBook=book;
   const isViewMode=document.body.classList.contains('view-mode');
   currentModalBook=book;
   const lent=loadLent();const isLent=bk(book) in lent;const lentTo=lent[bk(book)]||'';
@@ -2520,7 +2532,7 @@ function openModal(book){
     +'<button class="progress-mode-btn active" id="pm-pages">Pages</button>'
     +'<button class="progress-mode-btn" id="pm-pct">%</button>'
     +'<div class="progress-input-group" id="pg-pages-group">'
-    +'<div id="mobile-page-slider-wrap"><input type="range" id="mobile-page-slider" min="0" max="1000" value="0" step="1"><div id="mobile-slider-label"></div></div>'
+    +'<div id="mobile-progress-actions"><div id="mobile-slider-value">0 p.</div><div id="mobile-slider-sub">sur ? pages</div><input type="range" id="mobile-page-slider" min="0" max="1000" value="0" step="1"><button id="mobile-save-progress-btn">✓ Sauvegarder la progression</button><button id="mobile-mark-read-btn">🏆 Marquer comme lu</button><div id="mobile-rating-wrap"><div class="mobile-stars"><span class="mobile-star" data-v="1">★</span><span class="mobile-star" data-v="2">★</span><span class="mobile-star" data-v="3">★</span><span class="mobile-star" data-v="4">★</span><span class="mobile-star" data-v="5">★</span></div><button id="mobile-confirm-read-btn">Confirmer — <span id="mobile-rating-label">pas de note</span></button></div></div>'
     +'<input type="number" id="pg-pages-read" min="0" placeholder="'+(mp&&mp.pages_read?mp.pages_read:'0')+'" value="'+(mp&&mp.pages_read?mp.pages_read:'')+'" />'
     +'<span>/ <input type="number" id="pg-total-pages" min="1" placeholder="total" value="'+(mp&&mp.total_pages?mp.total_pages:'')+'" style="width:60px;padding:0.28rem 0.3rem;border:1px solid var(--line);border-radius:2px;background:var(--bg);font-family:DM Sans,sans-serif;font-size:0.8rem;color:var(--ink);outline:none;text-align:center" /></span>'
     +'</div>'
@@ -2830,34 +2842,75 @@ function openModal(book){
     }
   }
 
-    // Slider pages mobile
+    // Slider pages + boutons mobile
   (function(){
     var slider=document.getElementById('mobile-page-slider');
-    var sliderLabel=document.getElementById('mobile-slider-label');
+    var valLabel=document.getElementById('mobile-slider-value');
+    var subLabel=document.getElementById('mobile-slider-sub');
     var pagesRead=document.getElementById('pg-pages-read');
     var totalPagesInp=document.getElementById('pg-total-pages');
-    if(!slider||!pagesRead) return;
+    var saveBtn=document.getElementById('mobile-save-progress-btn');
+    var markReadBtn=document.getElementById('mobile-mark-read-btn');
+    var ratingWrap=document.getElementById('mobile-rating-wrap');
+    var confirmBtn=document.getElementById('mobile-confirm-read-btn');
+    var ratingLabel=document.getElementById('mobile-rating-label');
+    if(!slider) return;
+    var currentRating=0;
     function syncSlider(){
       var tp=parseInt(totalPagesInp&&totalPagesInp.value)||0;
-      var pr=parseInt(pagesRead.value)||0;
+      var pr=parseInt(pagesRead&&pagesRead.value)||0;
       slider.max=tp||9999;slider.value=pr;
       var pct=tp>0?Math.round((pr/tp)*100):0;
       slider.style.setProperty('--slider-pct',pct+'%');
-      if(sliderLabel) sliderLabel.textContent=pr+' / '+(tp||'?')+' p.'+(tp>0?' — '+pct+'%':'');
+      if(valLabel) valLabel.textContent=pr+' p.';
+      if(subLabel) subLabel.textContent='sur '+(tp||'?')+' pages'+(tp>0?' — '+pct+'%':'');
     }
     syncSlider();
     slider.addEventListener('input',function(){
       var tp=parseInt(totalPagesInp&&totalPagesInp.value)||parseInt(slider.max)||9999;
-      pagesRead.value=parseInt(slider.value);
-      var pct=tp>0?Math.round((parseInt(slider.value)/tp)*100):0;
+      var pr=parseInt(slider.value);
+      if(pagesRead) pagesRead.value=pr;
+      var pct=tp>0?Math.round((pr/tp)*100):0;
       slider.style.setProperty('--slider-pct',pct+'%');
-      if(sliderLabel) sliderLabel.textContent=slider.value+' / '+(tp||'?')+' p.'+(tp>0?' — '+pct+'%':'');
+      if(valLabel) valLabel.textContent=pr+' p.';
+      if(subLabel) subLabel.textContent='sur '+(tp||'?')+' pages'+(tp>0?' — '+pct+'%':'');
     });
-    slider.addEventListener('change',function(){
-      document.getElementById('pg-save-btn')&&document.getElementById('pg-save-btn').click();
-    });
-    pagesRead.addEventListener('input',syncSlider);
+    if(pagesRead) pagesRead.addEventListener('input',syncSlider);
     if(totalPagesInp) totalPagesInp.addEventListener('input',syncSlider);
+    // Bouton sauvegarder
+    if(saveBtn) saveBtn.addEventListener('click',function(){
+      document.getElementById('pg-save-btn')&&document.getElementById('pg-save-btn').click();
+      saveBtn.textContent='✓ Sauvegardé !';
+      setTimeout(function(){saveBtn.textContent='✓ Sauvegarder la progression';},1500);
+    });
+    // Bouton marquer comme lu
+    if(markReadBtn) markReadBtn.addEventListener('click',function(){
+      markReadBtn.style.display='none';
+      if(saveBtn) saveBtn.style.display='none';
+      if(ratingWrap) ratingWrap.style.display='block';
+    });
+    // Étoiles
+    var stars=document.querySelectorAll('.mobile-star');
+    stars.forEach(function(s){
+      s.addEventListener('click',function(){
+        currentRating=parseInt(s.dataset.v);
+        stars.forEach(function(st,i){st.classList.toggle('on',i<currentRating);});
+        if(ratingLabel) ratingLabel.textContent=currentRating+'★';
+      });
+    });
+    // Confirmer lu
+    if(confirmBtn) confirmBtn.addEventListener('click',function(){
+      var book2=arguments.callee._book||window._currentModalBook;
+      if(!book2) return;
+      book2.s='read';
+      if(currentRating>0) book2.r=currentRating.toFixed(1);
+      var pg=loadProgress();delete pg[bk(book2)];saveProgress(pg);
+      if(book2._custom) saveCustom(loadCustom().map(function(b){return(b.t===book2.t&&b.a===book2.a)?Object.assign({},b,{s:'read',r:book2.r}):b;}));
+      buildCurrent&&buildCurrent();buildStats&&buildStats();render&&render();
+      closeModal&&closeModal();
+      showToast('✓ Lu ! '+(currentRating>0?currentRating+'★':''));
+      if(getToken()) setTimeout(function(){pushToGitHub(getAllBooksForSync(),'✓ Lu: '+book2.t.slice(0,40));},300);
+    });
   })();
 
   // #4: Author clickable
