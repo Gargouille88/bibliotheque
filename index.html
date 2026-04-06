@@ -2540,6 +2540,7 @@ function openModal(book){
     +'<span>%</span>'
     +'</div>'
     +'<button class="progress-save-btn" id="pg-save-btn">Enregistrer</button>'
+    +'<div id="mobile-progress-actions"><div id="mobile-slider-value">0 p.</div><div id="mobile-slider-sub">sur ? pages</div><input type="range" id="mobile-page-slider" min="0" max="9999" value="0" step="1"><button id="mobile-save-progress-btn">✓ Sauvegarder la progression</button><button id="mobile-mark-read-btn">🏆 Marquer comme lu</button><div id="mobile-rating-wrap"><div class="mobile-stars"><span class="mobile-star" data-v="1">★</span><span class="mobile-star" data-v="2">★</span><span class="mobile-star" data-v="3">★</span><span class="mobile-star" data-v="4">★</span><span class="mobile-star" data-v="5">★</span></div><button id="mobile-confirm-read-btn">Confirmer — <span id="mobile-rating-label">pas de note</span></button></div></div>'
     +'</div>'
     +'</div>'
     : '';
@@ -2841,9 +2842,9 @@ function openModal(book){
     }
   }
 
-    // Slider pages + boutons mobile — logique directe sans passer par boutons cachés
+    // Slider pages + boutons mobile
   (function(){
-    if(window.innerWidth>700) return;
+    if(book.s!=='currently-reading') return;
     var slider=document.getElementById('mobile-page-slider');
     var valLabel=document.getElementById('mobile-slider-value');
     var subLabel=document.getElementById('mobile-slider-sub');
@@ -3234,18 +3235,6 @@ async function openCoverPicker(book,coverWrapEl){
   function doSearch(q){loadAllSources(q);}
 
   loadAllSources(book.t+' '+book.a);
-  // Mobile progress block (En cours seulement) — setTimeout car loadAllSources modifie le DOM
-  if(book.s==='currently-reading'){
-    setTimeout(function(){
-      var mpb=document.getElementById('mobile-progress-actions');
-      if(mpb)mpb.remove();
-      var nb=document.createElement('div');
-      nb.id='mobile-progress-actions';
-      nb.innerHTML='<div id="mobile-slider-value">0 p.</div><div id="mobile-slider-sub">sur ? pages</div><input type="range" id="mobile-page-slider" min="0" max="9999" value="0" step="1"><button id="mobile-save-progress-btn">✓ Sauvegarder la progression</button><button id="mobile-mark-read-btn">🏆 Marquer comme lu</button><div id="mobile-rating-wrap"><div class="mobile-stars"><span class="mobile-star" data-v="1">★</span><span class="mobile-star" data-v="2">★</span><span class="mobile-star" data-v="3">★</span><span class="mobile-star" data-v="4">★</span><span class="mobile-star" data-v="5">★</span></div><button id="mobile-confirm-read-btn">Confirmer — <span id="mobile-rating-label">pas de note</span></button></div></div>';
-      var pw=document.getElementById('modal-progress-wrap');
-      if(pw) pw.after(nb);
-    }, 150);
-  }
 }
 
 function filterByAuthor(author){
