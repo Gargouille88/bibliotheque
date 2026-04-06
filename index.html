@@ -3787,6 +3787,46 @@ if(!getToken()){
   document.querySelectorAll('[data-page="work"]').forEach(el=>el.style.display='none');
 }
 buildStats();render();updateSyncBtn();
+  // Sync API: fetch GitHub direct pour contourner le cache CDN
+  if(localStorage.getItem('gh_token')){
+    (function(){
+      var tk=localStorage.getItem('gh_token');
+      fetch('https://api.github.com/repos/gargouille88/bibliotheque/contents/index.html',{
+        headers:{'Authorization':'token '+tk,'Accept':'application/vnd.github.v3+json'},
+        cache:'no-store'
+      }).then(function(r){return r.json();}).then(function(d){
+        if(!d.content)return;
+        var raw=atob(d.content.replace(/\n/g,''));
+        var bytes=new Uint8Array(raw.length);
+        for(var i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
+        var html=new TextDecoder('utf-8').decode(bytes);
+        // Extraire SYNC_DATA avec eval (plus robuste que regex)
+        var syncMatch=html.match(/const SYNC_DATA=({[\s\S]+?\});\s*\n/);
+        if(!syncMatch)return;
+        var fileSyncData;
+        try{fileSyncData=eval('('+syncMatch[1]+')');}catch(e){return;}
+        var fileProg=(fileSyncData&&fileSyncData.progress)||{};
+        if(!Object.keys(fileProg).length)return;
+        var lsProg=loadProgress();
+        var changed=false;
+        Object.keys(fileProg).forEach(function(k){
+          var fp=fileProg[k]||{};
+          var lp=lsProg[k]||{};
+          var fTs=fp._ts||0;
+          var lTs=lp._ts||0;
+          if(fTs>lTs||(!lTs&&fTs)||(fTs&&!lp.hasOwnProperty('pages_read'))){
+            lsProg[k]=fp;changed=true;
+          }
+        });
+        if(changed){
+          saveProgress(lsProg);
+          if(SYNC_DATA&&SYNC_DATA.progress)Object.assign(SYNC_DATA.progress,fileProg);
+          buildCurrent&&buildCurrent();render&&render();
+        }
+      }).catch(function(){});
+    })();
+  }
+
   // Sync: merger SYNC_DATA.progress dans localStorage via timestamps
   (function(){
     try{
