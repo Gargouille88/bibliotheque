@@ -515,6 +515,27 @@ body.view-mode::after{content:'Mode lecture';position:fixed;bottom:0.8rem;right:
 .f-tobuy{border-color:#e05c2a;color:#e05c2a}
 .f-tobuy.active{background:#e05c2a;color:#fff}
 /* cache-bust:1775325882418 */
+
+/* ── Widget mobile En cours ── */
+#mobile-encours{display:none;padding:0.8rem 1rem;background:var(--bg);border-bottom:1px solid var(--line)}
+#mobile-encours .mec-title{font-size:0.62rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--ink3);font-weight:600;margin-bottom:0.6rem}
+#mobile-encours .mec-card{display:flex;gap:0.8rem;align-items:flex-start;padding:0.7rem;border:1px solid var(--line);border-radius:3px;background:var(--surface2);margin-bottom:0.5rem}
+#mobile-encours .mec-cover{width:48px;height:68px;object-fit:cover;border-radius:2px;flex-shrink:0;background:var(--line)}
+#mobile-encours .mec-info{flex:1;min-width:0}
+#mobile-encours .mec-book-title{font-size:0.82rem;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:0.25rem}
+#mobile-encours .mec-prog-bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:0.3rem}
+#mobile-encours .mec-prog-fill{height:100%;background:#e05c2a;border-radius:3px;transition:width 0.4s}
+#mobile-encours .mec-pages-row{display:flex;align-items:center;gap:0.35rem;margin-bottom:0.5rem;flex-wrap:wrap}
+#mobile-encours .mec-pages-input{width:60px;padding:0.2rem 0.3rem;border:1px solid var(--line);border-radius:2px;font-size:0.78rem;text-align:center;background:var(--bg);color:var(--ink);outline:none;font-family:DM Sans,sans-serif}
+#mobile-encours .mec-pages-label{font-size:0.68rem;color:var(--ink3)}
+#mobile-encours .mec-quick-btn{padding:0.18rem 0.4rem;font-size:0.65rem;border:1px solid var(--line);border-radius:2px;background:var(--bg);color:var(--ink2);cursor:pointer;font-family:DM Sans,sans-serif}
+#mobile-encours .mec-quick-btn:active{background:var(--ink);color:var(--bg)}
+#mobile-encours .mec-done-btn{width:100%;padding:0.35rem;font-size:0.72rem;border:none;border-radius:2px;background:#16a34a;color:#fff;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;letter-spacing:0.05em}
+#mobile-encours .mec-stars{display:flex;gap:0.2rem;margin-top:0.4rem;display:none}
+#mobile-encours .mec-star{font-size:1.2rem;cursor:pointer;color:var(--line);transition:color 0.15s}
+#mobile-encours .mec-star.on{color:#e05c2a}
+#mobile-encours .mec-save-rating{margin-top:0.4rem;width:100%;padding:0.3rem;font-size:0.72rem;border:none;border-radius:2px;background:#e05c2a;color:#fff;cursor:pointer;font-family:DM Sans,sans-serif;display:none}
+@media(max-width:700px){#mobile-encours{display:block}}
 </style>
 </head>
 <body>
@@ -544,6 +565,7 @@ body.view-mode::after{content:'Mode lecture';position:fixed;bottom:0.8rem;right:
 </nav>
 <div class="stats-bar" id="stats-bar"></div>
 <div class="page active" id="page-library">
+  <div id="mobile-encours"></div>
   <div class="controls">
     <div class="controls-row1">
       <div class="search-wrap">
@@ -1739,6 +1761,135 @@ function makeCard(book,showCoup){
   card.addEventListener('click',()=>openModal(book));
   card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')openModal(book);});
   return card;
+}
+
+
+function buildMobileEnCours(){
+  const wrap=document.getElementById('mobile-encours');
+  if(!wrap||window.innerWidth>700)return;
+  wrap.innerHTML='';
+  const cur=BOOKS.filter(b=>b.s==='currently-reading');
+  if(!cur.length){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  const ttl=document.createElement('div');ttl.className='mec-title';
+  ttl.textContent='📖 En cours ('+cur.length+')';
+  wrap.appendChild(ttl);
+  cur.forEach(function(book){
+    const prog=loadProgress()[bk(book)]||{};
+    const pagesRead=prog.pages_read||0;
+    const totalPages=prog.total_pages||getBookPages(book)||0;
+    const pct=totalPages>0?Math.min(100,Math.round((pagesRead/totalPages)*100)):0;
+
+    const card=document.createElement('div');card.className='mec-card';
+
+    // Cover
+    const img=document.createElement(book.c&&book.c.length>10?'img':'div');
+    img.className='mec-cover';
+    if(book.c&&book.c.length>10){img.src=book.c;img.alt=book.t;}
+    card.appendChild(img);
+
+    // Info
+    const info=document.createElement('div');info.className='mec-info';
+
+    const titleEl=document.createElement('div');titleEl.className='mec-book-title';
+    titleEl.textContent=book.t;titleEl.title=book.t;
+    info.appendChild(titleEl);
+
+    // Progress bar
+    const barWrap=document.createElement('div');barWrap.className='mec-prog-bar';
+    const fill=document.createElement('div');fill.className='mec-prog-fill';
+    fill.style.width=pct+'%';fill.id='mec-fill-'+BOOKS.indexOf(book);
+    barWrap.appendChild(fill);info.appendChild(barWrap);
+
+    // Pages row
+    const pgRow=document.createElement('div');pgRow.className='mec-pages-row';
+    const pgInp=document.createElement('input');
+    pgInp.type='number';pgInp.className='mec-pages-input';
+    pgInp.value=pagesRead;pgInp.min='0';pgInp.max=totalPages||9999;
+
+    const pgLabel=document.createElement('span');pgLabel.className='mec-pages-label';
+    pgLabel.textContent='/ '+(totalPages||'?')+' p.';
+
+    const savePages=function(){
+      const bi=BOOKS.indexOf(book);
+      const np=parseInt(pgInp.value)||0;
+      const tp=totalPages||parseInt(pgInp.max)||0;
+      const pg=loadProgress();pk=bk(book);
+      if(!pg[pk])pg[pk]={pages_read:0,total_pages:tp,pct:null};
+      pg[pk].pages_read=np;
+      pg[pk].pct=tp>0?Math.round((np/tp)*100):null;
+      saveProgress(pg);
+      // Update fill
+      const f=document.getElementById('mec-fill-'+bi);
+      if(f)f.style.width=(tp>0?Math.min(100,Math.round((np/tp)*100)):0)+'%';
+      // Update cover progress bar in grid too
+      render();
+    };
+
+    pgInp.addEventListener('change',savePages);
+    pgInp.addEventListener('blur',savePages);
+
+    pgRow.appendChild(pgInp);pgRow.appendChild(pgLabel);
+
+    // Quick +/- buttons
+    ['+10','+25','+50'].forEach(function(lbl){
+      const btn=document.createElement('button');btn.className='mec-quick-btn';btn.textContent=lbl;
+      btn.addEventListener('click',function(){
+        pgInp.value=Math.min(parseInt(pgInp.max)||9999,(parseInt(pgInp.value)||0)+parseInt(lbl));
+        savePages();
+      });
+      pgRow.appendChild(btn);
+    });
+    info.appendChild(pgRow);
+
+    // Done button
+    const doneBtn=document.createElement('button');doneBtn.className='mec-done-btn';
+    doneBtn.textContent='✓ Marquer comme lu';
+    doneBtn.addEventListener('click',function(){
+      doneBtn.style.display='none';
+      starsWrap.style.display='flex';
+      savRating.style.display='block';
+    });
+    info.appendChild(doneBtn);
+
+    // Stars for rating
+    const starsWrap=document.createElement('div');starsWrap.className='mec-stars';
+    let currentRating=0;
+    [1,2,3,4,5].forEach(function(n){
+      const s=document.createElement('span');s.className='mec-star';s.textContent='★';s.dataset.v=n;
+      s.addEventListener('click',function(){
+        currentRating=n;
+        starsWrap.querySelectorAll('.mec-star').forEach(function(st,i){
+          st.classList.toggle('on',i<n);
+        });
+      });
+      s.addEventListener('mouseover',function(){
+        starsWrap.querySelectorAll('.mec-star').forEach(function(st,i){st.classList.toggle('on',i<n);});
+      });
+      s.addEventListener('mouseout',function(){
+        starsWrap.querySelectorAll('.mec-star').forEach(function(st,i){st.classList.toggle('on',i<currentRating);});
+      });
+      starsWrap.appendChild(s);
+    });
+    info.appendChild(starsWrap);
+
+    // Save rating + mark as read
+    const savRating=document.createElement('button');savRating.className='mec-save-rating';
+    savRating.textContent='Enregistrer';
+    savRating.addEventListener('click',function(){
+      book.s='read';
+      if(currentRating>0)book.r=currentRating.toFixed(1);
+      const pg=loadProgress();delete pg[bk(book)];saveProgress(pg);
+      if(book._custom)saveCustom(loadCustom().map(b=>(b.t===book.t&&b.a===book.a)?{...b,s:'read',r:book.r}:b));
+      buildCurrent();buildStats();render();buildMobileEnCours();
+      showToast('✓ Terminé ! Note : '+currentRating+'★');
+      if(getToken())setTimeout(()=>pushToGitHub(getAllBooksForSync(),'✓ Lu: '+book.t.slice(0,40)),300);
+    });
+    info.appendChild(savRating);
+
+    card.appendChild(info);
+    wrap.appendChild(card);
+  });
 }
 
 function render(){
@@ -3615,7 +3766,7 @@ if(!getToken()){
   // Masquer l'onglet Travail dans la nav
   document.querySelectorAll('[data-page="work"]').forEach(el=>el.style.display='none');
 }
-buildStats();render();updateSyncBtn();
+buildStats();render();updateSyncBtn();buildMobileEnCours();
 // If loaded with cache-bust param, clean the URL silently
 if(location.search.startsWith('?v=')) history.replaceState(null,'',location.pathname);
 
