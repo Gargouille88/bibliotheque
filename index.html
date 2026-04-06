@@ -3781,7 +3781,24 @@ if(!getToken()){
   // Masquer l'onglet Travail dans la nav
   document.querySelectorAll('[data-page="work"]').forEach(el=>el.style.display='none');
 }
-buildStats();render();updateSyncBtn();// If loaded with cache-bust param, clean the URL silently
+// Fusionner SYNC_DATA du fichier dans localStorage au démarrage
+  (function(){
+    try {
+      if(SYNC_DATA && SYNC_DATA.progress) {
+        var lsProg = loadProgress();
+        var fileProg = SYNC_DATA.progress;
+        var merged = Object.assign({}, fileProg, lsProg);
+        // Pour chaque clé, prendre la valeur avec le plus de pages lues
+        Object.keys(fileProg).forEach(function(k){
+          if(!lsProg[k] || (fileProg[k].pages_read||0) > (lsProg[k].pages_read||0)) {
+            merged[k] = fileProg[k];
+          }
+        });
+        saveProgress(merged);
+      }
+    } catch(e) {}
+  })();
+  buildStats();render();updateSyncBtn();// If loaded with cache-bust param, clean the URL silently
 if(location.search.startsWith('?v=')) history.replaceState(null,'',location.pathname);
 
 if(!getToken()&&!localStorage.getItem('setup_dismissed')){setTimeout(()=>openSetup(),1200);}
