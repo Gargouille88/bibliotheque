@@ -3758,7 +3758,7 @@ async function runBatchFetch(opts){
   },2000);
 }
 document.getElementById('batch-fetch-btn')
-document.getElementById('batch-fetch-btn')?.addEventListener('click',function(){closeMoreMenu&&closeMoreMenu();setTimeout(function(){openBatchFetchModal();},50);});
+document.getElementById('batch-fetch-btn')?.addEventListener('click',function(){window.closeMoreMenu&&window.closeMoreMenu();setTimeout(function(){openBatchFetchModal();},50);});
 
 // Dark mode
 (function(){
