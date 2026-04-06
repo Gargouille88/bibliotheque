@@ -3797,10 +3797,10 @@ buildStats();render();updateSyncBtn();
       Object.keys(fileProg).forEach(function(k){
         var fp=fileProg[k]||{};
         var lp=lsProg[k]||{};
-        // Prendre la valeur la plus récente (via _ts), ou file si pas de timestamp local
         var fileTs=fp._ts||0;
         var localTs=lp._ts||0;
-        if(fileTs>localTs){
+        // File gagne si: a un _ts plus récent, OU si local n'a pas de _ts, OU si local n'existe pas
+        if(fileTs>localTs||(!localTs&&fileTs)||(fileTs&&!lp.hasOwnProperty('pages_read'))){
           lsProg[k]=fp;changed=true;
         }
       });
