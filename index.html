@@ -3781,24 +3781,50 @@ if(!getToken()){
   // Masquer l'onglet Travail dans la nav
   document.querySelectorAll('[data-page="work"]').forEach(el=>el.style.display='none');
 }
-// Fusionner SYNC_DATA du fichier dans localStorage au démarrage
+buildStats();render();updateSyncBtn();
+  // Sync progression depuis GitHub API (bypass CDN cache)
   (function(){
-    try {
-      if(SYNC_DATA && SYNC_DATA.progress) {
-        var lsProg = loadProgress();
-        var fileProg = SYNC_DATA.progress;
-        var merged = Object.assign({}, fileProg, lsProg);
-        // Pour chaque clé, prendre la valeur avec le plus de pages lues
-        Object.keys(fileProg).forEach(function(k){
-          if(!lsProg[k] || (fileProg[k].pages_read||0) > (lsProg[k].pages_read||0)) {
-            merged[k] = fileProg[k];
-          }
-        });
-        saveProgress(merged);
+    var tk=localStorage.getItem('gh_token');
+    if(!tk) return;
+    // Fetch asynchrone : ne bloque pas le rendu
+    fetch('https://api.github.com/repos/gargouille88/bibliotheque/contents/index.html',{
+      headers:{'Authorization':'token '+tk,'Accept':'application/vnd.github.v3+json'},
+      cache:'no-store'
+    }).then(function(r){return r.json();}).then(function(d){
+      if(!d.content) return;
+      // Décoder le fichier
+      var raw=atob(d.content.replace(/\n/g,''));
+      var bytes=new Uint8Array(raw.length);
+      for(var i=0;i<raw.length;i++) bytes[i]=raw.charCodeAt(i);
+      var html=new TextDecoder('utf-8').decode(bytes);
+      // Extraire SYNC_DATA du fichier
+      var m=html.match(/const SYNC_DATA=({[sS]*?});\s*\n/);
+      if(!m) m=html.match(/const SYNC_DATA=([\s\S]+?)(?=\nconst |\nfunction |\n\n)/);
+      if(!m) return;
+      var remoteSyncData;
+      try{remoteSyncData=eval('('+m[1]+')');}catch(e){return;}
+      if(!remoteSyncData||!remoteSyncData.progress) return;
+      // Fusionner : prendre le max des pages_read pour chaque livre
+      var localProg=loadProgress();
+      var remoteProg=remoteSyncData.progress;
+      var changed=false;
+      Object.keys(remoteProg).forEach(function(k){
+        var remote=remoteProg[k]||{};
+        var local=localProg[k]||{};
+        if((remote.pages_read||0)>(local.pages_read||0)){
+          localProg[k]=remote;changed=true;
+        }
+      });
+      if(changed){
+        saveProgress(localProg);
+        // Mettre à jour SYNC_DATA en mémoire aussi
+        if(SYNC_DATA&&SYNC_DATA.progress) Object.assign(SYNC_DATA.progress,remoteProg);
+        buildCurrent&&buildCurrent();render&&render();
+        showToast&&showToast('\u21bb Progression synchronis\u00e9e');
       }
-    } catch(e) {}
+    }).catch(function(){});
   })();
-  buildStats();render();updateSyncBtn();// If loaded with cache-bust param, clean the URL silently
+  // If loaded with cache-bust param, clean the URL silently
 if(location.search.startsWith('?v=')) history.replaceState(null,'',location.pathname);
 
 if(!getToken()&&!localStorage.getItem('setup_dismissed')){setTimeout(()=>openSetup(),1200);}
