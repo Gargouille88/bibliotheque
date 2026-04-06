@@ -905,7 +905,12 @@ function saveLent(a){localStorage.setItem(LS_LENT,JSON.stringify(a));}
 function loadComments(){try{return JSON.parse(localStorage.getItem(LS_COMMENTS))||{};}catch{return{};}};
 function saveComments(a){localStorage.setItem(LS_COMMENTS,JSON.stringify(a));}
 function loadProgress(){try{return JSON.parse(localStorage.getItem(LS_PROGRESS))||{};}catch{return{};}}
-function saveProgress(a){localStorage.setItem(LS_PROGRESS,JSON.stringify(a));}
+function saveProgress(a){
+  // Ajouter timestamp à chaque entrée sans _ts
+  var now=Date.now();
+  Object.keys(a).forEach(function(k){if(a[k]&&!a[k]._ts)a[k]._ts=now;});
+  localStorage.setItem(LS_PROGRESS,JSON.stringify(a));
+}
 function loadPages(){try{return JSON.parse(localStorage.getItem(LS_PAGES))||{};}catch{return{};}}
 function savePages(a){localStorage.setItem(LS_PAGES,JSON.stringify(a));}
 function getBookPages(book){const p=loadPages();return p[bk(book)]||book.pages||null;}
@@ -2888,7 +2893,7 @@ function openModal(book){
       var pr=parseInt(slider.value)||0;
       var tp=parseInt(totalPagesInp&&totalPagesInp.value)||initTotal||0;
       var pg=loadProgress();
-      pg[bk(book)]={pages_read:pr,total_pages:tp||null,pct:tp>0?Math.round((pr/tp)*100):null};
+      pg[bk(book)]={pages_read:pr,total_pages:tp||null,pct:tp>0?Math.round((pr/tp)*100):null,_ts:Date.now()};
       saveProgress(pg);
       if(SYNC_DATA&&SYNC_DATA.progress) SYNC_DATA.progress[bk(book)]=pg[bk(book)];
       buildCurrent&&buildCurrent();render&&render();
@@ -3782,7 +3787,7 @@ if(!getToken()){
   document.querySelectorAll('[data-page="work"]').forEach(el=>el.style.display='none');
 }
 buildStats();render();updateSyncBtn();
-  // Sync: merger SYNC_DATA.progress dans localStorage (SYNC_DATA est déjà parsé par le browser)
+  // Sync: merger SYNC_DATA.progress dans localStorage via timestamps
   (function(){
     try{
       var fileProg=(SYNC_DATA&&SYNC_DATA.progress)||{};
@@ -3792,7 +3797,10 @@ buildStats();render();updateSyncBtn();
       Object.keys(fileProg).forEach(function(k){
         var fp=fileProg[k]||{};
         var lp=lsProg[k]||{};
-        if((fp.pages_read||0)>(lp.pages_read||0)){
+        // Prendre la valeur la plus récente (via _ts), ou file si pas de timestamp local
+        var fileTs=fp._ts||0;
+        var localTs=lp._ts||0;
+        if(fileTs>localTs){
           lsProg[k]=fp;changed=true;
         }
       });
