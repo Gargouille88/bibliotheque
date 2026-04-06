@@ -2890,6 +2890,7 @@ function openModal(book){
       var pg=loadProgress();
       pg[bk(book)]={pages_read:pr,total_pages:tp||null,pct:tp>0?Math.round((pr/tp)*100):null};
       saveProgress(pg);
+      if(SYNC_DATA&&SYNC_DATA.progress) SYNC_DATA.progress[bk(book)]=pg[bk(book)];
       buildCurrent&&buildCurrent();render&&render();
       showToast('✓ '+pr+' p. sauvegardées');
       saveBtn.textContent='✓ Sauvegardé !';
