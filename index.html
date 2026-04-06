@@ -2852,8 +2852,7 @@ function openModal(book){
     var slider=document.getElementById('mobile-page-slider');
     if(!slider) return;
     var valLabel=document.getElementById('mobile-slider-value');
-    var pctLabel=document.getElementById('mobile-slider-pct');
-    var totalMobileInp=document.getElementById('mobile-total-input');
+    var subLabel=document.getElementById('mobile-slider-sub');
     var pagesReadInp=document.getElementById('pg-pages-read');
     var totalPagesInp=document.getElementById('pg-total-pages');
     var saveBtn=document.getElementById('mobile-save-progress-btn');
@@ -2862,47 +2861,40 @@ function openModal(book){
     var confirmBtn=document.getElementById('mobile-confirm-read-btn');
     var currentRating=0;
 
+    // Initialiser depuis la progression sauvegardée ou getBookPages
     var progData=loadProgress()[bk(book)]||{};
     var initRead=progData.pages_read||0;
     var initTotal=progData.total_pages||getBookPages(book)||0;
     if(pagesReadInp) pagesReadInp.value=initRead;
     if(initTotal&&totalPagesInp) totalPagesInp.value=initTotal;
-    if(initTotal&&totalMobileInp) totalMobileInp.value=initTotal;
     slider.max=initTotal||9999;
     slider.value=initRead;
-    function updateDisplay(pr,tp){
-      if(valLabel) valLabel.textContent=pr;
-      var pct=tp>0?Math.round((pr/tp)*100):0;
-      slider.style.setProperty('--slider-pct',(tp>0?pct:0)+'%');
-      if(pctLabel) pctLabel.textContent=tp>0?'('+pct+'%)':'';
-    }
-    updateDisplay(initRead,initTotal);
+    var sliderPct=initTotal>0?Math.round((initRead/initTotal)*100):0;
+    slider.style.setProperty('--slider-pct',sliderPct+'%');
+    if(valLabel) valLabel.textContent=initRead;
+    if(subLabel) subLabel.textContent='sur '+(initTotal||'?')+' pages'+(initTotal>0?' ('+sliderPct+'%)':'');
 
     slider.addEventListener('input',function(){
-      var tp=parseInt((totalMobileInp&&totalMobileInp.value)||0)||(initTotal)||9999;
       var pr=parseInt(slider.value);
+      var tp=parseInt(totalPagesInp&&totalPagesInp.value)||initTotal||0;
       if(pagesReadInp) pagesReadInp.value=pr;
-      updateDisplay(pr,tp);
-    });
-
-    if(totalMobileInp) totalMobileInp.addEventListener('input',function(){
-      var tp=parseInt(totalMobileInp.value)||0;
-      if(tp&&totalPagesInp) totalPagesInp.value=tp;
-      slider.max=tp||9999;
-      var pr=parseInt(slider.value)||0;
-      updateDisplay(pr,tp);
+      var pct=tp>0?Math.round((pr/tp)*100):0;
+      slider.style.setProperty('--slider-pct',pct+'%');
+      if(valLabel) valLabel.textContent=pr;
+      if(subLabel) subLabel.textContent='sur '+(tp||'?')+' pages'+(tp>0?' ('+pct+'%)':'');
     });
 
     if(saveBtn) saveBtn.addEventListener('click',function(){
       var pr=parseInt(slider.value)||0;
-      var tp=parseInt((totalMobileInp&&totalMobileInp.value)||0)||(parseInt(totalPagesInp&&totalPagesInp.value)||0);
+      var tp=parseInt(totalPagesInp&&totalPagesInp.value)||initTotal||0;
       var pg=loadProgress();
       pg[bk(book)]={pages_read:pr,total_pages:tp||null,pct:tp>0?Math.round((pr/tp)*100):null};
       saveProgress(pg);
       buildCurrent&&buildCurrent();render&&render();
       showToast('✓ '+pr+' p. sauvegardées');
       saveBtn.textContent='✓ Sauvegardé !';
-      setTimeout(function(){saveBtn.textContent='✓ Sauvegarder la progression';},2000);
+      saveBtn.style.background='#16a34a';
+      setTimeout(function(){saveBtn.textContent='✓ Sauvegarder la progression';saveBtn.style.background='';},2000);
       if(getToken()) setTimeout(function(){pushToGitHub(getAllBooksForSync(),'📖 Progression: '+book.t.slice(0,35));},300);
     });
 
