@@ -2532,7 +2532,6 @@ function openModal(book){
     +'<button class="progress-mode-btn active" id="pm-pages">Pages</button>'
     +'<button class="progress-mode-btn" id="pm-pct">%</button>'
     +'<div class="progress-input-group" id="pg-pages-group">'
-    +'<div id="mobile-progress-actions"><div id="mobile-slider-value">0 p.</div><div id="mobile-slider-sub">sur ? pages</div><input type="range" id="mobile-page-slider" min="0" max="1000" value="0" step="1"><button id="mobile-save-progress-btn">✓ Sauvegarder la progression</button><button id="mobile-mark-read-btn">🏆 Marquer comme lu</button><div id="mobile-rating-wrap"><div class="mobile-stars"><span class="mobile-star" data-v="1">★</span><span class="mobile-star" data-v="2">★</span><span class="mobile-star" data-v="3">★</span><span class="mobile-star" data-v="4">★</span><span class="mobile-star" data-v="5">★</span></div><button id="mobile-confirm-read-btn">Confirmer — <span id="mobile-rating-label">pas de note</span></button></div></div>'
     +'<input type="number" id="pg-pages-read" min="0" placeholder="'+(mp&&mp.pages_read?mp.pages_read:'0')+'" value="'+(mp&&mp.pages_read?mp.pages_read:'')+'" />'
     +'<span>/ <input type="number" id="pg-total-pages" min="1" placeholder="total" value="'+(mp&&mp.total_pages?mp.total_pages:'')+'" style="width:60px;padding:0.28rem 0.3rem;border:1px solid var(--line);border-radius:2px;background:var(--bg);font-family:DM Sans,sans-serif;font-size:0.8rem;color:var(--ink);outline:none;text-align:center" /></span>'
     +'</div>'
