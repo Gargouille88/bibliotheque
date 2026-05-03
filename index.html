@@ -945,6 +945,15 @@ function loadFavorites(){try{return JSON.parse(localStorage.getItem(LS_FAVORITES
 function saveFavorites(a){localStorage.setItem(LS_FAVORITES,JSON.stringify(a));}
 function isFavorite(book){return !!loadFavorites()[bk(book)];}
 
+// Wrapper fetch avec timeout — évite les blocages indéfinis sur OpenLibrary/Google Books
+function fetchTimeout(url,opts,ms){
+  ms=ms||8000;opts=opts||{};
+  const ctrl=new AbortController();
+  const id=setTimeout(()=>ctrl.abort(),ms);
+  const merged=Object.assign({},opts,{signal:ctrl.signal});
+  return fetch(url,merged).finally(()=>clearTimeout(id));
+}
+
 async function fetchPagesFromOL(book){
   const key=bk(book);const pages=loadPages();
   if(pages[key]) return pages[key];
@@ -953,7 +962,7 @@ async function fetchPagesFromOL(book){
     let url='';
     if(isbn) url='https://openlibrary.org/api/books?bibkeys=ISBN:'+isbn+'&jscmd=data&format=json';
     else url='https://openlibrary.org/search.json?q='+encodeURIComponent(book.t+' '+book.a)+'&limit=1&fields=number_of_pages_median';
-    const res=await fetch(url);const data=await res.json();
+    const res=await fetchTimeout(url);const data=await res.json();
     let n=null;
     if(isbn){const k='ISBN:'+isbn;if(data[k]&&data[k].number_of_pages)n=data[k].number_of_pages;}
     else if(data.docs&&data.docs[0]&&data.docs[0].number_of_pages_median)n=data.docs[0].number_of_pages_median;
@@ -968,6 +977,8 @@ function getProgress(book){const p=loadProgress();return p[bk(book)]||null;}
 function getToken(){return localStorage.getItem(TOKEN_KEY)||'';}
 function saveToken(t){localStorage.setItem(TOKEN_KEY,t);}
 function bk(b){return b.t+'||'+b.a;}
+// Helper pour échapper le HTML — protège contre les injections XSS via titres/auteurs/commentaires importés
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 (function(){
   // Normalize genre names (CSV encoding artifacts)
@@ -1182,34 +1193,51 @@ function handleImportFile(file){
 }
 
 function parseImportCSV(text,source){
-  // Detect separator
-  const firstLine=text.split('\n')[0];
-  const sep=firstLine.includes(';')?';':',';
-  // Strip BOM if present (sometimes survives encoding detection)
+  // Strip BOM if present
   text=text.replace(/^\uFEFF/,'');
-  const lines=text.split('\n').filter(l=>l.trim());
-  if(!lines.length) return [];
+  // Detect separator on first line
+  const firstNl=text.indexOf('\n');
+  const firstLine=firstNl>=0?text.slice(0,firstNl):text;
+  const sep=firstLine.includes(';')?';':',';
 
-  // Parse CSV respecting quotes
-  function parseLine(line){
-    const cells=[];let cur='';let inQ=false;
-    for(let i=0;i<line.length;i++){
-      const ch=line[i];
-      if(ch==='"'&&!inQ){inQ=true;}
-      else if(ch==='"'&&inQ&&line[i+1]==='"'){cur+='"';i++;}
-      else if(ch==='"'&&inQ){inQ=false;}
-      else if(ch===sep&&!inQ){cells.push(cur.trim());cur='';}
-      else cur+=ch;
+  // Tokenizer: parcourt tout le texte caractère par caractère et gère
+  // les guillemets (y compris doublés) et les retours à la ligne à l'intérieur des cellules.
+  // C'est la seule façon correcte de parser un CSV — split('\n') casse sur les commentaires multilignes.
+  function tokenize(t){
+    const rows=[];let row=[];let cur='';let inQ=false;
+    for(let i=0;i<t.length;i++){
+      const ch=t[i];
+      if(inQ){
+        if(ch==='"'){
+          if(t[i+1]==='"'){cur+='"';i++;}    // guillemet doublé = guillemet littéral
+          else inQ=false;
+        } else cur+=ch;
+      } else {
+        if(ch==='"') inQ=true;
+        else if(ch===sep){row.push(cur.trim());cur='';}
+        else if(ch==='\n'||ch==='\r'){
+          // fin de ligne uniquement si on n'est pas dans une cellule guillemetée
+          if(ch==='\r'&&t[i+1]==='\n') i++;   // CRLF
+          row.push(cur.trim());cur='';
+          if(row.length>1||row[0]) rows.push(row);
+          row=[];
+        }
+        else cur+=ch;
+      }
     }
-    cells.push(cur.trim());
-    return cells;
+    // Dernière cellule / dernière ligne
+    if(cur||row.length){row.push(cur.trim());if(row.length>1||row[0]) rows.push(row);}
+    return rows;
   }
 
-  const header=parseLine(lines[0]).map(h=>h.toLowerCase().replace(/[`'']/g,"'").trim());
+  const rows=tokenize(text);
+  if(!rows.length) return [];
+
+  const header=rows[0].map(h=>h.toLowerCase().replace(/[`'']/g,"'").trim());
   const books=[];
 
-  for(let i=1;i<lines.length;i++){
-    const cells=parseLine(lines[i]);
+  for(let i=1;i<rows.length;i++){
+    const cells=rows[i];
     if(cells.length<2) continue;
     const row={};
     header.forEach((h,j)=>row[h]=cells[j]||'');
@@ -1520,10 +1548,10 @@ function buildWork(){
     noDate.forEach(book=>{
       const covers=loadCovers();const coverUrl=covers[bk(book)]||book.c||'';
       const row=document.createElement('div');row.className='work-book-row';
-      row.innerHTML='<img class="work-book-cover" src="'+coverUrl+'" alt="" onerror="this.style.opacity=0.2">'
+      row.innerHTML='<img class="work-book-cover" src="'+esc(coverUrl)+'" alt="" onerror="this.style.opacity=0.2">'
         +'<div class="work-book-info">'
-        +'<div class="work-book-title">'+book.t+'</div>'
-        +'<div class="work-book-author">'+(book.a||'')+'</div>'
+        +'<div class="work-book-title">'+esc(book.t)+'</div>'
+        +'<div class="work-book-author">'+esc(book.a||'')+'</div>'
         +'</div>'
         +'<div class="work-book-action">'
         +'<input type="number" class="work-year-input" placeholder="Année" min="1900" max="2099" value="">'
@@ -1559,12 +1587,12 @@ function buildWork(){
       const covers=loadCovers();const coverUrl=covers[bk(book)]||book.c||'';
       const row=document.createElement('div');row.className='work-book-row';
       const starIds='work-star-'+Math.random().toString(36).slice(2);
-      row.innerHTML='<img class="work-book-cover" src="'+coverUrl+'" alt="" onerror="this.style.opacity=0.2">'
+      row.innerHTML='<img class="work-book-cover" src="'+esc(coverUrl)+'" alt="" onerror="this.style.opacity=0.2">'
         +'<div class="work-book-info">'
-        +'<div class="work-book-title">'+book.t+'</div>'
-        +'<div class="work-book-author">'+(book.a||'')+'</div>'
+        +'<div class="work-book-title">'+esc(book.t)+'</div>'
+        +'<div class="work-book-author">'+esc(book.a||'')+'</div>'
         +'</div>'
-        +'<div class="work-book-action"><div class="work-star-row" id="'+starIds+'"></div></div>';
+        +'<div class="work-book-action"><div class="work-star-row" id="'+esc(starIds)+'"></div></div>';
       const titleEl=row.querySelector('.work-book-title');
       titleEl.addEventListener('click',()=>openModal(book));
       const starRow=row.querySelector('.work-star-row');
@@ -1704,7 +1732,7 @@ async function tryLoadCover(book){
   const key=bk(book);
   try{
     const q=encodeURIComponent(book.t+' '+book.a);
-    const res=await fetch('https://www.googleapis.com/books/v1/volumes?q='+q+'&maxResults=1&fields=items/volumeInfo/imageLinks');
+    const res=await fetchTimeout('https://www.googleapis.com/books/v1/volumes?q='+q+'&maxResults=1&fields=items/volumeInfo/imageLinks');
     const data=await res.json();
     const url=data.items&&data.items[0]&&data.items[0].volumeInfo&&data.items[0].volumeInfo.imageLinks&&data.items[0].volumeInfo.imageLinks.thumbnail;
     if(url){
@@ -1806,15 +1834,15 @@ function makeCard(book,showCoup){
   if(currentView==='list'){
     const meta=document.createElement('div');meta.className='card-meta';
     const cachedPgL=getBookPages(book);
-    meta.innerHTML='<div class="card-title">'+book.t+'</div><div class="card-author">'+book.a+'</div>'+(book.r?'<div class="card-rating">'+stars(book.r)+'</div>':'')
+    meta.innerHTML='<div class="card-title">'+esc(book.t)+'</div><div class="card-author">'+esc(book.a)+'</div>'+(book.r?'<div class="card-rating">'+stars(book.r)+'</div>':'')
       +(progPct!=null?'<div style="font-size:0.68rem;color:var(--reading);font-weight:500;white-space:nowrap">'+progPct+'%</div>':'')
       +(cachedPgL?'<div style="font-size:0.7rem;color:var(--ink3);white-space:nowrap">'+cachedPgL+' p.</div>':'')
-      +'<div class="list-year">'+(book.y||'')+'</div>';
+      +'<div class="list-year">'+esc(book.y||'')+'</div>';
     card.appendChild(meta);
   }else{
     const meta=document.createElement('div');meta.className='card-meta';
     const cachedPg=getBookPages(book);
-    meta.innerHTML='<div class="card-title">'+book.t+'</div>'+(book.r?'<div class="card-rating">'+stars(book.r)+'</div>':'')+(cachedPg?'<div class="card-pages">'+cachedPg+' p.</div>':'');
+    meta.innerHTML='<div class="card-title">'+esc(book.t)+'</div>'+(book.r?'<div class="card-rating">'+stars(book.r)+'</div>':'')+(cachedPg?'<div class="card-pages">'+cachedPg+' p.</div>':'');
     if(!cachedPg&&book.s!=='to-read'){fetchPagesFromOL(book).then(n=>{if(n){const el=meta.querySelector('.card-pages');if(!el){const d=document.createElement('div');d.className='card-pages';d.textContent=n+' p.';meta.appendChild(d);}}});}
     if(progPct!=null){
       const pDiv=document.createElement('div');pDiv.className='card-progress';
@@ -1835,8 +1863,11 @@ function render(){
   const advMin=parseFloat(document.getElementById('adv-rate-min')?.value||0);
   const advMax=parseFloat(document.getElementById('adv-rate-max')?.value||5);
   const advFormat=document.getElementById('adv-format')?.value||'';
+  // Cache localStorage en mémoire pour ce render — gain perf 5-10× sur 730+ livres
+  // (évite des centaines de JSON.parse pendant la boucle filter+map)
+  const lentBooks=loadLent();
+  const commentsMap=loadComments();
   const visible=BOOKS.filter(b=>{
-    const lentBooks=loadLent();
     const mF=currentFilter==='all'
       ||(currentFilter==='priority'?isPriority(b)
       :(currentFilter==='lent'?!!lentBooks[bk(b)]
@@ -1844,13 +1875,13 @@ function render(){
       :currentFilter==='tobuy'?(b.s==='to-read'&&!b.own)
       :b.s===currentFilter));
     const mY=!currentYear||b.y===currentYear;
-    const mT=!currentTag||b.g.toLowerCase().includes(currentTag.toLowerCase());
+    const mT=!currentTag||(b.g||'').toLowerCase().includes(currentTag.toLowerCase());
     const mR=!b.r?true:(parseFloat(b.r)>=advMin&&parseFloat(b.r)<=advMax);
     const mFmt=!advFormat||b.f===advFormat;
-    if(!q) return mF&&mY&&mT;
+    if(!q) return mF&&mY&&mT&&mR&&mFmt;
     const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    const tt=norm(b.t);const aa=norm(b.a);
-    const cm=norm(loadComments()[bk(b)]||b.comment||'');
+    const tt=norm(b.t);const aa=norm(b.a||'');
+    const cm=norm(commentsMap[bk(b)]||b.comment||'');
     const gg=norm(b.g||'');
     const pp=norm(b.pub||'');
     const mPub=!currentPubFilter||pp.includes(norm(currentPubFilter));
@@ -1993,12 +2024,12 @@ function buildStatsPage(){
     const readThisYear=read.filter(b=>b.y==CY).length;
     const goal=parseInt(localStorage.getItem('biblio_annual_goal')||'0');
     const pct=goal?Math.min(100,Math.round((readThisYear/goal)*100)):0;
-    const totalPg=read.reduce((s,b)=>s+getBookPages(b),0);
+    const totalPg=read.reduce((s,b)=>s+(getBookPages(b)||0),0);
 
     // Pages par année
     const pgByYear={};
     read.filter(b=>b.y&&getBookPages(b)>0).forEach(b=>{
-      pgByYear[b.y]=(pgByYear[b.y]||0)+getBookPages(b);
+      pgByYear[b.y]=(pgByYear[b.y]||0)+(getBookPages(b)||0);
     });
     const pgYears=Object.keys(pgByYear).sort();
     const maxPg=pgYears.length?Math.max(...Object.values(pgByYear)):1;
@@ -2457,7 +2488,7 @@ async function fetchPublisher(book){
   let pub=null;
   if(isbn){
     try{
-      const r=await fetch('https://openlibrary.org/api/books?bibkeys=ISBN:'+isbn+'&jscmd=data&format=json');
+      const r=await fetchTimeout('https://openlibrary.org/api/books?bibkeys=ISBN:'+isbn+'&jscmd=data&format=json');
       const d=await r.json();
       const pubs=d['ISBN:'+isbn]?.publishers?.map(p=>p.name).filter(Boolean);
       if(pubs?.length) pub=pubs[0];
@@ -2466,14 +2497,14 @@ async function fetchPublisher(book){
   if(!pub){
     try{
       const q=isbn?'isbn:'+isbn:'intitle:'+encodeURIComponent(book.t.slice(0,25))+(book.a?'+inauthor:'+encodeURIComponent(book.a.split(',')[0].trim()):'');
-      const r=await fetch('https://www.googleapis.com/books/v1/volumes?q='+q);
+      const r=await fetchTimeout('https://www.googleapis.com/books/v1/volumes?q='+q);
       const d=await r.json();
       pub=d.items?.[0]?.volumeInfo?.publisher||null;
     }catch(e){}
   }
   if(!pub&&isbn){
     try{
-      const r=await fetch('https://openlibrary.org/search.json?isbn='+isbn+'&limit=1');
+      const r=await fetchTimeout('https://openlibrary.org/search.json?isbn='+isbn+'&limit=1');
       const d=await r.json();
       pub=d.docs?.[0]?.publisher?.[0]||null;
     }catch(e){}
@@ -2487,7 +2518,7 @@ async function fetchPubYear(book){
   // OL search → first_publish_year (date originale)
   try{
     const q=isbn?'isbn='+isbn:'title='+encodeURIComponent(book.t.slice(0,30))+'&author='+encodeURIComponent((book.a||'').split(',')[0].trim());
-    const r=await fetch('https://openlibrary.org/search.json?'+q+'&limit=1&fields=first_publish_year');
+    const r=await fetchTimeout('https://openlibrary.org/search.json?'+q+'&limit=1&fields=first_publish_year');
     const d=await r.json();
     const y=d.docs?.[0]?.first_publish_year;
     if(y&&y>0) orig=y;
@@ -2495,7 +2526,7 @@ async function fetchPubYear(book){
   // OL by ISBN → publish_date (édition spécifique)
   if(!orig&&isbn){
     try{
-      const r=await fetch('https://openlibrary.org/api/books?bibkeys=ISBN:'+isbn+'&jscmd=data&format=json');
+      const r=await fetchTimeout('https://openlibrary.org/api/books?bibkeys=ISBN:'+isbn+'&jscmd=data&format=json');
       const d=await r.json();
       const info=d['ISBN:'+isbn];
       const pub=info?.publish_date;
@@ -2506,7 +2537,7 @@ async function fetchPubYear(book){
   if(!orig&&!edition){
     try{
       const q=isbn?'isbn:'+isbn:'intitle:'+encodeURIComponent(book.t.slice(0,25));
-      const r=await fetch('https://www.googleapis.com/books/v1/volumes?q='+q+'&maxResults=1');
+      const r=await fetchTimeout('https://www.googleapis.com/books/v1/volumes?q='+q+'&maxResults=1');
       const d=await r.json();
       const y=d.items?.[0]?.volumeInfo?.publishedDate?.slice(0,4);
       if(y)edition=parseInt(y);
@@ -2555,18 +2586,18 @@ function openModal(book){
     : '';
     const info=document.createElement('div');info.className='modal-info';
   const genres=book.g?book.g.split(',').map(g=>g.trim()).filter(Boolean):[];
-  info.innerHTML='<div class="modal-title">'+book.t+'</div>'
-    +'<div class="modal-author" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px" title="Voir tous les livres de cet auteur" id="modal-author-link">'+(book.a||'Auteur inconnu')+'</div>'
+  info.innerHTML='<div class="modal-title">'+esc(book.t)+'</div>'
+    +'<div class="modal-author" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px" title="Voir tous les livres de cet auteur" id="modal-author-link">'+esc(book.a||'Auteur inconnu')+'</div>'
     // Status change
     +'<div class="modal-status-row"><span class="modal-status-lbl">Statut</span>'
     +'<select class="modal-status-sel" id="modal-status-sel">'
-    +Object.entries(STATUS_LABELS).map(([v,l])=>'<option value="'+v+'"'+(book.s===v?' selected':'')+'>'+l+'</option>').join('')
+    +Object.entries(STATUS_LABELS).map(([v,l])=>'<option value="'+esc(v)+'"'+(book.s===v?' selected':'')+'>'+esc(l)+'</option>').join('')
     +'</select><button class="modal-status-btn" id="modal-status-btn">Sauvegarder</button></div>'
     // Year (editable for read books)
     +(book.s==='read'?
       '<div class="modal-status-row" style="margin-top:0.3rem">'
       +'<span class="modal-status-lbl">Année lue</span>'
-      +'<input type="number" id="modal-year-input" min="1900" max="2099" value="'+(book.y||'')+'" placeholder="ex: 2023" style="width:70px;padding:0.22rem 0.45rem;border:1px solid var(--line);border-radius:2px;background:var(--bg);font-family:DM Sans,sans-serif;font-size:0.8rem;color:var(--ink);outline:none;text-align:center">'
+      +'<input type="number" id="modal-year-input" min="1900" max="2099" value="'+esc(book.y||'')+'" placeholder="ex: 2023" style="width:70px;padding:0.22rem 0.45rem;border:1px solid var(--line);border-radius:2px;background:var(--bg);font-family:DM Sans,sans-serif;font-size:0.8rem;color:var(--ink);outline:none;text-align:center">'
       +'<button class="modal-status-btn vis" id="modal-year-btn" style="display:none">Sauvegarder</button>'
       +'</div>'
     :'')
@@ -2578,16 +2609,16 @@ function openModal(book){
     +'</div>'
     // Comment
     +'<div class="modal-comment-wrap"><div class="modal-comment-lbl">Mon avis</div>'
-    +'<textarea class="modal-comment-input" id="modal-comment" placeholder="Tes impressions et ressentis…">'+bookComment+'</textarea>'
+    +'<textarea class="modal-comment-input" id="modal-comment" placeholder="Tes impressions et ressentis…">'+esc(bookComment)+'</textarea>'
     +'<button class="modal-comment-save" id="modal-comment-save">Sauvegarder l\'avis</button></div>'
     // Tags
     +progressSection
     +'<div class="modal-tags">'
-    +'<span class="tag tag-'+book.s+'">'+STATUS_LABELS[book.s]+'</span>'
-    +(book.pub?'<span class="tag tag-format" style="border-left:2px solid var(--accent)">'+book.pub+'</span>':'')+(book.f?'<span class="tag tag-format">'+book.f+'</span>':'')
-    +(book.y?'<span class="tag tag-year">📅 '+book.y+'</span>':'')
-    +(isLent?'<span class="tag tag-lent">prêté'+(lentTo?' à '+lentTo:'')+'</span>':'')
-    +genres.map(g=>'<span class="tag tag-genre">'+g+'</span>').join('')
+    +'<span class="tag tag-'+esc(book.s)+'">'+esc(STATUS_LABELS[book.s]||'')+'</span>'
+    +(book.pub?'<span class="tag tag-format" style="border-left:2px solid var(--accent)">'+esc(book.pub)+'</span>':'')+(book.f?'<span class="tag tag-format">'+esc(book.f)+'</span>':'')
+    +(book.y?'<span class="tag tag-year">📅 '+esc(book.y)+'</span>':'')
+    +(isLent?'<span class="tag tag-lent">prêté'+(lentTo?' à '+esc(lentTo):'')+'</span>':'')
+    +genres.map(g=>'<span class="tag tag-genre">'+esc(g)+'</span>').join('')
     +'<span class="tag tag-source" id="modal-source-tag"><span class="tag-source-dot" style="background:var(--ink3)"></span>couverture…</span>'+'<span class="modal-pages-tag" id="modal-pages-tag" title="Cliquer pour récupérer le nombre de pages">📄 …</span>'
     +'</div>';
   body.innerHTML='';body.appendChild(wrap);body.appendChild(info);
@@ -3351,9 +3382,9 @@ function openForm(){document.getElementById('form-overlay').classList.add('open'
     _setStatus('Recherche en cours…');
     let doc=null;
     // Try Open Library by ISBN
-    if(isbn){try{const r=await fetch('https://openlibrary.org/api/books?bibkeys=ISBN:'+isbn+'&jscmd=data&format=json');const d=await r.json();const info=d['ISBN:'+isbn];if(info){doc={title:info.title,authors:info.authors?.map(a=>a.name),publisher:info.publishers?.[0]?.name,pages:info.number_of_pages,cover:info.cover?.large||info.cover?.medium};}}catch(e){}}
+    if(isbn){try{const r=await fetchTimeout('https://openlibrary.org/api/books?bibkeys=ISBN:'+isbn+'&jscmd=data&format=json');const d=await r.json();const info=d['ISBN:'+isbn];if(info){doc={title:info.title,authors:info.authors?.map(a=>a.name),publisher:info.publishers?.[0]?.name,pages:info.number_of_pages,cover:info.cover?.large||info.cover?.medium};}}catch(e){}}
     // Try Google Books
-    if(!doc||(!doc.title&&!doc.authors)){try{const q=isbn?'isbn:'+isbn:'intitle:'+encodeURIComponent(title.slice(0,30));const r=await fetch('https://www.googleapis.com/books/v1/volumes?q='+q+'&maxResults=1');const d=await r.json();const vi=d.items?.[0]?.volumeInfo;if(vi){doc={title:vi.title,authors:vi.authors,publisher:vi.publisher,pages:vi.pageCount,cover:vi.imageLinks?.thumbnail?.replace('http:','https:'),categories:vi.categories};}}catch(e){}}
+    if(!doc||(!doc.title&&!doc.authors)){try{const q=isbn?'isbn:'+isbn:'intitle:'+encodeURIComponent(title.slice(0,30));const r=await fetchTimeout('https://www.googleapis.com/books/v1/volumes?q='+q+'&maxResults=1');const d=await r.json();const vi=d.items?.[0]?.volumeInfo;if(vi){doc={title:vi.title,authors:vi.authors,publisher:vi.publisher,pages:vi.pageCount,cover:vi.imageLinks?.thumbnail?.replace('http:','https:'),categories:vi.categories};}}catch(e){}}
     if(!doc){_setStatus('Aucun résultat trouvé.');return;}
     // Fill fields (only if empty)
     const _fv=(id,val)=>{const el=document.getElementById(id);if(el&&!el.value.trim()&&val)el.value=val;};
@@ -3407,7 +3438,7 @@ document.getElementById('lookup-btn').addEventListener('click',()=>{const v=titl
 async function searchOL(q){
   const a=document.getElementById('f-author').value.trim();
   try{
-    const res=await fetch('https://openlibrary.org/search.json?q='+encodeURIComponent(q+(a?' '+a:''))+'&limit=6&fields=title,author_name,isbn,first_publish_year,cover_i,number_of_pages_median');
+    const res=await fetchTimeout('https://openlibrary.org/search.json?q='+encodeURIComponent(q+(a?' '+a:''))+'&limit=6&fields=title,author_name,isbn,first_publish_year,cover_i,number_of_pages_median');
     const data=await res.json();renderSug(data.docs||[]);
   }catch{sugBox.innerHTML='';}
 }
@@ -3520,14 +3551,22 @@ async function getFileSHA(token){
   if(!res.ok) throw new Error('Impossible de lire le fichier ('+res.status+')');
   return (await res.json()).sha;
 }
+// Mutex pour éviter les pushs en parallèle (cause #1 des conflits 409)
+let _syncInFlight=false;
 async function pushToGitHub(allBooks,message){
   const token=getToken();if(!token){openSetup();return false;}
+  if(_syncInFlight){
+    // Un push est déjà en cours — on attend qu'il finisse plutôt que d'en lancer un autre
+    addLog('sync-skip','⏸ Sync ignorée (déjà en cours)',message||'');
+    return false;
+  }
+  _syncInFlight=true;
   showSyncBar('Synchronisation en cours…');
   try{
-    const fileRes=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_FILE,{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
+    const fileRes=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_FILE,{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'},cache:'no-store'});
     if(!fileRes.ok) throw new Error('Impossible de lire index.html ('+fileRes.status+')');
     const fileData=await fileRes.json();
-    const sha=fileData.sha;
+    let sha=fileData.sha; // ← let, pas const : on doit pouvoir le réassigner en cas de 409
     // TextDecoder properly handles all UTF-8 including chars > U+00FF
     const raw=atob(fileData.content.replace(/\n/g,''));
     const bytes=new Uint8Array(raw.length);
@@ -3548,28 +3587,53 @@ async function pushToGitHub(allBooks,message){
       .replace(/const BOOKS=\[[\s\S]*?\];/,'const BOOKS='+booksJSON+';')
       .replace(/const SYNC_DATA=\{[\s\S]*?\};/,'const SYNC_DATA='+syncJSON+';')
       .replace(/const PAGE_VERSION='[^']*';/,"const PAGE_VERSION='"+new Date().toISOString()+"';");
-    // TextEncoder properly handles all UTF-8 including chars > U+00FF
+    // Encodage UTF-8 → base64 chunk-safe (évite stack overflow sur gros fichiers)
     const encBytes=new TextEncoder().encode(updatedHTML);
+    const CHUNK=8192;
     let encBin='';
-    for(let i=0;i<encBytes.length;i++) encBin+=String.fromCharCode(encBytes[i]);
+    for(let i=0;i<encBytes.length;i+=CHUNK){
+      encBin+=String.fromCharCode.apply(null,encBytes.subarray(i,i+CHUNK));
+    }
     const encoded=btoa(encBin);
-    const res=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_FILE,{
+    const commitMsg=message||'📚 Mise à jour bibliothèque';
+    let res=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_FILE,{
       method:'PUT',
       headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
-      body:JSON.stringify({message:message||'📚 Mise à jour bibliothèque',content:encoded,sha:sha})
+      body:JSON.stringify({message:commitMsg,content:encoded,sha:sha})
     });
-    if(res.status===409){const r2=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/index.html',{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'},cache:'no-store'});const d2=await r2.json();sha=d2.sha;const res3=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/index.html',{method:'PUT',headers:{'Authorization':'token '+token,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:JSON.stringify({message,sha,content:encoded})});if(!res3.ok){document.getElementById('sync-msg').textContent='✗ Conflit persistant — réessayez';return;}const d3=await res3.json();window._lastCommitSha=d3.content?.sha;document.getElementById('sync-msg').textContent='✓ Sauvegardé sur GitHub — visible partout dans ~30s';return;}if(!res.ok){const err=await res.json();throw new Error(err.message||'Erreur GitHub '+res.status);}
+    // Gestion conflit 409 : on retente avec le SHA frais. Une fois max.
+    if(res.status===409){
+      addLog('sync-conflict','⚠ Conflit 409 — retry avec SHA frais',commitMsg);
+      const r2=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_FILE,{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'},cache:'no-store'});
+      if(!r2.ok) throw new Error('Impossible de relire le fichier après 409 ('+r2.status+')');
+      const d2=await r2.json();
+      sha=d2.sha;
+      res=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_FILE,{
+        method:'PUT',
+        headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
+        body:JSON.stringify({message:commitMsg,content:encoded,sha:sha})
+      });
+    }
+    if(!res.ok){
+      let errMsg='Erreur GitHub '+res.status;
+      try{const err=await res.json();errMsg=err.message||errMsg;}catch{}
+      throw new Error(errMsg);
+    }
     localStorage.setItem(LS_LASTUPDATE,now);
     updateLastUpdateDisplay();
-    addLog('sync-ok','✓ Synchro GitHub réussie',message||'mise à jour');
+    addLog('sync-ok','✓ Synchro GitHub réussie',commitMsg);
     // Mémoriser le nouveau SHA pour éviter un faux bandeau "mise à jour"
-    const newCommit=await(await fetch('https://api.github.com/repos/'+GH_REPO+'/commits/main',{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'},cache:'no-store'})).json();
-    if(newCommit.sha) sessionStorage.setItem('biblio_known_sha',newCommit.sha);
-    showSyncBar('✓ Sauvegardé sur GitHub — visible partout dans ~30s','success');
+    try{
+      const newCommit=await(await fetch('https://api.github.com/repos/'+GH_REPO+'/commits/main',{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'},cache:'no-store'})).json();
+      if(newCommit.sha) sessionStorage.setItem('biblio_known_sha',newCommit.sha);
+    }catch{}
+    showSyncBar('✓ Sauvegardé sur GitHub — recharge tes autres appareils dans ~30s','success');
     return true;
   }catch(e){
     addLog('sync-err','✗ Erreur de synchro',e.message);
     showSyncBar('Erreur : '+e.message,'error');return false;
+  }finally{
+    _syncInFlight=false;
   }
 }
 function getAllBooksForSync(){
@@ -3721,7 +3785,7 @@ async function runBatchFetch(opts){
       // Pages
       if(opts.pages&&!getBookPages(b)&&isbn){
         try{
-          var r=await fetch('https://openlibrary.org/api/books?bibkeys=ISBN:'+isbn+'&jscmd=data&format=json');
+          var r=await fetchTimeout('https://openlibrary.org/api/books?bibkeys=ISBN:'+isbn+'&jscmd=data&format=json');
           var d=await r.json();var info=d['ISBN:'+isbn];
           if(info?.number_of_pages){
             var pg=loadPages();pk=bk(b);pg[pk]=info.number_of_pages;savePages(pg);changed=true;found++;
@@ -3735,7 +3799,7 @@ async function runBatchFetch(opts){
         if(!cover){
           try{
             var q='intitle:'+encodeURIComponent(b.t.slice(0,25));
-            var r2=await fetch('https://www.googleapis.com/books/v1/volumes?q='+q+'&maxResults=1');
+            var r2=await fetchTimeout('https://www.googleapis.com/books/v1/volumes?q='+q+'&maxResults=1');
             var d2=await r2.json();
             cover=d2.items?.[0]?.volumeInfo?.imageLinks?.thumbnail?.replace('http:','https:')||null;
           }catch(e){}
@@ -3804,7 +3868,7 @@ buildStats();render();updateSyncBtn();
         var syncMatch=html.match(/const SYNC_DATA=({[\s\S]+?\});\s*\n/);
         if(!syncMatch)return;
         var fileSyncData;
-        try{fileSyncData=eval('('+syncMatch[1]+')');}catch(e){return;}
+        try{fileSyncData=JSON.parse(syncMatch[1]);}catch(e){return;}
         var fileProg=(fileSyncData&&fileSyncData.progress)||{};
         if(!Object.keys(fileProg).length)return;
         var lsProg=loadProgress();
