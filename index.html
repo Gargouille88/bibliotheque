@@ -527,11 +527,48 @@ header h1 em{font-style:normal;border-bottom:3px solid var(--accent);padding-bot
   .view-btn{min-width:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center}
 
   /* "+ Ajouter" devient un FAB en bas-droite, toujours visible */
-  #open-form-btn{position:fixed;bottom:max(1rem,calc(env(safe-area-inset-bottom) + 0.5rem));right:1rem;z-index:500;width:56px;height:56px;border-radius:50%;font-size:1.5rem;padding:0;text-indent:0;line-height:1;box-shadow:0 4px 12px rgba(0,0,0,0.25);font-weight:300}
-  #open-form-btn::first-letter{font-size:0;visibility:hidden}
-  /* Cache le texte "Ajouter", garde juste le "+" */
-  body #open-form-btn{font-size:0}
-  body #open-form-btn::before{content:"+";font-size:1.6rem;font-weight:300;color:#fff;display:block;line-height:56px}
+  /* Stratégie : on cache le texte original via overflow+text-indent, on dessine le "+" en pseudo-élément ::after */
+  /* Toutes les propriétés sont explicites pour garantir le rendu (pas d'héritage capricieux avec position:fixed) */
+  #open-form-btn{
+    position:fixed!important;
+    bottom:max(1.2rem,calc(env(safe-area-inset-bottom) + 0.8rem))!important;
+    right:1.2rem!important;
+    z-index:500!important;
+    width:60px!important;
+    height:60px!important;
+    min-width:60px!important;
+    min-height:60px!important;
+    max-width:60px!important;
+    max-height:60px!important;
+    padding:0!important;
+    border-radius:50%!important;
+    background:var(--accent)!important;
+    color:#fff!important;
+    border:none!important;
+    box-shadow:0 6px 16px rgba(0,0,0,0.3)!important;
+    /* Cache le texte "+ Ajouter" du HTML sans casser la mise en page */
+    font-size:0!important;
+    line-height:0!important;
+    text-indent:-9999px!important;
+    overflow:hidden!important;
+    /* Centre le contenu */
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    cursor:pointer!important;
+  }
+  /* Dessine le "+" via ::after — testé fiable sur Safari iOS/Chrome Android */
+  #open-form-btn::after{
+    content:"+";
+    display:block;
+    font-size:36px;
+    line-height:1;
+    text-indent:0;
+    color:#fff;
+    font-weight:300;
+    font-family:-apple-system,system-ui,sans-serif;
+  }
+  #open-form-btn:active{transform:scale(0.95);box-shadow:0 3px 8px rgba(0,0,0,0.3)!important}
   /* En view-mode, on cache le FAB */
   body.view-mode #open-form-btn{display:none!important}
 
@@ -3572,6 +3609,25 @@ function resetForm(){
   setStars(0);
 }
 document.getElementById('open-form-btn').addEventListener('click',openForm);
+// FIX bug FAB : mask-image sur .controls-row2 crée un containing block qui piège position:fixed
+// On déplace donc le bouton dans <body> directement en mobile
+(function(){
+  const btn=document.getElementById('open-form-btn');
+  if(!btn) return;
+  const originalParent=btn.parentNode;
+  function relocate(){
+    if(window.matchMedia('(max-width:700px)').matches){
+      // Si le bouton n'est pas déjà au niveau du body, on le déplace
+      if(btn.parentNode!==document.body) document.body.appendChild(btn);
+    } else {
+      // Repositionner dans la controls-row2 si on revient en desktop (rotation/resize)
+      if(btn.parentNode===document.body&&originalParent) originalParent.appendChild(btn);
+    }
+  }
+  relocate();
+  // Réagir aux changements de viewport (rotation device, redim fenêtre)
+  window.addEventListener('resize',relocate);
+})();
 document.getElementById('close-form').addEventListener('click',closeForm);
 document.getElementById('cancel-form').addEventListener('click',closeForm);
 document.getElementById('form-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeForm();});
