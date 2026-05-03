@@ -5,7 +5,15 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111111" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bibliothèque">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"Bibliothèque","short_name":"Bibliothèque","start_url":".","scope":".","display":"standalone","orientation":"portrait","background_color":"%23ffffff","theme_color":"%23111111","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 192 192%27%3E%3Crect width=%27192%27 height=%27192%27 rx=%2742%27 fill=%27%23111%27/%3E%3Crect x=%2748%27 y=%2730%27 width=%2772%27 height=%27132%27 rx=%274%27 fill=%27%23fff%27/%3E%3Crect x=%2754%27 y=%2736%27 width=%2760%27 height=%27120%27 rx=%273%27 fill=%27%23e05c2a%27/%3E%3Crect x=%27120%27 y=%2730%27 width=%2724%27 height=%27132%27 rx=%273%27 fill=%27%23333%27/%3E%3C/svg%3E","sizes":"192x192","type":"image/svg+xml","purpose":"any maskable"},{"src":"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 512 512%27%3E%3Crect width=%27512%27 height=%27512%27 rx=%27112%27 fill=%27%23111%27/%3E%3Crect x=%27128%27 y=%2780%27 width=%27192%27 height=%27352%27 rx=%2710%27 fill=%27%23fff%27/%3E%3Crect x=%27144%27 y=%2796%27 width=%27160%27 height=%27320%27 rx=%278%27 fill=%27%23e05c2a%27/%3E%3Crect x=%27320%27 y=%2780%27 width=%2764%27 height=%27352%27 rx=%278%27 fill=%27%23333%27/%3E%3C/svg%3E","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}]}'>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23111'/%3E%3Crect x='45' y='28' width='68' height='124' rx='4' fill='%23fff'/%3E%3Crect x='51' y='34' width='56' height='112' rx='3' fill='%23e05c2a'/%3E%3Crect x='57' y='45' width='34' height='6' rx='3' fill='%23fff' opacity='.85'/%3E%3Crect x='57' y='62' width='44' height='6' rx='3' fill='%23fff' opacity='.65'/%3E%3Crect x='57' y='79' width='38' height='6' rx='3' fill='%23fff' opacity='.65'/%3E%3Crect x='113' y='28' width='22' height='124' rx='3' fill='%23333'/%3E%3C/svg%3E">
 <title>Bibliothèque</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%23111'/><rect x='8' y='5' width='12' height='22' rx='1' fill='%23fff'/><rect x='9' y='6' width='10' height='20' rx='1' fill='%23e05c2a'/><rect x='10' y='8' width='6' height='1' rx='0.5' fill='%23fff' opacity='.8'/><rect x='10' y='11' width='8' height='1' rx='0.5' fill='%23fff' opacity='.6'/><rect x='10' y='14' width='7' height='1' rx='0.5' fill='%23fff' opacity='.6'/><rect x='20' y='5' width='4' height='22' rx='1' fill='%23333'/></svg>" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -43,7 +51,9 @@
 [data-theme="dark"] .nav-tab.active{color:var(--ink);border-bottom-color:var(--accent);background:transparent;}
 .dark-toggle{background:none;border:1px solid var(--line);border-radius:2px;padding:0.22rem 0.6rem;cursor:pointer;font-size:0.72rem;color:var(--ink3);transition:all var(--transition);display:flex;align-items:center;gap:0.3rem;line-height:1;letter-spacing:0.06em;text-transform:uppercase}
 .dark-toggle:hover{color:var(--ink);border-color:var(--ink)}
-body{background:var(--bg);color:var(--ink);font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;letter-spacing:0.01em}
+body{background:var(--bg);color:var(--ink);font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;letter-spacing:0.01em;min-height:100vh;min-height:100dvh}
+/* Désactive le flash bleu/gris au tap sur iOS/Android pour tous les éléments interactifs */
+button,a,input,select,textarea,.nav-tab,.filter-btn,.book-card,.list-card,[role="button"]{-webkit-tap-highlight-color:transparent}
 .update-banner{background:var(--ink);color:var(--bg);font-size:0.78rem;text-align:center;padding:0.5rem 1rem;display:none;align-items:center;justify-content:center;gap:0.7rem;cursor:pointer;transition:opacity 0.2s}
 .update-banner.show{display:flex}
 .update-banner:hover{opacity:0.9}
@@ -133,6 +143,11 @@ header h1 em{font-style:normal;border-bottom:3px solid var(--accent);padding-bot
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .book-card{animation:fadeUp 0.3s ease forwards;opacity:0}
 .book-card:nth-child(1){animation-delay:0.02s}.book-card:nth-child(2){animation-delay:0.04s}.book-card:nth-child(3){animation-delay:0.06s}.book-card:nth-child(4){animation-delay:0.08s}.book-card:nth-child(5){animation-delay:0.1s}.book-card:nth-child(6){animation-delay:0.12s}.book-card:nth-child(n+7){animation-delay:0.14s}
+/* Respect du paramètre OS "réduire les animations" (accessibilité, économie batterie) */
+@media (prefers-reduced-motion:reduce){
+  .book-card{animation:none;opacity:1}
+  *,*::before,*::after{transition-duration:0.01ms!important;animation-duration:0.01ms!important;animation-iteration-count:1!important}
+}
 .empty-state{grid-column:1/-1;text-align:center;padding:5rem 2rem;color:var(--ink3);font-family:'EB Garamond',serif;font-size:1.1rem;font-style:italic}
 .page-header{padding:1.8rem 1.5rem 0.5rem;max-width:1500px;margin:0 auto}
 .page-header h2{font-family:'EB Garamond',serif;font-size:1.4rem;font-weight:400;color:var(--ink);text-transform:uppercase;letter-spacing:0.05em;border-bottom:2px solid var(--ink);padding-bottom:0.4rem;display:inline-block}
@@ -468,79 +483,127 @@ header h1 em{font-style:normal;border-bottom:3px solid var(--accent);padding-bot
 
 
 
-.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--ink);color:var(--bg);padding:0.55rem 1.1rem;border-radius:2px;font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;z-index:2000;opacity:0;transform:translateY(8px);transition:opacity 0.2s,transform 0.2s;pointer-events:none}
+.toast{position:fixed;bottom:max(1.5rem,calc(env(safe-area-inset-bottom) + 0.8rem));right:1.5rem;background:var(--ink);color:var(--bg);padding:0.55rem 1.1rem;border-radius:2px;font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;z-index:2000;opacity:0;transform:translateY(8px);transition:opacity 0.2s,transform 0.2s;pointer-events:none}
 .toast.show{opacity:1;transform:translateY(0)}.toast.warn{background:var(--lent)}.toast.danger{background:#b91c1c}
 @media(max-width:700px){
   /* Header compact */
-  header{padding:0.5rem 1rem;flex-direction:row;align-items:center;justify-content:space-between;gap:0.5rem;min-height:0}
+  header{padding:0.5rem 1rem;flex-direction:row;align-items:center;justify-content:space-between;gap:0.5rem;min-height:0;padding-top:max(0.5rem,env(safe-area-inset-top));padding-left:max(1rem,env(safe-area-inset-left));padding-right:max(1rem,env(safe-area-inset-right))}
   header h1{font-size:1.05rem;letter-spacing:0.06em;margin:0}
   .header-sub,.last-update{display:none!important}
   .header-right{position:static;transform:none;display:flex;align-items:center;gap:0.4rem;flex-shrink:0}
-  .dark-toggle{font-size:0.62rem;padding:0.18rem 0.45rem}
+  .dark-toggle{font-size:0.62rem;padding:0.4rem 0.6rem;min-height:32px}
 
-  /* Nav: scroll horizontal une seule ligne */
-  .nav-tabs{overflow-x:auto;overflow-y:hidden;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;display:block;padding:0}
+  /* Nav: scroll horizontal une seule ligne, snap pour swipe naturel */
+  .nav-tabs{overflow-x:auto;overflow-y:hidden;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;display:block;padding:0;scroll-snap-type:x proximity;mask-image:linear-gradient(90deg,transparent,#000 12px,#000 calc(100% - 12px),transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 12px,#000 calc(100% - 12px),transparent)}
   .nav-tabs::-webkit-scrollbar{display:none}
-  .nav-tab{display:inline-block;padding:0.5rem 0.85rem;font-size:0.7rem;white-space:nowrap;vertical-align:top}
+  .nav-tab{display:inline-block;padding:0.85rem 1rem;font-size:0.72rem;white-space:nowrap;vertical-align:top;scroll-snap-align:start;min-height:44px}
 
   /* Stats bar 2x2 */
   .stats-bar{display:grid;grid-template-columns:1fr 1fr;gap:0}
   .stat-item{padding:0.3rem 0.5rem;font-size:0.72rem}
 
-  /* Controls compacts */
+  /* Controls compacts — search input à 16px pour empêcher le zoom auto iOS */
   .controls{padding:0.5rem 0.7rem}
   .controls-row1{display:flex;gap:0.4rem;margin-bottom:0.4rem}
-  #search{flex:1;font-size:0.82rem;padding:0.38rem 0.5rem}
-  #adv-toggle,#adv-reset{font-size:0.7rem;padding:0.38rem 0.55rem;white-space:nowrap}
+  #search{flex:1;font-size:16px;padding:0.55rem 0.6rem;min-height:40px}
+  #adv-toggle,#adv-reset{font-size:0.75rem;padding:0.55rem 0.7rem;white-space:nowrap;min-height:40px}
 
-  /* Filtres rapides: scroll horizontal */
-  .filter-group{overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;display:block;padding-bottom:0.25rem}
+  /* Filtres rapides: scroll horizontal avec gradient indiquant la scrollabilité */
+  .filter-group{overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;display:block;padding-bottom:0.3rem;mask-image:linear-gradient(90deg,transparent,#000 12px,#000 calc(100% - 12px),transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 12px,#000 calc(100% - 12px),transparent)}
   .filter-group::-webkit-scrollbar{display:none}
-  .filter-btn{display:inline-block;font-size:0.66rem;padding:0.25rem 0.5rem;margin-right:0.25rem;white-space:nowrap}
-  #year-select,#sort-select{font-size:0.75rem;padding:0.28rem 0.35rem;max-width:48%}
-  #genre-select{font-size:0.75rem;padding:0.28rem 0.35rem;width:100%}
+  .filter-btn{display:inline-block;font-size:0.72rem;padding:0.55rem 0.75rem;margin-right:0.3rem;white-space:nowrap;min-height:36px;line-height:1}
+  /* Inputs/selects : 16px pour anti-zoom iOS */
+  #year-select,#sort-select{font-size:16px;padding:0.5rem 0.4rem;max-width:48%;min-height:40px}
+  #genre-select{font-size:16px;padding:0.5rem 0.4rem;width:100%;min-height:40px}
+  #adv-rate-min,#adv-rate-max,#adv-format{font-size:16px!important;padding:0.45rem 0.5rem!important;min-height:40px}
+  #adv-panel{gap:0.5rem!important;padding:0.6rem!important}
 
-  /* Controls row2: scroll horizontal */
-  .controls-row2{overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;display:flex;flex-wrap:nowrap;padding:0.3rem 0.7rem;gap:0.4rem;border-top:1px solid var(--line)}
+  /* Controls row2: scroll horizontal avec gradient */
+  .controls-row2{overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;display:flex;flex-wrap:nowrap;padding:0.3rem 0.7rem;gap:0.4rem;border-top:1px solid var(--line);mask-image:linear-gradient(90deg,transparent,#000 12px,#000 calc(100% - 12px),transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 12px,#000 calc(100% - 12px),transparent)}
   .controls-row2::-webkit-scrollbar{display:none}
-  .controls-row2>*{flex-shrink:0;font-size:0.66rem;padding:0.22rem 0.45rem;white-space:nowrap}
-  #count-label{font-size:0.7rem;flex-shrink:0}
+  .controls-row2>*{flex-shrink:0;font-size:0.72rem;padding:0.5rem 0.7rem;white-space:nowrap;min-height:36px}
+  #count-label{font-size:0.78rem;flex-shrink:0;padding-top:0.6rem}
   .view-toggle{flex-shrink:0}
+  .view-btn{min-width:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center}
 
-  /* Grille 3 colonnes */
-  #grid{grid-template-columns:repeat(3,1fr);gap:0.5rem;padding:0.7rem}
+  /* "+ Ajouter" devient un FAB en bas-droite, toujours visible */
+  #open-form-btn{position:fixed;bottom:max(1rem,calc(env(safe-area-inset-bottom) + 0.5rem));right:1rem;z-index:500;width:56px;height:56px;border-radius:50%;font-size:1.5rem;padding:0;text-indent:0;line-height:1;box-shadow:0 4px 12px rgba(0,0,0,0.25);font-weight:300}
+  #open-form-btn::first-letter{font-size:0;visibility:hidden}
+  /* Cache le texte "Ajouter", garde juste le "+" */
+  body #open-form-btn{font-size:0}
+  body #open-form-btn::before{content:"+";font-size:1.6rem;font-weight:300;color:#fff;display:block;line-height:56px}
+  /* En view-mode, on cache le FAB */
+  body.view-mode #open-form-btn{display:none!important}
+
+  /* Grille adaptive : 2 colonnes sur petits écrans (<400px), 3 sinon */
+  #grid{grid-template-columns:repeat(3,1fr);gap:0.5rem;padding:0.7rem 0.7rem 5rem}
   .card-cover{height:95px}
   .card-info{padding:0.25rem 0.25rem 0.35rem}
-  .card-title{font-size:0.65rem;line-height:1.2;-webkit-line-clamp:2;max-height:2.4em}
-  .card-author{font-size:0.58rem}
-  .badge-owned,.badge-tobuy{font-size:0.46rem;padding:1px 3px}
+  .card-title{font-size:0.7rem;line-height:1.25;-webkit-line-clamp:2;max-height:2.5em}
+  .card-author{font-size:0.62rem}
+  .badge-owned,.badge-tobuy{font-size:0.5rem;padding:1px 3px}
   .cover-badge{font-size:0.6rem;padding:2px 3px}
 
   /* Vue liste mobile */
-  .list-view .list-card{padding:0.45rem 0.7rem;gap:0.55rem}
+  .list-view .list-card{padding:0.65rem 0.7rem;gap:0.55rem;min-height:52px}
   .list-view .list-cover{width:32px;height:46px}
-  .list-view .list-title{font-size:0.8rem}
+  .list-view .list-title{font-size:0.85rem}
   .list-view .card-author,.list-view .list-year{display:none}
+  /* Padding bottom pour ne pas que le FAB cache la dernière card */
+  .list-view{padding-bottom:5rem}
 
-  /* Modale plein écran (bottom sheet) */
+  /* Modale plein écran (bottom sheet) avec safe-area */
   #modal-overlay{align-items:flex-end;padding:0}
-  .modal-box{width:100%!important;max-width:100%!important;border-radius:14px 14px 0 0;max-height:93vh;overflow-y:auto}
-  .modal-body{flex-direction:column}
+  .modal-box{width:100%!important;max-width:100%!important;border-radius:14px 14px 0 0;max-height:93vh;max-height:93dvh;overflow-y:auto;padding-bottom:max(1rem,env(safe-area-inset-bottom))}
+  .modal-body{flex-direction:column;padding-bottom:1rem}
   .modal-cover-wrap{width:100%;display:flex;justify-content:center;padding-bottom:0.6rem}
   .modal-cover-wrap .cover-wrap{width:75px}
   .author-bar-wrap{display:none}
 
-  /* Formulaire ajout: bottom sheet */
+  /* Drag handle visuel sur la modale (bottom sheet) */
+  .modal-close-bar{position:relative;padding:0.45rem 1.1rem 0.2rem;justify-content:center}
+  .modal-close-bar::before{content:"";position:absolute;top:0.5rem;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:2px;background:var(--line)}
+  .modal-close{font-size:1.4rem;padding:0.5rem 0.7rem;min-height:44px;min-width:44px;position:absolute;right:0.4rem;top:0.3rem;display:flex;align-items:center;justify-content:center}
+
+  /* Boutons d'action dans la modale : tailles tactiles confortables */
+  .modal-status-btn,.edit-rating-save,.modal-comment-save{padding:0.55rem 0.9rem;font-size:0.72rem;min-height:38px}
+  .maction-btn{padding:0.7rem 0.9rem;min-height:44px;font-size:0.78rem}
+  /* Bouton Supprimer visuellement séparé pour éviter les taps accidentels */
+  .maction-delete,.maction-btn[data-action="delete"]{margin-top:0.6rem;border-top:1px solid var(--line);padding-top:0.9rem}
+  /* Inputs modale 16px anti-zoom iOS */
+  .modal-status-sel,#modal-year-input,#modal-genre-sel,#modal-pub-input,.modal-comment-input{font-size:16px}
+  /* Sélecteur de notes (★) : étoiles plus grosses sur mobile */
+  .modal-edit-rating .es{font-size:1.6rem;padding:0.2rem 0.1rem}
+
+  /* Formulaire ajout: bottom sheet avec safe-area */
   #form-overlay{align-items:flex-end;padding:0}
-  .form-box{width:100%!important;border-radius:14px 14px 0 0;max-height:93vh;overflow-y:auto}
+  .form-box{width:100%!important;border-radius:14px 14px 0 0;max-height:93vh;max-height:93dvh;overflow-y:auto;padding-bottom:max(1rem,env(safe-area-inset-bottom))}
   .form-inner{flex-direction:column}
   .form-preview-col{width:100%;flex-direction:row;gap:0.5rem}
   .preview-cover{width:55px}
   .field-row{grid-template-columns:1fr}
+  /* Inputs formulaire 16px anti-zoom iOS */
+  #f-title,#f-author,#f-isbn,#f-pub,#f-genre,#f-status,#f-format,#f-year,#f-total-pages,#f-rating,#f-tags,#f-comment{font-size:16px}
+
+  /* Setup token + import overlays : safe-area */
+  #setup-overlay .modal-box,.import-overlay .modal-box{padding-bottom:max(1rem,env(safe-area-inset-bottom))}
 
   /* Stats: une colonne */
   #page-stats .stats-section>div[style*="1fr 1fr"]{grid-template-columns:1fr!important}
   #page-stats>div>div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+  #page-stats{padding-bottom:5rem}
+  #page-current,#page-favorites,#page-work,#page-log{padding-bottom:5rem}
+
+  /* Update banner : safe-area top */
+  .update-banner{padding-top:max(0.5rem,calc(env(safe-area-inset-top) + 0.3rem))}
+}
+
+/* Petit écran : grille 2 colonnes pour vraie lisibilité */
+@media(max-width:380px){
+  #grid{grid-template-columns:repeat(2,1fr);gap:0.5rem}
+  .card-cover{height:140px}
+  .card-title{font-size:0.78rem;-webkit-line-clamp:2;max-height:2.6em}
+  .card-author{font-size:0.7rem}
 }
 
 /* ── Mode lecture seule (sans token GitHub) ── */
@@ -742,7 +805,7 @@ body.view-mode::after{content:'Mode lecture';position:fixed;bottom:0.8rem;right:
       <div class="goal-section" id="goal-section" style="margin-bottom:1.2rem">
         <div class="goal-row">
           <span class="goal-label">Objectif annuel</span>
-          <input type="number" class="goal-input" id="goal-input" min="1" max="500" placeholder="52">
+          <input type="number" inputmode="numeric" class="goal-input" id="goal-input" min="1" max="500" placeholder="52">
           <button class="goal-save-btn" id="goal-save-btn">Définir</button>
           <div class="goal-progress-wrap" id="goal-progress-wrap" style="display:none">
             <div class="goal-bar-bg"><div class="goal-bar-fill" id="goal-bar-fill" style="width:0%"></div></div>
@@ -853,7 +916,7 @@ body.view-mode::after{content:'Mode lecture';position:fixed;bottom:0.8rem;right:
         <div class="field-group" id="date-read-group" style="display:none"><label>Date de lecture</label><input type="date" id="f-date-read" style="color-scheme:light"></div>
         <div class="field-group" id="pages-group" style="display:none">
           <label>Nombre de pages (optionnel)</label>
-          <input type="number" id="f-total-pages" min="1" placeholder="ex : 320" autocomplete="off">
+          <input type="number" inputmode="numeric" id="f-total-pages" min="1" placeholder="ex : 320" autocomplete="off">
         </div>
         <div class="field-group"><label>Note</label>
           <div class="star-input" id="star-input"><span class="s" data-v="1">★</span><span class="s" data-v="2">★</span><span class="s" data-v="3">★</span><span class="s" data-v="4">★</span><span class="s" data-v="5">★</span><span class="rating-lbl" id="rating-val">—</span></div>
@@ -1554,7 +1617,7 @@ function buildWork(){
         +'<div class="work-book-author">'+esc(book.a||'')+'</div>'
         +'</div>'
         +'<div class="work-book-action">'
-        +'<input type="number" class="work-year-input" placeholder="Année" min="1900" max="2099" value="">'
+        +'<input type="number" inputmode="numeric" class="work-year-input" placeholder="Année" min="1900" max="2099" value="">'
         +'<button class="work-save-btn" disabled>Sauver</button>'
         +'</div>';
       const titleEl=row.querySelector('.work-book-title');
@@ -2572,15 +2635,15 @@ function openModal(book){
     +'<button class="progress-mode-btn active" id="pm-pages">Pages</button>'
     +'<button class="progress-mode-btn" id="pm-pct">%</button>'
     +'<div class="progress-input-group" id="pg-pages-group">'
-    +'<input type="number" id="pg-pages-read" min="0" placeholder="'+(mp&&mp.pages_read?mp.pages_read:'0')+'" value="'+(mp&&mp.pages_read?mp.pages_read:'')+'" />'
-    +'<span>/ <input type="number" id="pg-total-pages" min="1" placeholder="total" value="'+(mp&&mp.total_pages?mp.total_pages:'')+'" style="width:60px;padding:0.28rem 0.3rem;border:1px solid var(--line);border-radius:2px;background:var(--bg);font-family:DM Sans,sans-serif;font-size:0.8rem;color:var(--ink);outline:none;text-align:center" /></span>'
+    +'<input type="number" inputmode="numeric" id="pg-pages-read" min="0" placeholder="'+(mp&&mp.pages_read?mp.pages_read:'0')+'" value="'+(mp&&mp.pages_read?mp.pages_read:'')+'" />'
+    +'<span>/ <input type="number" inputmode="numeric" id="pg-total-pages" min="1" placeholder="total" value="'+(mp&&mp.total_pages?mp.total_pages:'')+'" style="width:60px;padding:0.28rem 0.3rem;border:1px solid var(--line);border-radius:2px;background:var(--bg);font-family:DM Sans,sans-serif;font-size:0.8rem;color:var(--ink);outline:none;text-align:center" /></span>'
     +'</div>'
     +'<div class="progress-input-group" id="pg-pct-group" style="display:none">'
-    +'<input type="number" id="pg-pct-val" min="0" max="100" placeholder="0" value="'+(mp&&mp.pct!=null?mp.pct:'')+'" />'
+    +'<input type="number" inputmode="numeric" id="pg-pct-val" min="0" max="100" placeholder="0" value="'+(mp&&mp.pct!=null?mp.pct:'')+'" />'
     +'<span>%</span>'
     +'</div>'
     +'<button class="progress-save-btn" id="pg-save-btn">Enregistrer</button>'
-    +'<div id="mobile-progress-actions"><div id="mobile-slider-value">0 p.</div><div id="mobile-slider-sub">sur ? pages</div><input type="range" id="mobile-page-slider" min="0" max="9999" value="0" step="1"><button id="mobile-save-progress-btn">✓ Sauvegarder la progression</button><button id="mobile-mark-read-btn">🏆 Marquer comme lu</button><div id="mobile-rating-wrap"><div class="mobile-stars"><span class="mobile-star" data-v="1">★</span><span class="mobile-star" data-v="2">★</span><span class="mobile-star" data-v="3">★</span><span class="mobile-star" data-v="4">★</span><span class="mobile-star" data-v="5">★</span></div><button id="mobile-confirm-read-btn">Confirmer — <span id="mobile-rating-label">pas de note</span></button></div></div>'
+    +'<div id="mobile-progress-actions"><div id="mobile-pages-row"><span id="mobile-slider-value">0</span><span class="mobile-sep">/</span><input type="number" inputmode="numeric" id="mobile-total-input" min="1" max="9999" placeholder="?" value=""><span class="mobile-sep">pages</span><span id="mobile-slider-pct"></span></div><div id="mobile-slider-sub" style="display:none"></div><input type="range" id="mobile-page-slider" min="0" max="9999" value="0" step="1"><button id="mobile-save-progress-btn">✓ Sauvegarder la progression</button><button id="mobile-mark-read-btn">🏆 Marquer comme lu</button><div id="mobile-rating-wrap"><div class="mobile-stars"><span class="mobile-star" data-v="1">★</span><span class="mobile-star" data-v="2">★</span><span class="mobile-star" data-v="3">★</span><span class="mobile-star" data-v="4">★</span><span class="mobile-star" data-v="5">★</span></div><button id="mobile-confirm-read-btn">Confirmer — <span id="mobile-rating-label">pas de note</span></button></div></div>'
     +'</div>'
     +'</div>'
     : '';
@@ -2597,7 +2660,7 @@ function openModal(book){
     +(book.s==='read'?
       '<div class="modal-status-row" style="margin-top:0.3rem">'
       +'<span class="modal-status-lbl">Année lue</span>'
-      +'<input type="number" id="modal-year-input" min="1900" max="2099" value="'+esc(book.y||'')+'" placeholder="ex: 2023" style="width:70px;padding:0.22rem 0.45rem;border:1px solid var(--line);border-radius:2px;background:var(--bg);font-family:DM Sans,sans-serif;font-size:0.8rem;color:var(--ink);outline:none;text-align:center">'
+      +'<input type="number" inputmode="numeric" id="modal-year-input" min="1900" max="2099" value="'+esc(book.y||'')+'" placeholder="ex: 2023" style="width:70px;padding:0.22rem 0.45rem;border:1px solid var(--line);border-radius:2px;background:var(--bg);font-family:DM Sans,sans-serif;font-size:0.8rem;color:var(--ink);outline:none;text-align:center">'
       +'<button class="modal-status-btn vis" id="modal-year-btn" style="display:none">Sauvegarder</button>'
       +'</div>'
     :'')
@@ -2889,6 +2952,8 @@ function openModal(book){
     if(!slider) return;
     var valLabel=document.getElementById('mobile-slider-value');
     var subLabel=document.getElementById('mobile-slider-sub');
+    var pctLabel=document.getElementById('mobile-slider-pct');
+    var mobTotalInp=document.getElementById('mobile-total-input');
     var pagesReadInp=document.getElementById('pg-pages-read');
     var totalPagesInp=document.getElementById('pg-total-pages');
     var saveBtn=document.getElementById('mobile-save-progress-btn');
@@ -2903,21 +2968,39 @@ function openModal(book){
     var initTotal=progData.total_pages||getBookPages(book)||0;
     if(pagesReadInp) pagesReadInp.value=initRead;
     if(initTotal&&totalPagesInp) totalPagesInp.value=initTotal;
+    if(mobTotalInp&&initTotal) mobTotalInp.value=initTotal;
     slider.max=initTotal||9999;
     slider.value=initRead;
     var sliderPct=initTotal>0?Math.round((initRead/initTotal)*100):0;
     slider.style.setProperty('--slider-pct',sliderPct+'%');
     if(valLabel) valLabel.textContent=initRead;
+    if(pctLabel) pctLabel.textContent=initTotal>0?'('+sliderPct+'%)':'';
     if(subLabel) subLabel.textContent='sur '+(initTotal||'?')+' pages'+(initTotal>0?' ('+sliderPct+'%)':'');
 
-    slider.addEventListener('input',function(){
-      var pr=parseInt(slider.value);
-      var tp=parseInt(totalPagesInp&&totalPagesInp.value)||initTotal||0;
-      if(pagesReadInp) pagesReadInp.value=pr;
+    function updateUI(pr,tp){
       var pct=tp>0?Math.round((pr/tp)*100):0;
       slider.style.setProperty('--slider-pct',pct+'%');
       if(valLabel) valLabel.textContent=pr;
+      if(pctLabel) pctLabel.textContent=tp>0?'('+pct+'%)':'';
       if(subLabel) subLabel.textContent='sur '+(tp||'?')+' pages'+(tp>0?' ('+pct+'%)':'');
+    }
+
+    slider.addEventListener('input',function(){
+      var pr=parseInt(slider.value)||0;
+      var tp=parseInt(mobTotalInp&&mobTotalInp.value)||parseInt(totalPagesInp&&totalPagesInp.value)||initTotal||0;
+      if(pagesReadInp) pagesReadInp.value=pr;
+      updateUI(pr,tp);
+    });
+
+    // Quand l'utilisateur saisit le total des pages, on met à jour le slider en conséquence
+    if(mobTotalInp) mobTotalInp.addEventListener('input',function(){
+      var tp=parseInt(mobTotalInp.value)||0;
+      if(tp>0){
+        slider.max=tp;
+        if(parseInt(slider.value)>tp) slider.value=tp;
+        if(totalPagesInp) totalPagesInp.value=tp;
+        updateUI(parseInt(slider.value)||0,tp);
+      }
     });
 
     if(saveBtn) saveBtn.addEventListener('click',function(){
@@ -2929,6 +3012,7 @@ function openModal(book){
       if(SYNC_DATA&&SYNC_DATA.progress) SYNC_DATA.progress[bk(book)]=pg[bk(book)];
       buildCurrent&&buildCurrent();render&&render();
       showToast('✓ '+pr+' p. sauvegardées');
+      if(navigator.vibrate) navigator.vibrate(15);
       saveBtn.textContent='✓ Sauvegardé !';
       saveBtn.style.background='#16a34a';
       setTimeout(function(){saveBtn.textContent='✓ Sauvegarder la progression';saveBtn.style.background='';},2000);
@@ -3271,6 +3355,77 @@ function filterByAuthor(author){
 }
 
 function closeModal(){document.getElementById('modal-overlay').classList.remove('open');document.body.style.overflow='';currentModalBook=null;document.getElementById('cover-picker-overlay')?.remove();}  document.getElementById('close-modal').addEventListener('click',closeModal);
+
+// ── Swipe-to-close sur les bottom-sheets (modale livre + form ajout) ──
+// Geste idiomatique mobile : tirer vers le bas pour fermer
+(function(){
+  function attachSwipeClose(boxSelector,closeFn){
+    const overlay=document.querySelector(boxSelector);
+    if(!overlay) return;
+    let startY=0,startScrollTop=0,dragging=false,box=null;
+    overlay.addEventListener('touchstart',e=>{
+      // N'active le drag que sur petit écran (bottom-sheet)
+      if(window.innerWidth>700) return;
+      box=overlay.querySelector('.modal-box,.form-box');
+      if(!box) return;
+      // On ne déclenche le drag que si le contenu est scrollé tout en haut
+      // pour ne pas interférer avec le scroll vertical normal
+      if(box.scrollTop>0){dragging=false;return;}
+      startY=e.touches[0].clientY;
+      startScrollTop=box.scrollTop;
+      dragging=true;
+      box.style.transition='none';
+    },{passive:true});
+    overlay.addEventListener('touchmove',e=>{
+      if(!dragging||!box) return;
+      const dy=e.touches[0].clientY-startY;
+      if(dy>0){
+        box.style.transform='translateY('+dy+'px)';
+      } else {
+        box.style.transform='';
+      }
+    },{passive:true});
+    overlay.addEventListener('touchend',e=>{
+      if(!dragging||!box){dragging=false;return;}
+      const dy=(e.changedTouches[0].clientY)-startY;
+      box.style.transition='transform 0.2s ease-out';
+      if(dy>120){
+        // Distance suffisante : on ferme
+        box.style.transform='translateY(100%)';
+        setTimeout(()=>{box.style.transform='';box.style.transition='';closeFn();},200);
+      } else {
+        box.style.transform='';
+        setTimeout(()=>{box.style.transition='';},200);
+      }
+      dragging=false;
+    });
+  }
+  attachSwipeClose('#modal-overlay',closeModal);
+  // Pour le formulaire ajout
+  setTimeout(()=>{
+    const formOv=document.getElementById('form-overlay');
+    if(formOv){
+      attachSwipeClose('#form-overlay',()=>{
+        formOv.classList.remove('open');
+        document.body.style.overflow='';
+      });
+    }
+  },100);
+})();
+
+// Escape pour fermer la modale ouverte
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    const mo=document.getElementById('modal-overlay');
+    const fo=document.getElementById('form-overlay');
+    const so=document.getElementById('setup-overlay');
+    const io=document.getElementById('import-overlay');
+    if(mo&&mo.classList.contains('open')) closeModal();
+    else if(fo&&fo.classList.contains('open')){fo.classList.remove('open');document.body.style.overflow='';}
+    else if(so&&so.classList.contains('open')) so.classList.remove('open');
+    else if(io&&io.classList.contains('open')) closeImport();
+  }
+});
   // Publisher tag click
   document.querySelectorAll('#modal-overlay .tag-format').forEach(tag=>{
     if(book.pub&&tag.textContent.trim()===book.pub){
