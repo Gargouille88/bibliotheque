@@ -109,7 +109,7 @@ header h1 em{font-style:normal;border-bottom:3px solid var(--accent);padding-bot
 .action-btn.primary:hover{background:#c04a1a;border-color:#c04a1a}
 .action-btn.sync-on{border-color:var(--read);color:var(--read);text-transform:uppercase}
 .page{display:none}.page.active{display:block}
-#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:1.2rem;padding:1.5rem 2rem;max-width:1500px;margin:0 auto}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--card-min,128px),1fr));gap:1.2rem;padding:1.5rem 2rem;max-width:1500px;margin:0 auto}
 #grid.list-view{display:flex;flex-direction:column;gap:0;padding:0;max-width:100%}
 .book-card{cursor:pointer;display:flex;flex-direction:column}
 .cover-wrap{position:relative;aspect-ratio:2/3;border-radius:1px;overflow:hidden;box-shadow:var(--sh-card);transition:box-shadow var(--transition),transform var(--transition);background:var(--surface2)}
@@ -698,6 +698,35 @@ body.view-mode::after{content:'Mode lecture';position:fixed;bottom:0.8rem;right:
   .mobile-star.on{color:#e05c2a}
   #mobile-confirm-read-btn{display:block;width:100%;padding:0.9rem;font-size:0.9rem;font-weight:600;background:#16a34a;color:#fff;border:none;border-radius:4px;cursor:pointer;font-family:DM Sans,sans-serif}
 }
+/* ── Vue étagère ── */
+#grid.shelf-view{display:flex;flex-wrap:wrap;align-items:flex-end;align-content:flex-start;column-gap:3px;row-gap:26px;padding:1.8rem 2rem 3.5rem;max-width:1500px;margin:0 auto;background-image:repeating-linear-gradient(180deg,transparent 0,transparent 165px,var(--ink) 165px,var(--ink) 170px,transparent 170px,transparent 191px);background-origin:content-box;background-clip:content-box}
+.spine-wrap{height:165px;display:flex;align-items:flex-end;cursor:pointer}
+.spine{position:relative;border-radius:2px 2px 0 0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:7px 0 5px;box-shadow:inset -2px 0 3px rgba(0,0,0,0.25),inset 1px 0 1px rgba(255,255,255,0.18);transition:transform 0.12s ease}
+.spine-wrap:hover .spine,.spine-wrap:focus .spine{transform:translateY(-7px)}
+.spine-title{writing-mode:vertical-rl;font-family:'EB Garamond',serif;font-size:0.6rem;color:#fff;max-height:116px;overflow:hidden;letter-spacing:0.02em;line-height:1;text-shadow:0 1px 2px rgba(0,0,0,0.4)}
+.spine-band{width:64%;height:2px;background:rgba(255,255,255,0.5);flex-shrink:0}
+.spine.spine-toread{opacity:0.45}
+.spine.spine-reading::after{content:'';position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--accent)}
+.spine.spine-dnf{opacity:0.28;filter:grayscale(0.7)}
+@media(max-width:700px){#grid.shelf-view{padding:1rem 0.8rem 5rem}}
+/* ── Série sur les cartes ── */
+.card-series{font-size:0.58rem;color:var(--ink3);margin-top:0.12rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.card-series:hover{color:var(--accent)}
+/* ── Prêt en retard ── */
+.lent-badge.lent-late{background:rgba(180,40,40,0.92)}
+/* ── Slider taille vignettes ── */
+#card-size{width:92px;accent-color:var(--accent);cursor:pointer}
+@media(max-width:700px){#card-size{display:none!important}}
+/* ── Confettis ── */
+#confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:3000}
+/* ── Scanner ISBN ── */
+#scan-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:1500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;padding:1rem}
+#scan-overlay video{width:min(92vw,480px);border-radius:6px;border:2px solid rgba(255,255,255,0.3)}
+#scan-overlay .scan-hint{color:rgba(255,255,255,0.85);font-size:0.82rem;text-align:center;letter-spacing:0.04em}
+.isbn-row{display:flex;gap:0.4rem;align-items:center}
+.isbn-row input{flex:1;min-width:0}
+.scan-btn{padding:0.4rem 0.7rem;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface2);cursor:pointer;font-size:0.78rem;white-space:nowrap;color:var(--ink2);font-family:'DM Sans',sans-serif}
+.scan-btn:hover{border-color:var(--ink3);color:var(--ink)}
 </style>
 </head>
 <body>
@@ -715,6 +744,7 @@ body.view-mode::after{content:'Mode lecture';position:fixed;bottom:0.8rem;right:
   <div class="header-right">
     <div style="display:flex;align-items:center;gap:0.7rem;justify-content:flex-end;flex-wrap:wrap">
       <button class="dark-toggle" id="dark-toggle" title="Basculer mode sombre/clair">☀️ Clair</button>
+      <button class="dark-toggle" id="accent-toggle" title="Changer la couleur d'accent" aria-label="Changer la couleur d'accent">🎨</button>
       <div class="last-update">Dernière mise à jour<span id="last-update-date">—</span></div>
     </div>
   </div>
@@ -798,7 +828,8 @@ body.view-mode::after{content:'Mode lecture';position:fixed;bottom:0.8rem;right:
     </div>
     <div class="controls-row2">
       <span class="count-label" id="count-label"></span>
-      <div class="view-toggle"><button class="view-btn active" id="btn-grid" title="Vue grille" aria-label="Vue grille">▦</button><button class="view-btn" id="btn-list" title="Vue liste" aria-label="Vue liste">☰</button></div>
+      <div class="view-toggle"><button class="view-btn active" id="btn-grid" title="Vue grille" aria-label="Vue grille">▦</button><button class="view-btn" id="btn-list" title="Vue liste" aria-label="Vue liste">☰</button><button class="view-btn" id="btn-shelf" title="Vue étagère" aria-label="Vue étagère">▤</button></div>
+      <input type="range" id="card-size" min="92" max="200" step="4" value="128" title="Taille des couvertures" aria-label="Taille des couvertures">
       <div style="flex:1"></div>
       <div class="more-menu-wrap" id="more-menu-wrap">
         <button class="action-btn" id="more-menu-btn" title="Plus d'actions">··· Plus</button>
@@ -908,7 +939,7 @@ body.view-mode::after{content:'Mode lecture';position:fixed;bottom:0.8rem;right:
           <div class="suggestions-box" id="suggestions-box"></div>
         </div>
         <div class="field-group"><label>Auteur(s)</label><input type="text" id="f-author" placeholder="Prénom Nom" autocomplete="off"></div>
-        <div class="field-group"><label>ISBN</label><input type="text" id="f-isbn" placeholder="Détecté automatiquement" maxlength="17" autocomplete="off"></div>
+        <div class="field-group"><label>ISBN</label><div class="isbn-row"><input type="text" id="f-isbn" placeholder="Détecté automatiquement" maxlength="17" autocomplete="off"><button type="button" class="scan-btn" id="scan-isbn-btn" title="Scanner le code-barres avec la caméra">📷 Scanner</button></div></div>
         <div class="field-row">
           <div class="field-group"><label>Éditeur</label><input type="text" id="f-pub" placeholder="Gallimard, Le Seuil…" autocomplete="off"></div>
           <div class="field-group"><label>Genre</label><select id="f-genre"><option value="">— Choisir —</option><option value="BD">BD</option><option value="Philosophie">Philosophie</option><option value="Poésie">Poésie</option><option value="Roman français">Roman français</option><option value="Roman étranger">Roman étranger</option><option value="Développement personnel">Développement personnel</option><option value="Ressources Humaines">Ressources Humaines</option><option value="Sciences">Sciences</option><option value="Biographie">Biographie</option><option value="Histoire">Histoire</option><option value="Essai">Essai</option><option value="Fantasy/SF">Fantasy/SF</option><option value="Théâtre">Théâtre</option></select></div>
@@ -970,6 +1001,10 @@ function loadCustom(){return _lsLoad(LS_CUSTOM,[]);}
 function saveCustom(a){_lsSave(LS_CUSTOM,a);}
 function loadLent(){return _lsLoad(LS_LENT,{});}
 function saveLent(a){_lsSave(LS_LENT,a);}
+// Prêts : rétro-compatible (ancien format = chaîne nom, nouveau = {name,since})
+function lentName(v){return typeof v==='string'?v:(v&&v.name)||'';}
+function lentSince(v){return (v&&typeof v==='object'&&v.since)?v.since:null;}
+function lentLate(v){const t=lentSince(v);return t?(Date.now()-t)>1000*60*60*24*60:false;} // > 2 mois
 function loadComments(){return _lsLoad(LS_COMMENTS,{});}
 function saveComments(a){_lsSave(LS_COMMENTS,a);}
 function loadProgress(){return _lsLoad(LS_PROGRESS,{});}
@@ -978,6 +1013,18 @@ function saveProgress(a){
   var now=Date.now();
   Object.keys(a).forEach(function(k){if(a[k]&&!a[k]._ts)a[k]._ts=now;});
   _lsSave(LS_PROGRESS,a);
+}
+// Historique de progression — alimente la section « Rythme de lecture » des stats
+const LS_PROG_HISTORY='biblio_progress_history';
+function recordProgressHistory(key,pagesRead){
+  try{
+    const h=JSON.parse(localStorage.getItem(LS_PROG_HISTORY)||'[]');
+    const last=h.filter(e=>e.k===key).pop();
+    if(last&&last.p===pagesRead)return; // pas de doublon
+    h.push({k:key,p:pagesRead,ts:Date.now()});
+    if(h.length>600)h.splice(0,h.length-600);
+    localStorage.setItem(LS_PROG_HISTORY,JSON.stringify(h));
+  }catch(e){}
 }
 function loadPages(){return _lsLoad(LS_PAGES,{});}
 function savePages(a){_lsSave(LS_PAGES,a);}
@@ -1779,6 +1826,11 @@ function buildStats(){
       render();
     });
   });
+  // Rappel de prêts : compteur ⏰ sur le bouton filtre quand un prêt dépasse 2 mois
+  const _lentAll=loadLent();
+  const _late=Object.values(_lentAll).filter(lentLate).length;
+  const _flb=document.getElementById('filter-lent');
+  if(_flb)_flb.innerHTML='📖 Prêtés'+(_late?' <span style="color:var(--dnf);font-weight:600">⏰'+_late+'</span>':'');
 }
 
 function stars(r){
@@ -1892,7 +1944,16 @@ function makeCard(book,showCoup){
     }
   }
 
-  if(isLent){const lb=document.createElement('div');lb.className='lent-badge';const n=lent[bk(book)];lb.textContent=n?'prêté à '+n:'prêté';wrap.appendChild(lb);}
+  if(isLent){
+    const lb=document.createElement('div');lb.className='lent-badge';
+    const lv=lent[bk(book)];const n=lentName(lv);const since=lentSince(lv);
+    let dur='';
+    if(since){const days=Math.floor((Date.now()-since)/86400000);if(days>=30)dur=' · '+Math.floor(days/30)+' mois';else if(days>=7)dur=' · '+Math.floor(days/7)+' sem.';}
+    if(lentLate(lv))lb.classList.add('lent-late');
+    lb.textContent=(n?'prêté à '+n:'prêté')+dur;
+    lb.title=since?'Prêté depuis le '+new Date(since).toLocaleDateString('fr-FR'):'';
+    wrap.appendChild(lb);
+  }
   if(isPriority(book)){const pb=document.createElement('div');pb.className='priority-badge';pb.textContent='⚡';wrap.appendChild(pb);}
   if(isFavorite(book)){const fb=document.createElement('div');fb.className='fav-badge';fb.textContent='♥';wrap.appendChild(fb);}
   const bookComment=loadComments()[bk(book)]||book.comment||'';
@@ -1911,7 +1972,9 @@ function makeCard(book,showCoup){
   }else{
     const meta=document.createElement('div');meta.className='card-meta';
     const cachedPg=getBookPages(book);
-    meta.innerHTML='<div class="card-title">'+esc(book.t)+'</div>'+(book.r?'<div class="card-rating">'+stars(book.r)+'</div>':'')+(cachedPg?'<div class="card-pages">'+cachedPg+' p.</div>':'');
+    meta.innerHTML='<div class="card-title">'+esc(book.t)+'</div>'+(book.series?'<div class="card-series" title="Voir toute la série">📚 '+esc(book.series)+'</div>':'')+(book.r?'<div class="card-rating">'+stars(book.r)+'</div>':'')+(cachedPg?'<div class="card-pages">'+cachedPg+' p.</div>':'');
+    const serEl=meta.querySelector('.card-series');
+    if(serEl)serEl.addEventListener('click',e=>{e.stopPropagation();const si=document.getElementById('search');if(si)si.value=book.series;currentSearch=book.series;render();});
     if(!cachedPg&&book.s!=='to-read'){fetchPagesFromOL(book).then(n=>{if(n){const el=meta.querySelector('.card-pages');if(!el){const d=document.createElement('div');d.className='card-pages';d.textContent=n+' p.';meta.appendChild(d);}}});}
     if(progPct!=null){
       const pDiv=document.createElement('div');pDiv.className='card-progress';
@@ -1926,6 +1989,30 @@ function makeCard(book,showCoup){
   return card;
 }
 
+
+// ── Vue étagère : tranches de livres (largeur ∝ pages, couleur par genre) ──
+const SPINE_COLORS=['#8e3b2f','#1f4e79','#2f6f4e','#6d4c8f','#a8552a','#7a2f45','#2a6f7a','#4a5568','#8a6d2f','#3b5f8a','#5f7a3b','#703b8a'];
+function spineColor(g){
+  const key=(g||'').split(',')[0].trim().toLowerCase()||'~sans';
+  let h=0;for(let i=0;i<key.length;i++)h=(h*31+key.charCodeAt(i))>>>0;
+  return SPINE_COLORS[h%SPINE_COLORS.length];
+}
+function makeSpine(book){
+  const w=document.createElement('div');w.className='spine-wrap';w.tabIndex=0;
+  const pages=getBookPages(book)||220;
+  const width=Math.max(15,Math.min(46,Math.round(pages/11)));
+  let hh=0;const t=book.t;for(let i=0;i<t.length;i++)hh=(hh*33+t.charCodeAt(i))>>>0;
+  const height=136+(hh%30); // légère variation déterministe par titre
+  const sp=document.createElement('div');
+  sp.className='spine'+(book.s==='to-read'?' spine-toread':book.s==='currently-reading'?' spine-reading':book.s==='did-not-finish'?' spine-dnf':'');
+  sp.style.width=width+'px';sp.style.height=height+'px';sp.style.background=spineColor(book.g);
+  sp.innerHTML='<div class="spine-band"></div><div class="spine-title">'+esc(book.t.slice(0,44))+'</div><div class="spine-band"></div>';
+  sp.title=book.t+(book.a?' — '+book.a:'')+(book.r?' · '+book.r+'★':'')+(book.g?' · '+book.g:'');
+  w.appendChild(sp);
+  w.addEventListener('click',()=>openModal(book));
+  w.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')openModal(book);});
+  return w;
+}
 
 function render(){
   const q=currentSearch.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -1954,7 +2041,8 @@ function render(){
     const cm=norm(commentsMap[bk(b)]||b.comment||'');
     const gg=norm(b.g||'');
     const pp=norm(b.pub||'');
-    return mF&&mY&&mT&&mR&&mFmt&&mPub&&(tt.includes(q)||aa.includes(q)||cm.includes(q)||gg.includes(q)||pp.includes(q));
+    const ss=norm(b.series||'');
+    return mF&&mY&&mT&&mR&&mFmt&&mPub&&(tt.includes(q)||aa.includes(q)||cm.includes(q)||gg.includes(q)||pp.includes(q)||ss.includes(q));
   });
   const sorted=[...visible];
   if(currentSort==='rating-desc') sorted.sort((a,b)=>{const ra=parseFloat(a.r)||0,rb=parseFloat(b.r)||0;return rb-ra;});
@@ -1970,7 +2058,7 @@ function render(){
   else if(currentSort==='pubyear-asc') sorted.sort((a,b)=>(a.pubYear||9999)-(b.pubYear||9999));
   else if(currentSort==='pubyear-desc') sorted.sort((a,b)=>(b.pubYear||0)-(a.pubYear||0));
   const grid=document.getElementById('grid');
-  grid.className=currentView==='list'?'list-view':'';
+  grid.className=currentView==='list'?'list-view':currentView==='shelf'?'shelf-view':'';
   grid.innerHTML='';
   // Publisher filter badge
   const pubBadge=document.getElementById('pub-filter-badge');
@@ -1993,7 +2081,7 @@ function render(){
     document.getElementById('empty-reset-btn')?.addEventListener('click',resetAllFilters);
     return;
   }
-  sorted.forEach(b=>grid.appendChild(makeCard(b,true)));
+  sorted.forEach(b=>grid.appendChild(currentView==='shelf'?makeSpine(b):makeCard(b,true)));
 }
 
 function buildFavorites(mode){
@@ -2091,6 +2179,21 @@ function buildStatsPage(){
     kGrid.appendChild(c);
   });
   wrap.appendChild(kGrid);
+
+  // ── Carte rétrospective annuelle (image à partager) ──
+  (function(){
+    const yearsRead=[...new Set(read.filter(b=>b.y).map(b=>b.y))].sort();
+    if(!yearsRead.length)return;
+    const cy=String(new Date().getFullYear());
+    const target=yearsRead.includes(cy)?cy:yearsRead[yearsRead.length-1];
+    const btnRow=document.createElement('div');
+    btnRow.style.cssText='display:flex;justify-content:flex-end;margin:0.8rem 0 1.6rem';
+    const btn=document.createElement('button');btn.className='action-btn';
+    btn.textContent='🖼 Ma carte '+target;
+    btn.title='Génère une image récap de tes lectures '+target+' à partager';
+    btn.addEventListener('click',()=>generateYearCard(target));
+    btnRow.appendChild(btn);wrap.appendChild(btnRow);
+  })();
 
   // ── Objectif annuel + stats pages ────────────────────────────────────────
   (function(){
@@ -2216,6 +2319,67 @@ function buildStatsPage(){
 
     row.appendChild(goalSec);row.appendChild(pgSec);
     wrap.appendChild(row);
+  })();
+
+  // ── Rythme de lecture (basé sur l'historique de progression horodaté) ──
+  (function(){
+    let hist=[];try{hist=JSON.parse(localStorage.getItem('biblio_progress_history')||'[]');}catch(e){}
+    const sec=document.createElement('div');
+    sec.style.cssText='margin-bottom:2.5rem;padding:1rem 1.2rem;border:1px solid var(--line);border-radius:2px';
+    const h=document.createElement('div');
+    h.style.cssText='font-size:0.68rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--ink3);font-weight:600;margin-bottom:0.8rem';
+    h.textContent='Rythme de lecture';
+    sec.appendChild(h);
+    function pagesInWindow(days){
+      const cutoff=Date.now()-days*86400000;
+      const byBook={};
+      hist.filter(e=>e.ts>=cutoff).forEach(e=>{(byBook[e.k]=byBook[e.k]||[]).push(e);});
+      let total=0;
+      Object.keys(byBook).forEach(k=>{
+        const arr=byBook[k].sort((a,b)=>a.ts-b.ts);
+        for(let i=1;i<arr.length;i++){const d=arr[i].p-arr[i-1].p;if(d>0)total+=d;}
+        const prev=hist.filter(e=>e.k===k&&e.ts<cutoff).sort((a,b)=>b.ts-a.ts)[0];
+        if(prev){const d=arr[0].p-prev.p;if(d>0)total+=d;}
+      });
+      return total;
+    }
+    if(!hist.length){
+      const hint=document.createElement('div');
+      hint.style.cssText='font-size:0.75rem;color:var(--ink3);font-style:italic';
+      hint.textContent='Mets à jour la progression de tes lectures en cours : ton rythme (pages/jour, date de fin estimée) apparaîtra ici au fil des jours.';
+      sec.appendChild(hint);
+    } else {
+      const p7=pagesInWindow(7),p30=pagesInWindow(30);
+      const kp=document.createElement('div');
+      kp.style.cssText='display:flex;gap:2.5rem;flex-wrap:wrap;margin-bottom:0.6rem';
+      [{v:Math.round(p7/7),l:'pages/jour · 7 derniers jours',st:p7+' pages'},{v:Math.round(p30/30),l:'pages/jour · 30 derniers jours',st:p30+' pages'}].forEach(o=>{
+        const k=document.createElement('div');k.style.textAlign='center';
+        k.innerHTML='<div style="font-size:1.6rem;font-family:Georgia,serif;color:var(--ink);line-height:1.1">'+o.v+'</div>'
+          +'<div style="font-size:0.58rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink3);margin-top:0.15rem">'+o.l+'</div>'
+          +'<div style="font-size:0.62rem;color:var(--ink3)">'+o.st+'</div>';
+        kp.appendChild(k);
+      });
+      sec.appendChild(kp);
+      BOOKS.filter(b=>b.s==='currently-reading').forEach(b=>{
+        const key=bk(b);
+        const entries=hist.filter(e=>e.k===key).sort((a,b2)=>a.ts-b2.ts);
+        const prog=getProgress(b);
+        const total=(prog&&prog.total_pages)||getBookPages(b);
+        if(entries.length>=2&&total){
+          const first=entries[0],last=entries[entries.length-1];
+          const days=(last.ts-first.ts)/86400000;
+          const rate=days>0.2?(last.p-first.p)/days:0;
+          if(rate>0.5&&last.p<total){
+            const eta=new Date(Date.now()+((total-last.p)/rate)*86400000);
+            const rowEl=document.createElement('div');
+            rowEl.style.cssText='font-size:0.75rem;color:var(--ink2);padding:0.35rem 0;border-top:1px solid var(--line2)';
+            rowEl.innerHTML='📖 <strong>'+esc(b.t.slice(0,45))+'</strong> — '+Math.round(rate)+' p./jour → fin estimée le <strong>'+eta.toLocaleDateString('fr-FR',{day:'numeric',month:'long'})+'</strong>';
+            sec.appendChild(rowEl);
+          }
+        }
+      });
+    }
+    wrap.appendChild(sec);
   })();
 
   if(toRead.length){
@@ -2557,6 +2721,86 @@ function buildStatsPage(){
   })();
 }
 
+// ── Carte rétrospective annuelle : canvas 1080×1350 téléchargé en PNG ──
+async function generateYearCard(year){
+  const books=BOOKS.filter(b=>b.s==='read'&&b.y==year);
+  if(!books.length){showToast('Aucun livre lu en '+year,'warn');return;}
+  showToast('🖼 Génération de la carte '+year+'…');
+  const sortedB=[...books].sort((a,b)=>(parseFloat(b.r)||0)-(parseFloat(a.r)||0)).slice(0,8);
+  const covers=await Promise.all(sortedB.map(b=>new Promise(res=>{
+    const url=getCachedCover(b)||b.c;
+    if(!url)return res({b:b,img:null});
+    const img=new Image();img.crossOrigin='anonymous';
+    const to=setTimeout(()=>res({b:b,img:null}),4000);
+    img.onload=()=>{clearTimeout(to);res({b:b,img:img.naturalWidth>1?img:null});};
+    img.onerror=()=>{clearTimeout(to);res({b:b,img:null});};
+    img.src=url;
+  })));
+  function draw(items){
+    const W=1080,H=1350;
+    const cv=document.createElement('canvas');cv.width=W;cv.height=H;
+    const ctx=cv.getContext('2d');
+    const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+    const BG=isDark?'#141414':'#faf7f2',INK=isDark?'#f0ece6':'#111111';
+    const ACC=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#e05c2a';
+    ctx.fillStyle=BG;ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle=INK;ctx.lineWidth=6;ctx.strokeRect(28,28,W-56,H-56);
+    ctx.textAlign='center';
+    ctx.fillStyle=INK;ctx.font='400 46px Georgia,serif';ctx.fillText('MES LECTURES',W/2,132);
+    ctx.fillStyle=ACC;ctx.font='400 118px Georgia,serif';ctx.fillText(year,W/2,248);
+    ctx.fillStyle=INK;ctx.fillRect(W/2-60,282,120,5);
+    const withR2=books.filter(b=>b.r&&parseFloat(b.r));
+    const avg=withR2.length?(withR2.reduce((sum,b)=>sum+parseFloat(b.r),0)/withR2.length).toFixed(1):'—';
+    const pgTot=books.reduce((sum,b)=>sum+(getBookPages(b)||0),0);
+    const ac2={};books.forEach(b=>{if(b.a){const a=b.a.split(',')[0].trim();ac2[a]=(ac2[a]||0)+1;}});
+    const topA=Object.entries(ac2).sort((a,b)=>b[1]-a[1])[0];
+    const kw=W/3;
+    [[books.length,'LIVRES LUS'],[pgTot?pgTot.toLocaleString('fr-FR'):'—','PAGES'],[avg+'★','NOTE MOYENNE']].forEach((o,i)=>{
+      ctx.fillStyle=INK;ctx.font='400 62px Georgia,serif';ctx.fillText(String(o[0]),kw*i+kw/2,398);
+      ctx.fillStyle=isDark?'#999':'#777';ctx.font='500 21px system-ui,sans-serif';ctx.fillText(o[1],kw*i+kw/2,438);
+    });
+    if(topA){ctx.fillStyle=isDark?'#999':'#777';ctx.font='italic 26px Georgia,serif';ctx.fillText('Auteur le plus lu : '+topA[0]+' ('+topA[1]+' livres)',W/2,502);}
+    const cw2=200,ch2=300,gap=32;
+    const gx=(W-4*cw2-3*gap)/2,gy=560;
+    items.forEach((it,i)=>{
+      const x=gx+(i%4)*(cw2+gap),y=gy+Math.floor(i/4)*(ch2+gap);
+      let drawn=false;
+      if(it.img){try{ctx.drawImage(it.img,x,y,cw2,ch2);drawn=true;}catch(e){}}
+      if(!drawn){
+        ctx.fillStyle=spineColor(it.b.g);ctx.fillRect(x,y,cw2,ch2);
+        ctx.fillStyle='rgba(255,255,255,0.92)';ctx.font='400 23px Georgia,serif';ctx.textAlign='center';
+        const words=it.b.t.split(' ');let line='';let yy=y+72;
+        words.forEach(wd=>{
+          if((line+' '+wd).trim().length>14){ctx.fillText(line.trim(),x+cw2/2,yy);yy+=30;line=wd;}
+          else line+=' '+wd;
+        });
+        if(line.trim()&&yy<y+ch2-24)ctx.fillText(line.trim(),x+cw2/2,yy);
+      }
+      ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.strokeRect(x,y,cw2,ch2);
+      if(parseFloat(it.b.r)===5){
+        ctx.fillStyle=ACC;ctx.beginPath();ctx.arc(x+cw2-24,y+24,17,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#fff';ctx.font='600 21px system-ui';ctx.textAlign='center';ctx.fillText('★',x+cw2-24,y+31);
+      }
+    });
+    ctx.fillStyle=isDark?'#777':'#999';ctx.font='500 20px system-ui,sans-serif';ctx.textAlign='center';
+    ctx.fillText('— Bibliothèque —',W/2,H-64);
+    return cv;
+  }
+  let cv=draw(covers);
+  let url=null;
+  try{url=cv.toDataURL('image/png');}
+  catch(e){
+    // canvas souillé (couverture sans CORS) → version dos de livres stylisés
+    cv=draw(covers.map(c=>({b:c.b,img:null})));
+    try{url=cv.toDataURL('image/png');}catch(e2){showToast('Impossible de générer la carte','danger');return;}
+  }
+  const a=document.createElement('a');
+  a.href=url;a.download='mes-lectures-'+year+'.png';
+  document.body.appendChild(a);a.click();a.remove();
+  showToast('✓ Carte '+year+' téléchargée');
+  addLog('sync-ok','🖼 Carte rétrospective '+year,books.length+' livres');
+}
+
 async function fetchPublisher(book){
   const isbn=book.c?.match(/isbn\/(\d+)/)?.[1];
   let pub=null;
@@ -2671,6 +2915,14 @@ function applyMarkRead(book,rating,year){
   if(book._custom){saveCustom(loadCustom().map(b=>(b.t===book.t&&b.a===book.a)?{...b,s:'read',r:book.r,y:year}:b));}
   buildStats();buildCurrent();buildFavorites();render();
   showToast('✓ Lu — '+rating+'★ ('+year+')');
+  celebrate(false);
+  // Objectif annuel atteint pile ?
+  const _goal=parseInt(localStorage.getItem('biblio_annual_goal')||'0');
+  if(_goal){
+    const _cy=String(new Date().getFullYear());
+    const _n=BOOKS.filter(b=>b.s==='read'&&b.y==_cy).length;
+    if(_n===_goal)setTimeout(()=>{celebrate(true);showToast('🎉 Objectif annuel atteint : '+_goal+' livres !');},800);
+  }
   if(getToken()) setTimeout(()=>pushToGitHub(getAllBooksForSync(),'✓ Lu: '+book.t.slice(0,40)+' — '+rating+'★'),300);
 }
 
@@ -2678,7 +2930,7 @@ function openModal(book){
   window._currentModalBook=book;
   const isViewMode=document.body.classList.contains('view-mode');
   currentModalBook=book;
-  const lent=loadLent();const isLent=bk(book) in lent;const lentTo=lent[bk(book)]||'';
+  const lent=loadLent();const isLent=bk(book) in lent;const lentTo=lentName(lent[bk(book)]);
   const isCustom=!!book._custom;
   const comments=loadComments();const bookComment=comments[bk(book)]||book.comment||'';
   const body=document.getElementById('modal-body'),actions=document.getElementById('modal-actions');
@@ -2892,6 +3144,33 @@ function openModal(book){
     }
   })();
 
+  // Série / saga
+  (function(){
+    const sRow=document.createElement('div');
+    sRow.className='modal-status-row';sRow.style.marginTop='0.3rem';
+    const sLbl=document.createElement('span');sLbl.className='modal-status-lbl';sLbl.textContent='Série';
+    const sInp=document.createElement('input');
+    sInp.id='modal-series-input';sInp.type='text';
+    sInp.value=book.series||'';sInp.placeholder='ex : L\'Assassin royal';
+    sInp.setAttribute('list','series-datalist');
+    sInp.style.cssText='padding:0.22rem 0.45rem;border:1px solid var(--line);border-radius:2px;background:var(--bg);font-family:DM Sans,sans-serif;font-size:0.78rem;color:var(--ink);outline:none;flex:1;min-width:0';
+    let dl=document.getElementById('series-datalist');
+    if(!dl){dl=document.createElement('datalist');dl.id='series-datalist';document.body.appendChild(dl);}
+    dl.innerHTML=[...new Set(BOOKS.map(b=>b.series).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr')).map(x=>'<option value="'+esc(x)+'">').join('');
+    const sSave=document.createElement('button');sSave.className='modal-status-btn';sSave.textContent='OK';sSave.style.display='none';
+    sInp.addEventListener('input',()=>{sSave.style.display=sInp.value.trim()!==(book.series||'')?'inline-block':'none';});
+    sSave.addEventListener('click',()=>{
+      const v=sInp.value.trim();
+      if(v)book.series=v;else delete book.series;
+      if(book._custom){saveCustom(loadCustom().map(b=>(b.t===book.t&&b.a===book.a)?{...b,series:book.series}:b));}
+      sSave.style.display='none';render();
+      showToast(v?'📚 Série enregistrée':'Série retirée');
+      if(getToken())setTimeout(()=>pushToGitHub(getAllBooksForSync(),'📚 Série: '+book.t.slice(0,35)),300);
+    });
+    sRow.appendChild(sLbl);sRow.appendChild(sInp);sRow.appendChild(sSave);
+    document.querySelector('#modal-overlay .modal-status-row')?.parentNode?.appendChild(sRow);
+  })();
+
   // Genre selector
   (function(){
     // Create genre row dynamically and insert after status row
@@ -3000,6 +3279,7 @@ function openModal(book){
           const totalPages=parseInt(document.getElementById('pg-total-pages').value);
           if(isNaN(pagesRead)||pagesRead<0){showToast('Nombre de pages invalide','danger');return;}
           progress[bk(book)]={pages_read:pagesRead,total_pages:totalPages||null,pct:null};
+          recordProgressHistory(bk(book),pagesRead);
         }
         saveProgress(progress);
         showToast('Progression sauvegardée');
@@ -3074,6 +3354,7 @@ function openModal(book){
       var pg=loadProgress();
       pg[bk(book)]={pages_read:pr,total_pages:tp||null,pct:tp>0?Math.round((pr/tp)*100):null,_ts:Date.now()};
       saveProgress(pg);
+      recordProgressHistory(bk(book),pr);
       if(SYNC_DATA&&SYNC_DATA.progress) SYNC_DATA.progress[bk(book)]=pg[bk(book)];
       buildCurrent&&buildCurrent();render&&render();
       showToast('✓ '+pr+' p. sauvegardées');
@@ -3193,6 +3474,36 @@ function openModal(book){
     commentSave.classList.remove('vis');showToast('Avis sauvegardé');
     if(getToken()) setTimeout(()=>pushToGitHub(getAllBooksForSync(),'💬 Avis: '+book.t),300);
   });
+
+  // Couleur dominante de la couverture → liseré + halo de la fiche
+  (function(){
+    const box=document.querySelector('#modal-overlay .modal-box');
+    if(box)box.style.borderTop='';
+    let tries=0;
+    const iv=setInterval(()=>{
+      tries++;
+      if(tries>12){clearInterval(iv);return;}
+      const img=cw.querySelector('.cover-img');
+      if(!(img&&img.complete&&img.naturalWidth>1))return;
+      clearInterval(iv);
+      const probe=new Image();probe.crossOrigin='anonymous';
+      probe.onload=()=>{
+        try{
+          const c=document.createElement('canvas');c.width=16;c.height=16;
+          const cx=c.getContext('2d');
+          cx.drawImage(probe,0,0,16,16);
+          const d=cx.getImageData(0,0,16,16).data;
+          let r=0,g=0,bl=0,n=0;
+          for(let i=0;i<d.length;i+=4){r+=d[i];g+=d[i+1];bl+=d[i+2];n++;}
+          r=Math.round(r/n);g=Math.round(g/n);bl=Math.round(bl/n);
+          if(box)box.style.borderTop='5px solid rgb('+r+','+g+','+bl+')';
+          wrap.style.filter='drop-shadow(0 6px 16px rgba('+r+','+g+','+bl+',0.35))';
+        }catch(e){} // canvas souillé (CORS) → on ignore silencieusement
+      };
+      probe.onerror=()=>{};
+      probe.src=img.src;
+    },250);
+  })();
 
   // Filtre par éditeur au clic sur le tag (déplacé ici : nécessite `book`)
   if(book.pub){
@@ -3553,7 +3864,7 @@ function showLentDialog(book,key,lent){
   box.querySelector('#lent-cancel').addEventListener('click',close);
   overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
   const confirm=()=>{
-    const name=input.value.trim();lent[key]=name;saveLent(lent);
+    const name=input.value.trim();lent[key]={name:name,since:Date.now()};saveLent(lent);
     showToast(name?'Prêté à '+name:'Marqué comme prêté','warn');close();render();
     if(getToken()) setTimeout(()=>pushToGitHub(getAllBooksForSync(),'📖 Prêt: '+book.t),300);
   };
@@ -3609,8 +3920,29 @@ document.getElementById('adv-reset')?.addEventListener('click',()=>{
   currentPubFilter=null;
   render();
 });
-document.getElementById('btn-grid').addEventListener('click',()=>{currentView='grid';document.getElementById('btn-grid').classList.add('active');document.getElementById('btn-list').classList.remove('active');render();});
-document.getElementById('btn-list').addEventListener('click',()=>{currentView='list';document.getElementById('btn-list').classList.add('active');document.getElementById('btn-grid').classList.remove('active');render();});
+function setView(v){
+  currentView=v;
+  ['grid','list','shelf'].forEach(x=>document.getElementById('btn-'+x)?.classList.toggle('active',x===v));
+  const cs=document.getElementById('card-size');if(cs)cs.style.display=v==='grid'?'':'none';
+  localStorage.setItem('biblio_view',v);
+  render();
+}
+document.getElementById('btn-grid').addEventListener('click',()=>setView('grid'));
+document.getElementById('btn-list').addEventListener('click',()=>setView('list'));
+document.getElementById('btn-shelf').addEventListener('click',()=>setView('shelf'));
+// Taille des vignettes (persistée)
+(function(){
+  const sl=document.getElementById('card-size');if(!sl)return;
+  const saved=parseInt(localStorage.getItem('biblio_card_size'))||128;
+  sl.value=saved;
+  document.getElementById('grid').style.setProperty('--card-min',saved+'px');
+  sl.addEventListener('input',()=>{
+    document.getElementById('grid').style.setProperty('--card-min',sl.value+'px');
+    localStorage.setItem('biblio_card_size',sl.value);
+  });
+})();
+// Restaurer la vue préférée
+(function(){const v=localStorage.getItem('biblio_view');if(v==='list'||v==='shelf')setView(v);})();
 
 // FORM
 let currentRating=0;
@@ -3750,6 +4082,44 @@ document.getElementById('f-isbn').addEventListener('input',function(){
   const isbn=this.value.replace(/[\s-]/g,'');
   if(isbn.length>=10){const url='https://covers.openlibrary.org/b/isbn/'+isbn+'-M.jpg';const img=new Image();img.onload=()=>{if(img.naturalWidth>1){const p=document.getElementById('preview-cover');p.innerHTML='<img src="'+url+'" alt="" style="width:100%;height:100%;object-fit:cover;display:block">';}};img.src=url;}
 });
+
+// ── Scanner de code-barres ISBN (API BarcodeDetector — Chrome/Edge/Android) ──
+function openBarcodeScanner(){
+  if(!('BarcodeDetector' in window)){showToast('Scanner non supporté par ce navigateur — saisis l\'ISBN à la main','warn');return;}
+  if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){showToast('Caméra non disponible','warn');return;}
+  document.getElementById('scan-overlay')?.remove();
+  const ov=document.createElement('div');ov.id='scan-overlay';
+  ov.innerHTML='<div class="scan-hint">Vise le code-barres au dos du livre</div>'
+    +'<video autoplay playsinline muted></video>'
+    +'<button class="btn-cancel" id="scan-cancel" style="background:transparent;color:#fff;border-color:rgba(255,255,255,0.4)">Annuler</button>';
+  document.body.appendChild(ov);
+  const video=ov.querySelector('video');
+  let stream=null,timer=null,closed=false;
+  const close=()=>{closed=true;clearInterval(timer);if(stream)stream.getTracks().forEach(t=>t.stop());ov.remove();};
+  ov.querySelector('#scan-cancel').addEventListener('click',close);
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(st=>{
+    if(closed){st.getTracks().forEach(t=>t.stop());return;}
+    stream=st;video.srcObject=st;
+    const det=new BarcodeDetector({formats:['ean_13']});
+    timer=setInterval(async()=>{
+      try{
+        const codes=await det.detect(video);
+        const hit=codes.find(c=>/^97[89]\d{10}$/.test(c.rawValue));
+        if(hit){
+          close();
+          const f=document.getElementById('f-isbn');
+          if(f){
+            f.value=hit.rawValue;
+            showToast('📷 ISBN détecté : '+hit.rawValue);
+            if(navigator.vibrate)navigator.vibrate(20);
+            f.dispatchEvent(new Event('blur')); // déclenche l'auto-remplissage existant
+          }
+        }
+      }catch(e){}
+    },350);
+  }).catch(()=>{close();showToast('Accès caméra refusé','warn');});
+}
+document.getElementById('scan-isbn-btn')?.addEventListener('click',openBarcodeScanner);
 
 // SUBMIT
 document.getElementById('submit-form').addEventListener('click',()=>{
@@ -4155,6 +4525,67 @@ async function runBatchFetch(opts){
   },2000);
 }
 document.getElementById('batch-fetch-btn')?.addEventListener('click',function(){window.closeMoreMenu&&window.closeMoreMenu();setTimeout(function(){openBatchFetchModal();},50);});
+
+// ── Thèmes d'accent (cycle via 🎨) ──
+const ACCENTS=[
+  {id:'orange',name:'Orange brûlée',l:['#e05c2a','#fdf0eb','#f0703a'],d:['#f07040','#2a1a12','#f08050']},
+  {id:'encre',name:'Bleu encre',l:['#1a4fa8','#eaf0fa','#3565c0'],d:['#6f9df0','#141c2e','#8ab0f5']},
+  {id:'foret',name:'Vert forêt',l:['#1a7a3c','#e9f6ee','#2f9a55'],d:['#4ade80','#122419','#6ee7a0']},
+  {id:'bordeaux',name:'Bordeaux',l:['#8e2f3c','#f7ecef','#a84a58'],d:['#d97583','#271418','#e694a0']}
+];
+function applyAccent(id){
+  const a=ACCENTS.find(x=>x.id===id)||ACCENTS[0];
+  let st=document.getElementById('accent-style');
+  if(a.id==='orange'){if(st)st.remove();}
+  else{
+    if(!st){st=document.createElement('style');st.id='accent-style';document.head.appendChild(st);}
+    st.textContent=':root{--accent:'+a.l[0]+';--accent-light:'+a.l[1]+';--gold:'+a.l[0]+';--gold2:'+a.l[2]+';--reading:'+a.l[0]+'}'
+      +'[data-theme="dark"]{--accent:'+a.d[0]+';--accent-light:'+a.d[1]+';--gold:'+a.d[0]+';--gold2:'+a.d[2]+';--reading:'+a.d[0]+'}';
+  }
+  localStorage.setItem('biblio_accent',a.id);
+  return a;
+}
+(function(){
+  applyAccent(localStorage.getItem('biblio_accent')||'orange');
+  document.getElementById('accent-toggle')?.addEventListener('click',()=>{
+    const cur=localStorage.getItem('biblio_accent')||'orange';
+    const i=ACCENTS.findIndex(x=>x.id===cur);
+    const next=ACCENTS[(i+1)%ACCENTS.length];
+    applyAccent(next.id);
+    showToast('🎨 '+next.name);
+  });
+})();
+
+// ── Micro-célébrations (confettis sobres) ──
+function celebrate(big){
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  document.getElementById('confetti-canvas')?.remove();
+  const cv=document.createElement('canvas');cv.id='confetti-canvas';
+  cv.width=window.innerWidth;cv.height=window.innerHeight;
+  document.body.appendChild(cv);
+  const ctx=cv.getContext('2d');
+  const acc=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#e05c2a';
+  const cols=[acc,'#16a34a','#1a4fa8','#d4a017'];
+  const N=big?170:70;
+  const ps=Array.from({length:N},()=>({
+    x:Math.random()*cv.width,y:-20-Math.random()*cv.height*0.35,
+    vy:2+Math.random()*3.5,vx:(Math.random()-0.5)*1.8,
+    r:3+Math.random()*4,c:cols[Math.floor(Math.random()*cols.length)],
+    a:Math.random()*Math.PI,va:(Math.random()-0.5)*0.22
+  }));
+  const dur=big?2600:1800;const t0=performance.now();
+  (function frame(t){
+    const el=t-t0;
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ps.forEach(p=>{
+      p.y+=p.vy;p.x+=p.vx;p.a+=p.va;
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.a);
+      ctx.globalAlpha=Math.max(0,1-el/dur);ctx.fillStyle=p.c;
+      ctx.fillRect(-p.r,-p.r/2,p.r*2,p.r);ctx.restore();
+    });
+    if(el<dur)requestAnimationFrame(frame);else cv.remove();
+  })(t0);
+}
 
 // Dark mode
 (function(){
