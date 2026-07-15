@@ -1069,6 +1069,26 @@ function fetchTimeout(url,opts,ms){
   return fetch(url,merged).finally(()=>clearTimeout(id));
 }
 
+// ── Couvertures Amazon (via ISBN-10) ──
+function isbn13to10(isbn){
+  isbn=(isbn||'').replace(/[^0-9Xx]/g,'');
+  if(isbn.length===10)return isbn;
+  if(isbn.length!==13||!isbn.startsWith('978'))return null;
+  const core=isbn.slice(3,12);
+  let sum=0;
+  for(let i=0;i<9;i++)sum+=(10-i)*parseInt(core[i],10);
+  const check=(11-sum%11)%11;
+  return core+(check===10?'X':String(check));
+}
+function amazonCoverUrl(isbn){
+  const i10=isbn13to10(isbn);
+  return i10?('https://images-na.ssl-images-amazon.com/images/P/'+i10+'.01.LZZZZZZZ.jpg'):null;
+}
+function extractIsbnFromCoverUrl(url){
+  const m=(url||'').match(/\/isbn\/([0-9Xx]{10,13})-/);
+  return m?m[1]:null;
+}
+
 async function fetchPagesFromOL(book){
   const key=bk(book);const pages=loadPages();
   if(pages[key]) return pages[key];
@@ -1851,6 +1871,16 @@ function makePh(book){
 const coverSourceCache={};
 async function tryLoadCover(book){
   const key=bk(book);
+  // 1) Amazon via ISBN (haute résolution) si un ISBN est connu
+  try{
+    const isbn=extractIsbnFromCoverUrl(book.c)||extractIsbnFromCoverUrl(getCachedCover(book));
+    const azUrl=isbn?amazonCoverUrl(isbn):null;
+    if(azUrl){
+      const ok=await chkImg(azUrl);
+      if(ok){coverSourceCache[key]='amazon';setCachedCover(book,azUrl);return azUrl;}
+    }
+  }catch{}
+  // 2) Google Books en repli
   try{
     const q=encodeURIComponent(book.t+' '+book.a);
     const res=await fetchTimeout('https://www.googleapis.com/books/v1/volumes?q='+q+'&maxResults=1&fields=items/volumeInfo/imageLinks');
@@ -3633,6 +3663,7 @@ async function openCoverPicker(book,coverWrapEl){
       const img=document.createElement('img');img.loading='lazy';img.alt=title||'';
       img.style.cssText='width:72px;aspect-ratio:2/3;object-fit:cover;border-radius:1px;background:var(--surface2);border:1px solid var(--line)';
       img.onerror=()=>opt.style.display='none';
+      img.onload=()=>{if(img.naturalWidth<=5||img.naturalHeight<=5)opt.style.display='none';};
       img.src=url;
       const titleEl=document.createElement('div');titleEl.className='cover-option-title';titleEl.textContent=title||'';
       opt.appendChild(img);opt.appendChild(titleEl);
@@ -3659,6 +3690,10 @@ async function openCoverPicker(book,coverWrapEl){
     if(cached&&cached!==book.c) currentCovers.push({url:cached,title:'En cache',isCurrent:true});
     addCoversToSection('current',currentCovers.filter((v,i,a)=>a.findIndex(x=>x.url===v.url)===i),[]);
 
+    // Section: Amazon (via ISBN)
+    const secAZ=createSection('az','Amazon','#f59e0b');
+    body.appendChild(secAZ);
+
     // Section: Open Library
     const secOL=createSection('ol','Open Library','#16a34a');
     body.appendChild(secOL);
@@ -3676,6 +3711,7 @@ async function openCoverPicker(book,coverWrapEl){
         .then(r=>r.json())
         .then(d=>{
           const covers=[];
+          const isbns=[];
           const seenIds=new Set();
           (d.docs||[]).forEach(doc=>{
             if(doc.cover_i&&!seenIds.has(doc.cover_i)){
@@ -3683,12 +3719,13 @@ async function openCoverPicker(book,coverWrapEl){
               const url='https://covers.openlibrary.org/b/id/'+doc.cover_i+'-M.jpg';
               if(!seen.has(url)){seen.add(url);covers.push({url,title:doc.title||''});}
             }
-            (doc.isbn||[]).slice(0,3).forEach(isbn=>{
+            (doc.isbn||[]).slice(0,4).forEach(isbn=>{
+              isbns.push({isbn,title:doc.title||''});
               const url='https://covers.openlibrary.org/b/isbn/'+isbn+'-M.jpg';
               if(!seen.has(url)){seen.add(url);covers.push({url,title:doc.title||''});}
             });
           });
-          return covers;
+          return {covers,isbns};
         }),
       // Google Books
       fetch('https://www.googleapis.com/books/v1/volumes?q='+encodeURIComponent(q)+'&maxResults=10&fields=items(volumeInfo(title,imageLinks))')
@@ -3707,7 +3744,19 @@ async function openCoverPicker(book,coverWrapEl){
         })
     ]);
 
-    addCoversToSection('ol', olResult.status==='fulfilled'?olResult.value:[], []);
+    // Amazon : couvertures haute résolution construites à partir des ISBN trouvés
+    const azCovers=[];
+    const azSeen=new Set();
+    const pushAz=(isbn,title)=>{
+      const url=amazonCoverUrl(isbn);
+      if(url&&!azSeen.has(url)){azSeen.add(url);seen.add(url);azCovers.push({url,title:title||('ISBN '+isbn)});}
+    };
+    const ownIsbn=extractIsbnFromCoverUrl(book.c)||extractIsbnFromCoverUrl(getCachedCover(book));
+    if(ownIsbn)pushAz(ownIsbn,book.t);
+    if(olResult.status==='fulfilled')(olResult.value.isbns||[]).slice(0,15).forEach(x=>pushAz(x.isbn,x.title));
+    addCoversToSection('az', azCovers.slice(0,12), []);
+
+    addCoversToSection('ol', olResult.status==='fulfilled'?olResult.value.covers:[], []);
     addCoversToSection('gb', gbResult.status==='fulfilled'?gbResult.value:[], []);
 
     if(olResult.status==='rejected'){
