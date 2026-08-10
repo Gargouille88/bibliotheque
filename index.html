@@ -4636,23 +4636,152 @@ const titleWrap=document.getElementById('title-wrap');
 titleInput.addEventListener('input',function(){
   clearTimeout(searchTimer);const v=this.value.trim();
   titleWrap.classList.toggle('has-val',v.length>0);
-  if(v.length<3){sugBox.innerHTML='';return;}
+  if(v.length<2){sugBox.innerHTML='';return;}
   sugBox.innerHTML='<div class="search-suggestions"><div class="search-loading">Recherche…</div></div>';
-  searchTimer=setTimeout(()=>searchOL(v),650);
+  searchTimer=setTimeout(()=>searchOL(v),350);
 });
 document.getElementById('lookup-btn').addEventListener('click',()=>{const v=titleInput.value.trim();if(v.length>=2)searchOL(v);});
+
+// ── Recherche double source : Google Books + Open Library ──
+// OL seul est lent et throttle agressivement → GB en première ligne, OL en complément.
+let _sugSeq=0;
+function _sugMsg(txt){sugBox.innerHTML='<div class="search-suggestions"><div class="search-loading">'+esc(txt)+'</div></div>';}
+
+async function searchGoogleBooks(q){
+  const r=await fetchTimeout('https://www.googleapis.com/books/v1/volumes?q='+encodeURIComponent(q)+'&maxResults=8&printType=books',{},7000);
+  if(!r.ok)throw new Error('gb '+r.status);
+  const d=await r.json();
+  return (d.items||[]).map(function(it){
+    const v=it.volumeInfo||{};
+    const ids=v.industryIdentifiers||[];
+    const isbn=((ids.filter(function(x){return x.type==='ISBN_13';})[0])||(ids.filter(function(x){return x.type==='ISBN_10';})[0])||{}).identifier||'';
+    const th=((v.imageLinks&&(v.imageLinks.thumbnail||v.imageLinks.smallThumbnail))||'')
+      .replace('http:','https:').replace('&edge=curl','');
+    return {
+      title:v.title||'',
+      author_name:v.authors||[],
+      isbn:isbn?[isbn]:[],
+      first_publish_year:v.publishedDate?parseInt(v.publishedDate.slice(0,4),10)||null:null,
+      number_of_pages_median:v.pageCount||null,
+      _thumb:th,
+      _publisher:v.publisher||'',
+      _src:'gb'
+    };
+  }).filter(function(d){return d.title;});
+}
+
+async function searchOpenLibrary(q){
+  const r=await fetchTimeout('https://openlibrary.org/search.json?q='+encodeURIComponent(q)+'&limit=6&fields=title,author_name,isbn,first_publish_year,cover_i,number_of_pages_median,publisher',{},7000);
+  if(!r.ok)throw new Error('ol '+r.status);
+  const d=await r.json();
+  return (d.docs||[]).map(function(doc){
+    doc._src='ol';
+    doc._publisher=(doc.publisher&&doc.publisher[0])||'';
+    return doc;
+  }).filter(function(doc){return doc.title;});
+}
+
+// BnF — SRU Dublin Core. Sans clé, imbattable sur les éditions françaises.
+// Réponse XML : on parse via DOMParser en comparant les localName (préfixes ns variables).
+// BnF : "Damasio, Alain (1969-....)" → "Alain Damasio"
+function _bnfAuthor(s){
+  s=(s||'').replace(/\([^)]*\)/g,'').trim().replace(/[.,;]+$/,'').trim();
+  const m=s.match(/^([^,]+),\s*(.+)$/);
+  if(m)s=(m[2]+' '+m[1]).trim();
+  return s.replace(/\s+/g,' ');
+}
+// BnF : "La Horde du Contrevent / Alain Damasio" → "La Horde du Contrevent" (ISBD)
+function _bnfTitle(s){
+  return (s||'').replace(/\s+\/\s+.*$/,'').replace(/\s*[\/:;.,]\s*$/,'').trim();
+}
+function _dcVals(rec,name){
+  const out=[];
+  const all=rec.getElementsByTagName('*');
+  for(let i=0;i<all.length;i++){
+    if(all[i].localName===name){
+      const t=(all[i].textContent||'').trim();
+      if(t)out.push(t);
+    }
+  }
+  return out;
+}
+async function searchBnF(q){
+  const query='bib.anywhere all "'+q.replace(/"/g,'')+'"';
+  const url='https://catalogue.bnf.fr/api/SRU?version=1.2&operation=searchRetrieve'
+    +'&query='+encodeURIComponent(query)
+    +'&recordSchema=dublincore&maximumRecords=6';
+  const r=await fetchTimeout(url,{},7000);
+  if(!r.ok)throw new Error('bnf '+r.status);
+  const xml=new DOMParser().parseFromString(await r.text(),'application/xml');
+  if(xml.getElementsByTagName('parsererror').length)throw new Error('bnf parse');
+  const recs=[],all=xml.getElementsByTagName('*');
+  for(let i=0;i<all.length;i++){if(all[i].localName==='recordData')recs.push(all[i]);}
+  return recs.map(function(rec){
+    const ids=_dcVals(rec,'identifier');
+    let isbn='';
+    for(let i=0;i<ids.length;i++){
+      const m=ids[i].replace(/[\s-]/g,'').match(/(97[89]\d{10}|\d{9}[\dXx])/);
+      if(m){isbn=m[1];break;}
+    }
+    const dates=_dcVals(rec,'date');
+    let yr=null;
+    for(let i=0;i<dates.length;i++){
+      const m=dates[i].match(/(1[5-9]\d{2}|20\d{2})/);
+      if(m){yr=parseInt(m[1],10);break;}
+    }
+    return {
+      title:_bnfTitle(_dcVals(rec,'title')[0]||''),
+      author_name:_dcVals(rec,'creator').slice(0,2).map(_bnfAuthor).filter(Boolean),
+      isbn:isbn?[isbn]:[],
+      first_publish_year:yr,
+      number_of_pages_median:null,
+      _publisher:_dcVals(rec,'publisher')[0]||'',
+      _src:'bnf'
+    };
+  }).filter(function(d){return d.title;});
+}
+
 async function searchOL(q){
   const a=document.getElementById('f-author').value.trim();
-  try{
-    const res=await fetchTimeout('https://openlibrary.org/search.json?q='+encodeURIComponent(q+(a?' '+a:''))+'&limit=6&fields=title,author_name,isbn,first_publish_year,cover_i,number_of_pages_median');
-    const data=await res.json();renderSug(data.docs||[]);
-  }catch{sugBox.innerHTML='';}
+  const full=q+(a?' '+a:'');
+  const seq=++_sugSeq;
+  _sugMsg('Recherche…');
+  const res=await Promise.allSettled([searchGoogleBooks(full),searchOpenLibrary(full),searchBnF(full)]);
+  if(seq!==_sugSeq)return; // réponse obsolète, une frappe plus récente a pris la main
+  const docs=[],seen=new Map();
+  res.forEach(function(r){
+    if(r.status!=='fulfilled')return;
+    r.value.forEach(function(d){
+      const k=(d.title||'').toLowerCase().trim().replace(/[^a-z0-9]/g,'')
+        +'|'+(((d.author_name||[])[0])||'').toLowerCase().trim().replace(/[^a-z0-9]/g,'');
+      const prev=seen.get(k);
+      if(prev){
+        // Doublon : on complète les trous plutôt que de jeter (BnF a l'éditeur, GB la vignette)
+        if(!prev._publisher&&d._publisher)prev._publisher=d._publisher;
+        if(!prev._thumb&&d._thumb)prev._thumb=d._thumb;
+        if(!(prev.isbn||[]).length&&(d.isbn||[]).length)prev.isbn=d.isbn;
+        if(!prev.first_publish_year&&d.first_publish_year)prev.first_publish_year=d.first_publish_year;
+        if(!prev.number_of_pages_median&&d.number_of_pages_median)prev.number_of_pages_median=d.number_of_pages_median;
+        if(!prev.cover_i&&d.cover_i)prev.cover_i=d.cover_i;
+        return;
+      }
+      seen.set(k,d);docs.push(d);
+    });
+  });
+  if(docs.length){renderSug(docs);return;}
+  const failed=res.filter(function(r){return r.status==='rejected';}).length;
+  if(failed===res.length){
+    console.warn('[suggestions] GB:',res[0].reason,'| OL:',res[1].reason,'| BnF:',res[2].reason);
+    _sugMsg('Recherche indisponible — saisis les infos à la main');
+  }else{
+    _sugMsg('Aucun résultat pour « '+full+' »');
+  }
 }
 function renderSug(docs){
   if(!docs.length){sugBox.innerHTML='';return;}
   const box=document.createElement('div');box.className='search-suggestions';
   docs.slice(0,5).forEach(doc=>{
-    const cUrl=doc.cover_i?'https://covers.openlibrary.org/b/id/'+doc.cover_i+'-S.jpg':'';
+    const cUrl=doc._thumb||(doc.cover_i?'https://covers.openlibrary.org/b/id/'+doc.cover_i+'-S.jpg':'');
     const isbn=(doc.isbn&&doc.isbn[0])||'';
     const author=(doc.author_name&&doc.author_name.slice(0,2).join(', '))||'';
     const item=document.createElement('div');item.className='suggestion-item';
@@ -4661,6 +4790,17 @@ function renderSug(docs){
       +(doc.first_publish_year?'<span class="sug-year">'+doc.first_publish_year+'</span>':'');
     item.addEventListener('click',()=>applySug(doc,isbn));
     box.appendChild(item);
+    // Surclassement Amazon : bien plus haute résolution que les vignettes GB (~128 px).
+    // Amazon renvoie un GIF 1×1 quand la couverture n'existe pas → chkImg filtre via naturalWidth.
+    const az=isbn?amazonCoverUrl(isbn):null;
+    if(az)chkImg(az).then(ok=>{
+      if(!ok||!item.isConnected)return;
+      const slot=item.querySelector('.sug-cover');
+      if(!slot)return;
+      const img=document.createElement('img');
+      img.className='sug-cover';img.alt='';img.loading='lazy';img.src=az;
+      slot.replaceWith(img);
+    });
   });
   sugBox.innerHTML='';sugBox.appendChild(box);
 }
@@ -4670,8 +4810,19 @@ function applySug(doc,isbn){
   if(isbn)document.getElementById('f-isbn').value=isbn;
   if(doc.number_of_pages_median&&!document.getElementById('f-total-pages').value)
     document.getElementById('f-total-pages').value=doc.number_of_pages_median;
-  const cFull=doc.cover_i?'https://covers.openlibrary.org/b/id/'+doc.cover_i+'-M.jpg':(isbn?'https://covers.openlibrary.org/b/isbn/'+isbn+'-M.jpg':'');
-  if(cFull){const p=document.getElementById('preview-cover');p.innerHTML='<img src="'+cFull+'" alt="" style="width:100%;height:100%;object-fit:cover;display:block">';}
+  const pubInp=document.getElementById('f-pub');
+  if(doc._publisher&&pubInp&&!pubInp.value.trim())pubInp.value=doc._publisher;
+  const cFull=doc.cover_i?'https://covers.openlibrary.org/b/id/'+doc.cover_i+'-M.jpg'
+    :(doc._thumb?doc._thumb.replace('zoom=1','zoom=3')
+    :(isbn?'https://covers.openlibrary.org/b/isbn/'+isbn+'-M.jpg':''));
+  const setPrev=function(u){
+    const p=document.getElementById('preview-cover');
+    if(p)p.innerHTML='<img src="'+u+'" alt="" style="width:100%;height:100%;object-fit:cover;display:block">';
+  };
+  if(cFull)setPrev(cFull);
+  // Amazon en priorité si l'ISBN le permet — meilleure définition, meilleures éditions FR.
+  const az=isbn?amazonCoverUrl(isbn):null;
+  if(az)chkImg(az).then(ok=>{if(ok)setPrev(az);});
   titleWrap.classList.add('has-val');sugBox.innerHTML='';
 }
 document.getElementById('f-isbn').addEventListener('input',function(){
