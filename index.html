@@ -909,6 +909,7 @@ body.view-mode::after{content:'Mode lecture';position:fixed;bottom:0.8rem;right:
           <button class="more-menu-item" id="journal-btn">📋 Journal</button>
           <button class="more-menu-item" id="travail-btn">✦ Travail</button>
           <button class="more-menu-item" id="batch-fetch-btn">✦ Compléter les données</button>
+          <button class="more-menu-item" id="gbkey-btn">🔑 Clé Google Books</button>
           <button class="more-menu-item" id="export-btn">↓ Exporter</button>
         </div>
       </div>
@@ -5339,6 +5340,28 @@ async function runBatchFetch(opts){
   },2000);
 }
 document.getElementById('batch-fetch-btn')?.addEventListener('click',function(){window.closeMoreMenu&&window.closeMoreMenu();setTimeout(function(){openBatchFetchModal();},50);});
+
+// Saisie de la clé Google Books depuis l'interface : sur mobile il n'existe
+// aucune console navigateur, localStorage.setItem() était donc inatteignable.
+document.getElementById('gbkey-btn')?.addEventListener('click',function(){
+  window.closeMoreMenu&&window.closeMoreMenu();
+  setTimeout(function(){
+    var cur=gbKey();
+    var msg=cur
+      ? 'Clé actuelle : '+cur.slice(0,10)+'…\n\nColle une nouvelle clé, ou laisse vide et valide pour la supprimer.'
+      : 'Colle ta clé Google Books (commence par AIza…).\n\nSans clé, l\'app fonctionne mais partage le quota anonyme de tout le monde.';
+    var v=prompt(msg,cur);
+    if(v===null)return; // Annuler : on ne touche à rien
+    v=v.trim();
+    if(!v){try{localStorage.removeItem('gb_key');}catch(e){}showToast('Clé supprimée — quota anonyme','warn');return;}
+    if(!/^AIza[0-9A-Za-z_-]{20,}$/.test(v)){
+      showToast('Clé invalide : elle doit commencer par AIza','warn');return;
+    }
+    try{localStorage.setItem('gb_key',v);}catch(e){showToast('Impossible d\'enregistrer','warn');return;}
+    _cooldownUntil=0; // nouvelle clé, nouveau quota : on lève le verrou
+    showToast('✓ Clé enregistrée — quota personnel actif');
+  },50);
+});
 
 // ── Thèmes d'accent (cycle via 🎨) ──
 const ACCENTS=[
